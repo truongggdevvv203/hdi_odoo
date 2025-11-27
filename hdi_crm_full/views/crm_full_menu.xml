@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Actions that reuse core models' views by pointing to their models. -->
+  <record id="action_hdi_crm_leads" model="ir.actions.act_window">
+    <field name="name">Leads</field>
+    <field name="res_model">crm.lead</field>
+    <field name="view_mode">kanban,tree,form</field>
+  </record>
+
+  <record id="action_hdi_crm_customers" model="ir.actions.act_window">
+    <field name="name">Customers</field>
+    <field name="res_model">res.partner</field>
+    <field name="view_mode">kanban,tree,form</field>
+    <field name="domain">[("is_company","=",True)]</field>
+  </record>
+
+  <record id="action_hdi_crm_activities" model="ir.actions.act_window">
+    <field name="name">Activities</field>
+    <field name="res_model">mail.activity</field>
+    <field name="view_mode">kanban,tree,form</field>
+  </record>
+
+  <!-- Top-level HDI menu -->
+  <record id="menu_hdi_crm_root" model="ir.ui.menu">
+    <field name="name">HDI CRM</field>
+    <field name="sequence">10</field>
+  </record>
+
+  <!-- Submenus reusing the actions above -->
+  <record id="menu_hdi_crm_leads" model="ir.ui.menu">
+    <field name="name">Leads</field>
+    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="action" ref="action_hdi_crm_leads"/>
+  </record>
+
+  <record id="menu_hdi_crm_customers" model="ir.ui.menu">
+    <field name="name">Customers</field>
+    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="action" ref="action_hdi_crm_customers"/>
+  </record>
+
+  <record id="menu_hdi_crm_activities" model="ir.ui.menu">
+    <field name="name">Activities</field>
+    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="action" ref="action_hdi_crm_activities"/>
+  </record>
+
+  <!-- Shortcut under Contacts to show related customers (optional) -->
+  <record id="menu_hdi_crm_customers_contacts" model="ir.ui.menu">
+    <field name="name">HDI Customers</field>
+    <field name="parent_id" ref="contacts.menu_contacts"/>
+    <field name="action" ref="action_hdi_crm_customers"/>
+  </record>
+
+</odoo>
