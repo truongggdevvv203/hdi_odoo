@@ -3,7 +3,7 @@
     <data>
         <!-- CRM Lead Action -->
         <record id="action_crm_lead" model="ir.actions.act_window">
-            <field name="name">Leads</field>
+            <field name="name">Khách hàng tiềm năng</field>
             <field name="res_model">crm.lead</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="view_id" ref="view_crm_lead_kanban"/>
@@ -13,7 +13,7 @@
         
         <!-- CRM Opportunity Action -->
         <record id="action_crm_opportunity" model="ir.actions.act_window">
-            <field name="name">Opportunities</field>
+            <field name="name">Cơ hội</field>
             <field name="res_model">crm.opportunity</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="view_id" ref="view_crm_opportunity_kanban"/>
@@ -23,7 +23,7 @@
         
         <!-- CRM Customer Action -->
         <record id="action_crm_customer" model="ir.actions.act_window">
-            <field name="name">Customers</field>
+            <field name="name">Khách hàng</field>
             <field name="res_model">crm.customer</field>
             <field name="view_mode">list,form</field>
             <field name="search_view_id" ref="view_crm_customer_search"/>
@@ -32,7 +32,7 @@
         
         <!-- CRM Activity Action -->
         <record id="action_crm_activity" model="ir.actions.act_window">
-            <field name="name">Activities</field>
+            <field name="name">Hoạt động</field>
             <field name="res_model">crm.activity</field>
             <field name="view_mode">list,calendar,form</field>
             <field name="search_view_id" ref="view_crm_activity_search"/>
@@ -40,56 +40,56 @@
         
         <!-- CRM Stages Action -->
         <record id="action_crm_stage" model="ir.actions.act_window">
-            <field name="name">Stages</field>
+            <field name="name">Giai đoạn</field>
             <field name="res_model">crm.stage</field>
             <field name="view_mode">list,form</field>
         </record>
         
         <!-- CRM Tags Action -->
         <record id="action_crm_tag" model="ir.actions.act_window">
-            <field name="name">Tags</field>
+            <field name="name">Thẻ</field>
             <field name="res_model">crm.tag</field>
             <field name="view_mode">list,form</field>
         </record>
         
         <!-- CRM Sources Action -->
         <record id="action_crm_source" model="ir.actions.act_window">
-            <field name="name">Lead Sources</field>
+            <field name="name">Nguồn khách hàng tiềm năng</field>
             <field name="res_model">crm.source</field>
             <field name="view_mode">list,form</field>
         </record>
         
         <!-- CRM Industries Action -->
         <record id="action_crm_industry" model="ir.actions.act_window">
-            <field name="name">Industries</field>
+            <field name="name">Ngành nghề</field>
             <field name="res_model">crm.industry</field>
             <field name="view_mode">list,form</field>
         </record>
         
         <!-- CRM Teams Action -->
         <record id="action_crm_team_view" model="ir.actions.act_window">
-            <field name="name">Sales Teams</field>
+            <field name="name">Đội bán hàng</field>
             <field name="res_model">crm.team</field>
             <field name="view_mode">list,form</field>
         </record>
         
         <!-- CRM Lost Reasons Action -->
         <record id="action_crm_lost_reason" model="ir.actions.act_window">
-            <field name="name">Lost Reasons</field>
+            <field name="name">Lý do mất</field>
             <field name="res_model">crm.lost.reason</field>
             <field name="view_mode">list,form</field>
         </record>
         
         <!-- Partner Ratings Action -->
         <record id="action_crm_partner_rating" model="ir.actions.act_window">
-            <field name="name">Partner Ratings</field>
+            <field name="name">Đánh giá đối tác</field>
             <field name="res_model">crm.partner.rating</field>
             <field name="view_mode">list,form</field>
         </record>
         
         <!-- Partner Value Action -->
         <record id="action_crm_partner_value" model="ir.actions.act_window">
-            <field name="name">Partner Value</field>
+            <field name="name">Giá trị đối tác</field>
             <field name="res_model">crm.partner.value</field>
             <field name="view_mode">list,form</field>
         </record>
@@ -98,30 +98,30 @@
         <menuitem id="menu_crm_root" name="CRM" sequence="10" web_icon="hdi_crm,static/description/icon.png"/>
         
         <!-- CRM Leads Menu -->
-        <menuitem id="menu_crm_leads" name="Leads" parent="menu_crm_root" sequence="10" action="action_crm_lead"/>
+        <menuitem id="menu_crm_leads" name="Khách hàng tiềm năng" parent="menu_crm_root" sequence="10" action="action_crm_lead"/>
         
         <!-- CRM Opportunities Menu -->
-        <menuitem id="menu_crm_opportunities" name="Opportunities" parent="menu_crm_root" sequence="20" action="action_crm_opportunity"/>
+        <menuitem id="menu_crm_opportunities" name="Cơ hội" parent="menu_crm_root" sequence="20" action="action_crm_opportunity"/>
         
         <!-- CRM Customers Menu -->
-        <menuitem id="menu_crm_customers" name="Customers" parent="menu_crm_root" sequence="30" action="action_crm_customer"/>
+        <menuitem id="menu_crm_customers" name="Khách hàng" parent="menu_crm_root" sequence="30" action="action_crm_customer"/>
         
         <!-- CRM Activities Menu -->
-        <menuitem id="menu_crm_activities" name="Activities" parent="menu_crm_root" sequence="40" action="action_crm_activity"/>
+        <menuitem id="menu_crm_activities" name="Hoạt động" parent="menu_crm_root" sequence="40" action="action_crm_activity"/>
         
         <!-- CRM Business Partner Management Menu -->
-        <menuitem id="menu_crm_business_partner" name="Business Partners" parent="menu_crm_root" sequence="50" action="base.action_partner_form"/>
+        <menuitem id="menu_crm_business_partner" name="Đối tác kinh doanh" parent="menu_crm_root" sequence="50" action="base.action_partner_form"/>
         <!-- CRM Configuration Menu -->
-        <menuitem id="menu_crm_configuration" name="Configuration" parent="menu_crm_root" sequence="100"/>
+        <menuitem id="menu_crm_configuration" name="Cấu hình" parent="menu_crm_root" sequence="100"/>
         
         <!-- Configuration Submenu Items -->
-        <menuitem id="menu_crm_stage" name="Stages" parent="menu_crm_configuration" sequence="10" action="action_crm_stage"/>
-        <menuitem id="menu_crm_tag" name="Tags" parent="menu_crm_configuration" sequence="20" action="action_crm_tag"/>
-        <menuitem id="menu_crm_source" name="Lead Sources" parent="menu_crm_configuration" sequence="30" action="action_crm_source"/>
-        <menuitem id="menu_crm_industry" name="Industries" parent="menu_crm_configuration" sequence="40" action="action_crm_industry"/>
-        <menuitem id="menu_crm_team" name="Sales Teams" parent="menu_crm_configuration" sequence="50" action="action_crm_team_view"/>
-        <menuitem id="menu_crm_lost_reason" name="Lost Reasons" parent="menu_crm_configuration" sequence="60" action="action_crm_lost_reason"/>
-        <menuitem id="menu_crm_partner_rating" name="Partner Ratings" parent="menu_crm_configuration" sequence="70" action="action_crm_partner_rating"/>
-        <menuitem id="menu_crm_partner_value" name="Partner Value" parent="menu_crm_configuration" sequence="80" action="action_crm_partner_value"/>
+        <menuitem id="menu_crm_stage" name="Giai đoạn" parent="menu_crm_configuration" sequence="10" action="action_crm_stage"/>
+        <menuitem id="menu_crm_tag" name="Thẻ" parent="menu_crm_configuration" sequence="20" action="action_crm_tag"/>
+        <menuitem id="menu_crm_source" name="Nguồn khách hàng tiềm năng" parent="menu_crm_configuration" sequence="30" action="action_crm_source"/>
+        <menuitem id="menu_crm_industry" name="Ngành nghề" parent="menu_crm_configuration" sequence="40" action="action_crm_industry"/>
+        <menuitem id="menu_crm_team" name="Đội bán hàng" parent="menu_crm_configuration" sequence="50" action="action_crm_team_view"/>
+        <menuitem id="menu_crm_lost_reason" name="Lý do mất" parent="menu_crm_configuration" sequence="60" action="action_crm_lost_reason"/>
+        <menuitem id="menu_crm_partner_rating" name="Đánh giá đối tác" parent="menu_crm_configuration" sequence="70" action="action_crm_partner_rating"/>
+        <menuitem id="menu_crm_partner_value" name="Giá trị đối tác" parent="menu_crm_configuration" sequence="80" action="action_crm_partner_value"/>
     </data>
 </odoo>
