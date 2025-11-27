@@ -45,11 +45,11 @@
                         <notebook>
                             <page string="Members">
                                 <field name="crm_team_member_ids">
-                                    <list>
+                                    <tree>
                                         <field name="user_id"/>
                                         <field name="company_id"/>
                                         <field name="active"/>
-                                    </list>
+                                    </tree>
                                     <form>
                                         <group>
                                             <field name="user_id"/>
