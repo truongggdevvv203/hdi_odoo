@@ -105,6 +105,11 @@ class CrmTeam(models.Model):
     member_warning = fields.Text(
         string='Member Warning',
     )
+    
+    is_membership_multi = fields.Boolean(
+        string='Multiple Memberships',
+        default=False,
+    )
 
 
 class CrmLostReason(models.Model):
