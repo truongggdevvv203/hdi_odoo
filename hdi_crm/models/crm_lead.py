@@ -146,8 +146,10 @@ class CrmLead(models.Model):
         tracking=True,
     )
     
-    def _read_group_stage_ids(self, stages, domain, order):
-        return stages.search([], order=order)
+    def _read_group_stage_ids(self, stages, domain, order=None):
+        if order:
+            return stages.search([], order=order)
+        return stages.search([])
     
     @api.constrains('probability')
     def _check_probability(self):
