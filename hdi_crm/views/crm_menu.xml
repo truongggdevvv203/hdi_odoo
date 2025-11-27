@@ -3,7 +3,7 @@
     <data>
         <!-- CRM Lead Action -->
         <record id="action_crm_lead" model="ir.actions.act_window">
-            <field name="name">Khách hàng tiềm năng</field>
+            <field name="name">Quy trình</field>
             <field name="res_model">crm.lead</field>
             <field name="view_mode">kanban,list,form</field>
             <field name="view_id" ref="view_crm_lead_kanban"/>
@@ -98,7 +98,7 @@
         <menuitem id="menu_crm_root" name="CRM" sequence="10" web_icon="hdi_crm,static/description/icon.png"/>
         
         <!-- CRM Leads Menu -->
-        <menuitem id="menu_crm_leads" name="Khách hàng tiềm năng" parent="menu_crm_root" sequence="10" action="action_crm_lead"/>
+        <menuitem id="menu_crm_leads" name="Quy trình" parent="menu_crm_root" sequence="10" action="action_crm_lead"/>
         
         <!-- CRM Opportunities Menu -->
         <menuitem id="menu_crm_opportunities" name="Cơ hội" parent="menu_crm_root" sequence="20" action="action_crm_opportunity"/>
