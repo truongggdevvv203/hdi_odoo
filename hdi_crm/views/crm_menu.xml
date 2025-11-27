@@ -1,127 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- CRM Lead Action -->
-        <record id="action_crm_lead" model="ir.actions.act_window">
-            <field name="name">Quy trình</field>
-            <field name="res_model">crm.lead</field>
-            <field name="view_mode">kanban,list,form</field>
-            <field name="view_id" ref="view_crm_lead_kanban"/>
-            <field name="search_view_id" ref="view_crm_lead_search"/>
-            <field name="context">{'search_default_filter_active': 1}</field>
-        </record>
-        
-        <!-- CRM Opportunity Action -->
-        <record id="action_crm_opportunity" model="ir.actions.act_window">
-            <field name="name">Cơ hội</field>
-            <field name="res_model">crm.opportunity</field>
-            <field name="view_mode">kanban,list,form</field>
-            <field name="view_id" ref="view_crm_opportunity_kanban"/>
-            <field name="search_view_id" ref="view_crm_opportunity_search"/>
-            <field name="context">{'search_default_filter_active': 1}</field>
-        </record>
-        
-        <!-- CRM Customer Action -->
-        <record id="action_crm_customer" model="ir.actions.act_window">
-            <field name="name">Khách hàng</field>
-            <field name="res_model">crm.customer</field>
-            <field name="view_mode">list,form</field>
-            <field name="search_view_id" ref="view_crm_customer_search"/>
-            <field name="context">{'search_default_filter_active': 1}</field>
-        </record>
-        
-        <!-- CRM Activity Action -->
-        <record id="action_crm_activity" model="ir.actions.act_window">
-            <field name="name">Hoạt động</field>
-            <field name="res_model">crm.activity</field>
-            <field name="view_mode">list,calendar,form</field>
-            <field name="search_view_id" ref="view_crm_activity_search"/>
-        </record>
-        
-        <!-- CRM Stages Action -->
-        <record id="action_crm_stage" model="ir.actions.act_window">
-            <field name="name">Giai đoạn</field>
-            <field name="res_model">crm.stage</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        
-        <!-- CRM Tags Action -->
-        <record id="action_crm_tag" model="ir.actions.act_window">
-            <field name="name">Thẻ</field>
-            <field name="res_model">crm.tag</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        
-        <!-- CRM Sources Action -->
-        <record id="action_crm_source" model="ir.actions.act_window">
-            <field name="name">Nguồn khách hàng tiềm năng</field>
-            <field name="res_model">crm.source</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        
-        <!-- CRM Industries Action -->
-        <record id="action_crm_industry" model="ir.actions.act_window">
-            <field name="name">Ngành nghề</field>
-            <field name="res_model">crm.industry</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        
-        <!-- CRM Teams Action -->
-        <record id="action_crm_team_view" model="ir.actions.act_window">
-            <field name="name">Đội bán hàng</field>
-            <field name="res_model">crm.team</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        
-        <!-- CRM Lost Reasons Action -->
-        <record id="action_crm_lost_reason" model="ir.actions.act_window">
-            <field name="name">Lý do mất</field>
-            <field name="res_model">crm.lost.reason</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        
-        <!-- Partner Ratings Action -->
-        <record id="action_crm_partner_rating" model="ir.actions.act_window">
-            <field name="name">Đánh giá đối tác</field>
-            <field name="res_model">crm.partner.rating</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        
-        <!-- Partner Value Action -->
-        <record id="action_crm_partner_value" model="ir.actions.act_window">
-            <field name="name">Giá trị đối tác</field>
-            <field name="res_model">crm.partner.value</field>
-            <field name="view_mode">list,form</field>
-        </record>
+        <!-- Override CRM top-level menu to set groups like Odoo base -->
+        <menuitem id="crm_menu_root" name="CRM" web_icon="hdi_crm,static/description/icon.png" groups="sales_team.group_sale_salesman,sales_team.group_sale_manager" sequence="25"/>
 
-        <!-- CRM Main Menu -->
-        <menuitem id="menu_crm_root" name="CRM" sequence="10" web_icon="hdi_crm,static/description/icon.png"/>
-        
-        <!-- CRM Leads Menu -->
-        <menuitem id="menu_crm_leads" name="Quy trình" parent="menu_crm_root" sequence="10" action="action_crm_lead"/>
-        
-        <!-- CRM Opportunities Menu -->
-        <menuitem id="menu_crm_opportunities" name="Cơ hội" parent="menu_crm_root" sequence="20" action="action_crm_opportunity"/>
-        
-        <!-- CRM Customers Menu -->
-        <menuitem id="menu_crm_customers" name="Khách hàng" parent="menu_crm_root" sequence="30" action="action_crm_customer"/>
-        
-        <!-- CRM Activities Menu -->
-        <menuitem id="menu_crm_activities" name="Hoạt động" parent="menu_crm_root" sequence="40" action="action_crm_activity"/>
-        
-        <!-- CRM Business Partner Management Menu -->
-        <menuitem id="menu_crm_business_partner" name="Đối tác kinh doanh" parent="menu_crm_root" sequence="50" action="base.action_partner_form"/>
-        <!-- CRM Configuration Menu -->
-        <menuitem id="menu_crm_configuration" name="Cấu hình" parent="menu_crm_root" sequence="100"/>
-        
-        <!-- Configuration Submenu Items -->
-        <menuitem id="menu_crm_stage" name="Giai đoạn" parent="menu_crm_configuration" sequence="10" action="action_crm_stage"/>
-        <menuitem id="menu_crm_tag" name="Thẻ" parent="menu_crm_configuration" sequence="20" action="action_crm_tag"/>
-        <menuitem id="menu_crm_source" name="Nguồn khách hàng tiềm năng" parent="menu_crm_configuration" sequence="30" action="action_crm_source"/>
-        <menuitem id="menu_crm_industry" name="Ngành nghề" parent="menu_crm_configuration" sequence="40" action="action_crm_industry"/>
-        <menuitem id="menu_crm_team" name="Đội bán hàng" parent="menu_crm_configuration" sequence="50" action="action_crm_team_view"/>
-        <menuitem id="menu_crm_lost_reason" name="Lý do mất" parent="menu_crm_configuration" sequence="60" action="action_crm_lost_reason"/>
-        <menuitem id="menu_crm_partner_rating" name="Đánh giá đối tác" parent="menu_crm_configuration" sequence="70" action="action_crm_partner_rating"/>
-        <menuitem id="menu_crm_partner_value" name="Giá trị đối tác" parent="menu_crm_configuration" sequence="80" action="action_crm_partner_value"/>
+        <!-- SALES (MAIN USER MENU) -->
+        <menuitem id="crm_menu_sales" name="Sales" parent="crm_menu_root" sequence="1"/>
+        <menuitem id="menu_crm_opportunities" name="My Pipeline" parent="crm_menu_sales" action="action_crm_opportunity" sequence="1"/>
+        <menuitem id="crm_lead_menu_my_activities" name="My Activities" parent="crm_menu_sales" groups="sales_team.group_sale_salesman" action="action_crm_activity" sequence="2"/>
+        <menuitem id="sales_team_menu_team_pipeline" name="Teams" parent="crm_menu_sales" action="action_crm_team_view" groups="sales_team.group_sale_manager" sequence="4"/>
+        <menuitem id="res_partner_menu_customer" name="Customers" parent="crm_menu_sales" action="base.action_partner_form" sequence="5"/>
+
+        <!-- LEADS (MAIN USER MENU) -->
+        <menuitem id="crm_menu_leads" name="Leads" parent="crm_menu_root" action="action_crm_lead" groups="crm.group_use_lead" sequence="5"/>
+
+        <!-- REPORTING -->
+        <menuitem id="crm_menu_report" name="Reporting" parent="crm_menu_root" sequence="20" groups="sales_team.group_sale_salesman"/>
+        <menuitem id="crm_menu_forecast" name="Forecast" parent="crm_menu_report" action="action_crm_opportunity" sequence="1"/>
+        <menuitem id="crm_opportunity_report_menu" name="Pipeline" parent="crm_menu_report" action="action_crm_opportunity" sequence="2"/>
+        <menuitem id="crm_opportunity_report_menu_lead" name="Leads" parent="crm_menu_report" action="action_crm_lead" sequence="3"/>
+        <menuitem id="crm_activity_report_menu" name="Activities" parent="crm_menu_report" action="action_crm_activity" sequence="4"/>
+
+        <!-- CONFIGURATION -->
+        <menuitem id="crm_menu_config" name="Configuration" parent="crm_menu_root" sequence="25" groups="sales_team.group_sale_manager"/>
+        <menuitem id="crm_config_settings_menu" name="Settings" parent="crm_menu_config" action="action_crm_lead" groups="base.group_system" sequence="0"/>
+        <menuitem id="menu_crm_config_opportunity" name="Opportunities" parent="crm_menu_config" sequence="1" groups="sales_team.group_sale_manager"/>
+        <menuitem id="crm_team_config" name="Sales Teams" parent="crm_menu_config" action="action_crm_team_view" sequence="5"/>
+        <menuitem id="crm_team_member_config" name="Teams Members" parent="crm_menu_config" action="action_crm_team_view" sequence="6" groups="base.group_no_one"/>
+        <menuitem id="crm_team_menu_config_activities" name="Activities" parent="crm_menu_config" sequence="8"/>
+        <menuitem id="crm_team_menu_config_activity_types" name="Activity Types" parent="crm_team_menu_config_activities" action="action_crm_activity" sequence="10"/>
+        <menuitem id="mail_activity_plan_menu_config_lead" name="Activity Plans" parent="crm_team_menu_config_activities" action="action_crm_activity" groups="sales_team.group_sale_manager" sequence="11"/>
+        <menuitem id="crm_recurring_plan_menu_config" name="Recurring Plans" parent="crm_menu_config" action="action_crm_opportunity" sequence="12" groups="crm.group_use_recurring_revenues"/>
+        <menuitem id="menu_crm_config_lead" name="Pipeline" parent="crm_menu_config" sequence="15" groups="sales_team.group_sale_manager"/>
+        <menuitem id="menu_crm_lead_stage_act" name="Stages" sequence="0" parent="menu_crm_config_lead" action="action_crm_stage" groups="base.group_no_one"/>
+        <menuitem id="menu_crm_lead_categ" name="Tags" action="action_crm_tag" parent="menu_crm_config_lead" sequence="1"/>
+        <menuitem id="menu_crm_lost_reason" name="Lost Reasons" parent="menu_crm_config_lead" action="action_crm_lost_reason" sequence="6"/>
+
+        <!-- Your additional configuration features -->
+        <menuitem id="menu_crm_source" name="Nguồn khách hàng tiềm năng" parent="crm_menu_config" sequence="20" action="action_crm_source"/>
+        <menuitem id="menu_crm_industry" name="Ngành nghề" parent="crm_menu_config" sequence="21" action="action_crm_industry"/>
+        <menuitem id="menu_crm_partner_rating" name="Đánh giá đối tác" parent="crm_menu_config" sequence="22" action="action_crm_partner_rating"/>
+        <menuitem id="menu_crm_partner_value" name="Giá trị đối tác" parent="crm_menu_config" sequence="23" action="action_crm_partner_value"/>
+
+        <menuitem id="menu_import_crm" name="Import &amp; Synchronize" parent="crm_menu_root"/>
     </data>
 </odoo>
