@@ -31,3 +31,34 @@ class CrmStage(models.Model):
     
     description = fields.Text(string='Description')
 
+
+class CrmSource(models.Model):
+    _name = 'crm.source'
+    _description = 'Lead Source'
+
+    name = fields.Char(
+        string='Source Name',
+        required=True,
+    )
+
+
+class CrmIndustry(models.Model):
+    _name = 'crm.industry'
+    _description = 'Industry'
+
+    name = fields.Char(
+        string='Industry Name',
+        required=True,
+    )
+
+
+class CrmLostReason(models.Model):
+    _name = 'crm.lost.reason'
+    _description = 'Lost Reason'
+
+    name = fields.Char(
+        string='Lost Reason',
+        required=True,
+    )
+
+
