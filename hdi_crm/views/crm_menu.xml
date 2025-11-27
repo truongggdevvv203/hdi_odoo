@@ -52,12 +52,7 @@
         <menuitem id="menu_crm_industry" name="Industries" parent="menu_crm_configuration" sequence="40" action="action_crm_industry"/>
         
         <!-- CRM Teams -->
-        <record id="action_crm_team" model="ir.actions.act_window">
-            <field name="name">Sales Teams</field>
-            <field name="res_model">crm.team</field>
-            <field name="view_mode">list,form</field>
-        </record>
-        <menuitem id="menu_crm_team" name="Sales Teams" parent="menu_crm_configuration" sequence="50" action="action_crm_team"/>
+        <menuitem id="menu_crm_team" name="Sales Teams" parent="menu_crm_configuration" sequence="50" action="action_crm_team_view"/>
         
         <!-- CRM Lost Reasons -->
         <record id="action_crm_lost_reason" model="ir.actions.act_window">
