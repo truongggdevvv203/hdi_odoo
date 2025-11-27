@@ -79,6 +79,20 @@
             <field name="res_model">crm.lost.reason</field>
             <field name="view_mode">list,form</field>
         </record>
+        
+        <!-- Partner Ratings Action -->
+        <record id="action_crm_partner_rating" model="ir.actions.act_window">
+            <field name="name">Partner Ratings</field>
+            <field name="res_model">crm.partner.rating</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        
+        <!-- Partner Value Action -->
+        <record id="action_crm_partner_value" model="ir.actions.act_window">
+            <field name="name">Partner Value</field>
+            <field name="res_model">crm.partner.value</field>
+            <field name="view_mode">list,form</field>
+        </record>
 
         <!-- CRM Main Menu -->
         <menuitem id="menu_crm_root" name="CRM" sequence="10" web_icon="hdi_crm,static/description/icon.png"/>
@@ -95,6 +109,9 @@
         <!-- CRM Activities Menu -->
         <menuitem id="menu_crm_activities" name="Activities" parent="menu_crm_root" sequence="40" action="action_crm_activity"/>
         
+        <!-- CRM Business Partner Management Menu -->
+        <menuitem id="menu_crm_business_partner" name="Business Partners" parent="menu_crm_root" sequence="50" action="base.action_partner_form"/>
+        
         <!-- CRM Configuration Menu -->
         <menuitem id="menu_crm_configuration" name="Configuration" parent="menu_crm_root" sequence="100"/>
         
@@ -105,5 +122,7 @@
         <menuitem id="menu_crm_industry" name="Industries" parent="menu_crm_configuration" sequence="40" action="action_crm_industry"/>
         <menuitem id="menu_crm_team" name="Sales Teams" parent="menu_crm_configuration" sequence="50" action="action_crm_team_view"/>
         <menuitem id="menu_crm_lost_reason" name="Lost Reasons" parent="menu_crm_configuration" sequence="60" action="action_crm_lost_reason"/>
+        <menuitem id="menu_crm_partner_rating" name="Partner Ratings" parent="menu_crm_configuration" sequence="70" action="action_crm_partner_rating"/>
+        <menuitem id="menu_crm_partner_value" name="Partner Value" parent="menu_crm_configuration" sequence="80" action="action_crm_partner_value"/>
     </data>
 </odoo>
