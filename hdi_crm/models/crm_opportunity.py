@@ -100,7 +100,12 @@ class CrmOpportunity(models.Model):
     )
     
     # Classification
-    # tag_ids inherited from crm.lead
+    tag_ids = fields.Many2many(
+        'crm.tag',
+        relation='crm_opportunity_crm_tag_rel',
+        string='Tags',
+        tracking=True,
+    )
     
     # Timeline
     date_deadline = fields.Date(
