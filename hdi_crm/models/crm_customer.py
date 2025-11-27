@@ -142,6 +142,24 @@ class CrmCustomer(models.Model):
         tracking=True,
     )
     
+    # Channels (redefined to avoid relation table conflict)
+    channel_ids = fields.Many2many(
+        'mail.channel',
+        relation='crm_customer_mail_channel_rel',
+        column1='partner_id',
+        column2='channel_id',
+        string='Channels',
+    )
+    
+    # Categories (redefined to avoid relation table conflict)
+    category_id = fields.Many2many(
+        'res.partner.category',
+        relation='crm_customer_res_partner_category_rel',
+        column1='partner_id',
+        column2='category_id',
+        string='Tags',
+    )
+    
     def action_view_opportunities(self):
         """View all opportunities for this customer"""
         return {
