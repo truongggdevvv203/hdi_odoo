@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Action records referenced by menus -->
+        <!-- Action records referenced by menus (ensure view types match available views) -->
         <record id="action_crm_lead" model="ir.actions.act_window">
             <field name="name">Quy trình</field>
             <field name="res_model">crm.lead</field>
             <field name="view_mode">kanban,tree,form</field>
-            <field name="view_id" ref="view_crm_lead_kanban"/>
             <field name="search_view_id" ref="view_crm_lead_search"/>
+            <field name="view_ids" eval="[
+                (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_crm_lead_kanban')}),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_lead_list')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_lead_form')})
+            ]"/>
             <field name="context">{'search_default_filter_active': 1}</field>
         </record>
 
@@ -15,8 +19,12 @@
             <field name="name">Cơ hội</field>
             <field name="res_model">crm.opportunity</field>
             <field name="view_mode">kanban,tree,form</field>
-            <field name="view_id" ref="view_crm_opportunity_kanban"/>
             <field name="search_view_id" ref="view_crm_opportunity_search"/>
+            <field name="view_ids" eval="[
+                (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_crm_opportunity_kanban')}),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_opportunity_list')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_opportunity_form')})
+            ]"/>
             <field name="context">{'search_default_filter_active': 1}</field>
         </record>
 
@@ -25,6 +33,10 @@
             <field name="res_model">crm.customer</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_crm_customer_search"/>
+            <field name="view_ids" eval="[
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_customer_list')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_customer_form')})
+            ]"/>
             <field name="context">{'search_default_filter_active': 1}</field>
         </record>
 
@@ -33,6 +45,11 @@
             <field name="res_model">crm.activity</field>
             <field name="view_mode">tree,calendar,form</field>
             <field name="search_view_id" ref="view_crm_activity_search"/>
+            <field name="view_ids" eval="[
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_activity_list')}),
+                (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_crm_activity_calendar')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_activity_form')})
+            ]"/>
         </record>
 
         <record id="action_crm_stage" model="ir.actions.act_window">
@@ -48,11 +65,7 @@
         </record>
 
         <record id="action_crm_source" model="ir.actions.act_window">
-                <field name="view_ids" eval="[
-                    (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_crm_lead_kanban')}),
-                    (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_lead_list')}),
-                    (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_lead_form')})
-                ]"/>
+            <field name="name">Nguồn khách hàng tiềm năng</field>
             <field name="res_model">crm.source</field>
             <field name="view_mode">tree,form</field>
         </record>
@@ -62,23 +75,20 @@
             <field name="res_model">crm.industry</field>
             <field name="view_mode">tree,form</field>
         </record>
-                <field name="view_ids" eval="[
-                    (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_crm_opportunity_kanban')}),
-                    (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_opportunity_list')}),
-                    (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_opportunity_form')})
-                ]"/>
+
         <record id="action_crm_team_view" model="ir.actions.act_window">
             <field name="name">Đội bán hàng</field>
             <field name="res_model">crm.team</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_ids" eval="[
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('crm_team_list')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('crm_team_form')})
+            ]"/>
         </record>
 
         <record id="action_crm_lost_reason" model="ir.actions.act_window">
             <field name="name">Lý do mất</field>
-                <field name="view_ids" eval="[
-                    (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_customer_list')}),
-                    (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_customer_form')})
-                ]"/>
+            <field name="res_model">crm.lost.reason</field>
             <field name="view_mode">tree,form</field>
         </record>
 
@@ -86,11 +96,7 @@
             <field name="name">Đánh giá đối tác</field>
             <field name="res_model">crm.partner.rating</field>
             <field name="view_mode">tree,form</field>
-                <field name="view_ids" eval="[
-                    (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_activity_list')}),
-                    (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_crm_activity_calendar')}),
-                    (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_activity_form')})
-                ]"/>
+        </record>
 
         <record id="action_crm_partner_value" model="ir.actions.act_window">
             <field name="name">Giá trị đối tác</field>
@@ -121,10 +127,7 @@
         <!-- CONFIGURATION -->
         <menuitem id="crm_menu_config" name="Configuration" parent="crm_menu_root" sequence="25" groups="sales_team.group_sale_manager"/>
         <menuitem id="crm_config_settings_menu" name="Settings" parent="crm_menu_config" action="action_crm_lead" groups="base.group_system" sequence="0"/>
-                <field name="view_ids" eval="[
-                    (0, 0, {'view_mode': 'tree', 'view_id': ref('crm_team_list')}),
-                    (0, 0, {'view_mode': 'form', 'view_id': ref('crm_team_form')})
-                ]"/>
+        <menuitem id="menu_crm_config_opportunity" name="Opportunities" parent="crm_menu_config" sequence="1" groups="sales_team.group_sale_manager"/>
         <menuitem id="crm_team_config" name="Sales Teams" parent="crm_menu_config" action="action_crm_team_view" sequence="5"/>
         <menuitem id="crm_team_member_config" name="Teams Members" parent="crm_menu_config" action="action_crm_team_view" sequence="6" groups="base.group_no_one"/>
         <menuitem id="crm_team_menu_config_activities" name="Activities" parent="crm_menu_config" sequence="8"/>
