@@ -25,3 +25,5 @@ access_crm_partner_rating_manager,crm.partner.rating.manager,model_crm_partner_r
 access_crm_partner_rating_user,crm.partner.rating.user,model_crm_partner_rating,group_crm_user,1,1,1,0
 access_crm_partner_value_manager,crm.partner.value.manager,model_crm_partner_value,group_crm_manager,1,1,1,1
 access_crm_partner_value_user,crm.partner.value.user,model_crm_partner_value,group_crm_user,1,1,1,0
+access_crm_partner_info_manager,crm.partner.info.manager,model_crm_partner_info,group_crm_manager,1,1,1,1
+access_crm_partner_info_user,crm.partner.info.user,model_crm_partner_info,group_crm_user,1,1,1,0

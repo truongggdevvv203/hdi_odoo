@@ -82,86 +82,135 @@
             </field>
         </record>
 
-        <!-- Extended res.partner Form View for CRM -->
-        <record id="view_res_partner_crm_form" model="ir.ui.view">
-            <field name="name">res.partner.crm.form</field>
-            <field name="model">res.partner</field>
-            <field name="inherit_id" ref="base.view_partner_form"/>
+        <!-- CRM Partner Info List View -->
+        <record id="crm_partner_info_list" model="ir.ui.view">
+            <field name="name">crm.partner.info.list</field>
+            <field name="model">crm.partner.info</field>
             <field name="arch" type="xml">
-                <xpath expr="//page[@name='internal_notes']" position="before">
-                    <page string="CRM Info">
-                        <group>
-                            <group>
-                                <field name="partner_type"/>
-                                <field name="preferred_contact_method"/>
-                                <field name="credit_risk"/>
-                            </group>
-                            <group>
-                                <field name="customer_since"/>
-                                <field name="last_contact_date"/>
-                                <field name="days_since_contact"/>
-                            </group>
-                        </group>
-                        <group>
-                            <group>
-                                <field name="average_rating"/>
-                                <field name="rating_count"/>
-                            </group>
-                            <group>
-                                <field name="partner_value"/>
-                                <field name="total_spent"/>
-                            </group>
-                        </group>
-                        <group>
-                            <field name="last_activity_date"/>
-                        </group>
-                    </page>
-                    <page string="Ratings">
-                        <field name="rating_ids" nolabel="1">
-                            <tree>
-                                <field name="rating"/>
-                                <field name="rater_id"/>
-                                <field name="date_rated"/>
-                                <field name="comment"/>
-                            </tree>
-                            <form>
+                <list string="CRM Partner Info">
+                    <field name="partner_id"/>
+                    <field name="partner_type"/>
+                    <field name="average_rating"/>
+                    <field name="partner_value"/>
+                    <field name="credit_risk"/>
+                    <field name="last_contact_date"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- CRM Partner Info Form View -->
+        <record id="crm_partner_info_form" model="ir.ui.view">
+            <field name="name">crm.partner.info.form</field>
+            <field name="model">crm.partner.info</field>
+            <field name="arch" type="xml">
+                <form string="CRM Partner Information">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="partner_id"/>
+                            </h1>
+                        </div>
+                        
+                        <notebook>
+                            <page string="Partner Info">
                                 <group>
-                                    <field name="rating"/>
-                                    <field name="rater_id"/>
-                                    <field name="date_rated"/>
+                                    <group>
+                                        <field name="partner_type"/>
+                                        <field name="credit_risk"/>
+                                        <field name="preferred_contact_method"/>
+                                    </group>
+                                    <group>
+                                        <field name="customer_since"/>
+                                        <field name="last_contact_date"/>
+                                        <field name="days_since_contact"/>
+                                    </group>
                                 </group>
+                            </page>
+                            
+                            <page string="Rating &amp; Value">
                                 <group>
-                                    <field name="comment"/>
+                                    <group>
+                                        <field name="average_rating"/>
+                                        <field name="rating_count"/>
+                                    </group>
+                                    <group>
+                                        <field name="partner_value"/>
+                                        <field name="total_spent"/>
+                                    </group>
                                 </group>
-                            </form>
-                        </field>
-                    </page>
-                    <page string="Value History">
-                        <field name="value_tracking_ids" nolabel="1">
-                            <tree>
-                                <field name="value_category"/>
-                                <field name="value"/>
-                                <field name="date"/>
-                                <field name="recorded_by"/>
-                            </tree>
-                            <form>
-                                <group>
-                                    <field name="value_category"/>
-                                    <field name="value"/>
-                                    <field name="date"/>
-                                    <field name="recorded_by"/>
-                                </group>
-                                <group>
-                                    <field name="note"/>
-                                </group>
-                            </form>
-                        </field>
-                    </page>
-                </xpath>
-                <xpath expr="//div[@name='buttons']" position="inside">
-                    <button name="action_record_contact" type="object" class="btn-secondary" string="Record Contact"/>
-                    <button name="action_add_rating" type="object" class="btn-secondary" string="Add Rating"/>
-                </xpath>
+                            </page>
+                            
+                            <page string="Ratings">
+                                <field name="rating_ids" nolabel="1">
+                                    <list>
+                                        <field name="rating"/>
+                                        <field name="rater_id"/>
+                                        <field name="date_rated"/>
+                                        <field name="comment"/>
+                                    </list>
+                                    <form>
+                                        <group>
+                                            <field name="rating"/>
+                                            <field name="rater_id"/>
+                                            <field name="date_rated"/>
+                                        </group>
+                                        <group>
+                                            <field name="comment"/>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                            
+                            <page string="Value History">
+                                <field name="value_tracking_ids" nolabel="1">
+                                    <list>
+                                        <field name="value_category"/>
+                                        <field name="value"/>
+                                        <field name="date"/>
+                                        <field name="recorded_by"/>
+                                    </list>
+                                    <form>
+                                        <group>
+                                            <field name="value_category"/>
+                                            <field name="value"/>
+                                            <field name="date"/>
+                                            <field name="recorded_by"/>
+                                        </group>
+                                        <group>
+                                            <field name="note"/>
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <footer>
+                        <button name="action_record_contact" type="object" class="btn-primary" string="Record Contact"/>
+                        <button name="action_add_rating" type="object" class="btn-secondary" string="Add Rating"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- CRM Partner Info Search View -->
+        <record id="crm_partner_info_search" model="ir.ui.view">
+            <field name="name">crm.partner.info.search</field>
+            <field name="model">crm.partner.info</field>
+            <field name="arch" type="xml">
+                <search string="Search CRM Partner Info">
+                    <field name="partner_id"/>
+                    <field name="partner_type"/>
+                    <field name="credit_risk"/>
+                    <separator/>
+                    <filter name="filter_customers" string="Customers" domain="[('partner_type', '=', 'customer')]"/>
+                    <filter name="filter_prospects" string="Prospects" domain="[('partner_type', '=', 'prospect')]"/>
+                    <filter name="filter_high_risk" string="High Risk" domain="[('credit_risk', '=', 'high')]"/>
+                    <separator/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_type" string="Partner Type" context="{'group_by': 'partner_type'}"/>
+                        <filter name="group_risk" string="Credit Risk" context="{'group_by': 'credit_risk'}"/>
+                    </group>
+                </search>
             </field>
         </record>
 
@@ -177,6 +226,14 @@
             <field name="name">Partner Value</field>
             <field name="res_model">crm.partner.value</field>
             <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- CRM Partner Info Action -->
+        <record id="action_crm_partner_info" model="ir.actions.act_window">
+            <field name="name">CRM Partner Information</field>
+            <field name="res_model">crm.partner.info</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="crm_partner_info_search"/>
         </record>
     </data>
 </odoo>

@@ -95,10 +95,19 @@ class CrmPartnerValue(models.Model):
     )
 
 
-class ResPartnerCrmExtension(models.Model):
-    """Extend res.partner model with CRM specific fields"""
-    _name = 'res.partner'
-    _inherit = 'res.partner'
+class CrmPartnerInfo(models.Model):
+    """Separate model to store CRM partner information without inheriting res.partner"""
+    _name = 'crm.partner.info'
+    _description = 'CRM Partner Information'
+    _order = 'partner_id'
+    
+    partner_id = fields.Many2one(
+        'res.partner',
+        string='Partner',
+        required=True,
+        ondelete='cascade',
+        unique=True,
+    )
     
     # CRM Classification
     partner_type = fields.Selection(
@@ -150,7 +159,7 @@ class ResPartnerCrmExtension(models.Model):
     
     company_currency = fields.Many2one(
         'res.currency',
-        related='company_id.currency_id',
+        related='partner_id.company_id.currency_id',
         readonly=True,
     )
     
@@ -213,57 +222,60 @@ class ResPartnerCrmExtension(models.Model):
     
     @api.depends('rating_ids')
     def _compute_average_rating(self):
-        for partner in self:
-            if partner.rating_ids:
-                ratings = [int(r.rating.split()[0]) for r in partner.rating_ids]
-                partner.average_rating = sum(ratings) / len(ratings)
+        for info in self:
+            if info.rating_ids:
+                ratings = [int(r.rating.split()[0]) for r in info.rating_ids]
+                info.average_rating = sum(ratings) / len(ratings)
             else:
-                partner.average_rating = 0.0
+                info.average_rating = 0.0
     
     @api.depends('rating_ids')
     def _compute_rating_count(self):
-        for partner in self:
-            partner.rating_count = len(partner.rating_ids)
+        for info in self:
+            info.rating_count = len(info.rating_ids)
     
     @api.depends('value_tracking_ids')
     def _compute_partner_value(self):
-        for partner in self:
-            revenue_value = partner.value_tracking_ids.filtered(
+        for info in self:
+            revenue_value = info.value_tracking_ids.filtered(
                 lambda x: x.value_category == 'revenue'
             )
             if revenue_value:
-                partner.partner_value = sum(v.value for v in revenue_value)
+                info.partner_value = sum(v.value for v in revenue_value)
             else:
-                partner.partner_value = 0.0
+                info.partner_value = 0.0
     
-    @api.depends('sale_order_ids')
+    @api.depends('partner_id')
     def _compute_total_spent(self):
-        for partner in self:
-            if hasattr(self.env['sale.order'], '_name'):
+        for info in self:
+            try:
                 orders = self.env['sale.order'].search([
-                    ('partner_id', '=', partner.id),
+                    ('partner_id', '=', info.partner_id.id),
                     ('state', 'in', ['sale', 'done'])
                 ])
-                partner.total_spent = sum(o.amount_total for o in orders)
-            else:
-                partner.total_spent = 0.0
+                info.total_spent = sum(o.amount_total for o in orders)
+            except Exception:
+                info.total_spent = 0.0
     
     def _compute_last_activity_date(self):
-        for partner in self:
-            activities = self.env['mail.activity'].search([
-                ('res_model', '=', 'res.partner'),
-                ('res_id', '=', partner.id),
-            ], order='date_deadline desc', limit=1)
-            partner.last_activity_date = activities.date_deadline if activities else None
+        for info in self:
+            try:
+                activities = self.env['mail.activity'].search([
+                    ('res_model', '=', 'res.partner'),
+                    ('res_id', '=', info.partner_id.id),
+                ], order='date_deadline desc', limit=1)
+                info.last_activity_date = activities.date_deadline if activities else None
+            except Exception:
+                info.last_activity_date = None
     
     @api.depends('last_contact_date')
     def _compute_days_since_contact(self):
-        for partner in self:
-            if partner.last_contact_date:
-                days = (fields.Date.context_today(self) - partner.last_contact_date).days
-                partner.days_since_contact = days
+        for info in self:
+            if info.last_contact_date:
+                days = (fields.Date.context_today(self) - info.last_contact_date).days
+                info.days_since_contact = days
             else:
-                partner.days_since_contact = 0
+                info.days_since_contact = 0
     
     def action_record_contact(self):
         """Record today's date as last contact date"""
@@ -289,7 +301,7 @@ class ResPartnerCrmExtension(models.Model):
             'res_model': 'crm.partner.rating',
             'view_mode': 'form',
             'context': {
-                'default_partner_id': self.id,
+                'default_partner_id': self.partner_id.id,
             },
             'target': 'new',
         }
@@ -301,9 +313,9 @@ class ResPartnerCrmExtension(models.Model):
             'name': 'Partner Ratings',
             'res_model': 'crm.partner.rating',
             'view_mode': 'tree,form',
-            'domain': [('partner_id', '=', self.id)],
+            'domain': [('partner_id', '=', self.partner_id.id)],
             'context': {
-                'default_partner_id': self.id,
+                'default_partner_id': self.partner_id.id,
             },
         }
     
@@ -314,9 +326,9 @@ class ResPartnerCrmExtension(models.Model):
             'name': 'Opportunities',
             'res_model': 'crm.opportunity',
             'view_mode': 'kanban,list,form',
-            'domain': [('partner_id', '=', self.id)],
+            'domain': [('partner_id', '=', self.partner_id.id)],
             'context': {
-                'default_partner_id': self.id,
+                'default_partner_id': self.partner_id.id,
             },
         }
     
@@ -327,7 +339,7 @@ class ResPartnerCrmExtension(models.Model):
             'name': 'Leads',
             'res_model': 'crm.lead',
             'view_mode': 'list,form',
-            'domain': [('partner_id', '=', self.id)],
+            'domain': [('partner_id', '=', self.partner_id.id)],
         }
     
     def action_view_value_history(self):
@@ -337,8 +349,9 @@ class ResPartnerCrmExtension(models.Model):
             'name': 'Value History',
             'res_model': 'crm.partner.value',
             'view_mode': 'list,form',
-            'domain': [('partner_id', '=', self.id)],
+            'domain': [('partner_id', '=', self.partner_id.id)],
             'context': {
-                'default_partner_id': self.id,
+                'default_partner_id': self.partner_id.id,
             },
         }
+

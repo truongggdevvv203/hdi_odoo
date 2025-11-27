@@ -111,7 +111,6 @@
         
         <!-- CRM Business Partner Management Menu -->
         <menuitem id="menu_crm_business_partner" name="Business Partners" parent="menu_crm_root" sequence="50" action="base.action_partner_form"/>
-        
         <!-- CRM Configuration Menu -->
         <menuitem id="menu_crm_configuration" name="Configuration" parent="menu_crm_root" sequence="100"/>
         
