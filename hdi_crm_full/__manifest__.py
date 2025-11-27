@@ -7,9 +7,8 @@
     'license': 'LGPL-3',
     'depends': ['crm', 'contacts', 'mail', 'sale_management'],
     'data': [
-        'security/ir.model.access.csv',
         'views/crm_full_menu.xml',
     ],
     'installable': True,
-    'application': False,
+    'application': True,
 }
