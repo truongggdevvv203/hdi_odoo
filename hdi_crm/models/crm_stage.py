@@ -81,6 +81,11 @@ class CrmTeam(models.Model):
         default=10,
     )
     
+    active = fields.Boolean(
+        string='Active',
+        default=True,
+    )
+    
     member_ids = fields.Many2many(
         'res.users',
         string='Team Members',
