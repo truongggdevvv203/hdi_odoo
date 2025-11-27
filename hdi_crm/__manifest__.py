@@ -1,7 +1,7 @@
 {
     'name': 'HDI CRM',
     'version': '18.0.1.0.0',
-    'category': 'Sales/CRM',
+    'category': 'hdi',
     'summary': 'Complete CRM module with Lead, Opportunity, and Customer management',
     'description': 'Full-featured CRM module for Odoo 18 with built-in functionality for managing leads, opportunities, customers, and sales activities',
     'author': 'HDI Development Team',
