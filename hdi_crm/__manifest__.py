@@ -14,14 +14,10 @@
   ],
   'data': [
     # Security
-    # 'security/crm_security.xml',
-    # 'security/ir.model.access.csv',
+    'security/crm_security.xml',
+    'security/ir.model.access.csv',
 
-    # 'views/crm_activity_views.xml',
-    # 'views/crm_lead_views.xml',
-    # 'views/crm_opportunity_views.xml',
-    # 'views/crm_customer_views.xml',
-    # 'views/crm_team_views.xml',
+    'views/hdi_crm_lead_views.xml',
     'views/crm_menu.xml',
   ],
 

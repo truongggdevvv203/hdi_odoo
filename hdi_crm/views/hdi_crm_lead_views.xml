@@ -1,0 +1,16 @@
+<odoo>
+    <record id="view_crm_lead_form_enhanced" model="ir.ui.view">
+        <field name="name">crm.lead.form.enhanced</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <sheet position="inside">
+                <group string="Thông tin nâng cao">
+                    <field name="customer_priority"/>
+                    <field name="lead_source_detail"/>
+                    <field name="lead_score" readonly="1"/>
+                </group>
+            </sheet>
+        </field>
+    </record>
+</odoo>
