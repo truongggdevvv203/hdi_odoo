@@ -132,14 +132,5 @@
             </field>
         </record>
 
-        <!-- CRM Opportunity Action -->
-        <record id="action_crm_opportunity" model="ir.actions.act_window">
-            <field name="name">Opportunities</field>
-            <field name="res_model">crm.opportunity</field>
-            <field name="view_mode">kanban,list,form</field>
-            <field name="view_id" ref="view_crm_opportunity_kanban"/>
-            <field name="search_view_id" ref="view_crm_opportunity_search"/>
-            <field name="context">{'search_default_filter_active': 1}</field>
-        </record>
     </data>
 </odoo>

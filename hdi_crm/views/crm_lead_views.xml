@@ -135,14 +135,5 @@
             </field>
         </record>
 
-        <!-- CRM Lead Action -->
-        <record id="action_crm_lead" model="ir.actions.act_window">
-            <field name="name">Leads</field>
-            <field name="res_model">crm.lead</field>
-            <field name="view_mode">kanban,list,form</field>
-            <field name="view_id" ref="view_crm_lead_kanban"/>
-            <field name="search_view_id" ref="view_crm_lead_search"/>
-            <field name="context">{'search_default_filter_active': 1}</field>
-        </record>
     </data>
 </odoo>
