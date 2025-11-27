@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 class CrmLeadEnhancement(models.Model):
     """Enhancement fields for Lead Management"""
-    _name = 'crm.lead'
     _inherit = 'crm.lead'
     
     # Lead Classification

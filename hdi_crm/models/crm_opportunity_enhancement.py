@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 class CrmOpportunityEnhancement(models.Model):
     """Enhancement fields for Opportunity Management"""
-    _name = 'crm.opportunity'
     _inherit = 'crm.opportunity'
     
     # Sales Process
