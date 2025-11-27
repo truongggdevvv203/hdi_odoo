@@ -17,11 +17,6 @@
     'security/crm_security.xml',
     'security/ir.model.access.csv',
 
-    # Data
-    'data/crm_stage.xml',
-    'data/crm_tag.xml',
-
-
     'views/crm_lead_views.xml',
     'views/crm_opportunity_views.xml',
     'views/crm_customer_views.xml',
