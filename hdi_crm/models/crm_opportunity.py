@@ -147,12 +147,6 @@ class CrmOpportunity(models.Model):
         string='Related Lead',
     )
     
-    order_ids = fields.One2many(
-        'sale.order',
-        'opportunity_id',
-        string='Sales Orders',
-    )
-    
     lost_reason_id = fields.Many2one(
         'crm.lost.reason',
         string='Lost Reason',

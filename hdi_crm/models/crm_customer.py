@@ -120,20 +120,6 @@ class CrmCustomer(models.Model):
         readonly=True,
     )
     
-    # Relations
-    opportunity_ids = fields.One2many(
-        'crm.opportunity',
-        'partner_id',
-        string='Opportunities',
-        domain=[('partner_id', '=', 'id')],
-    )
-    
-    order_ids = fields.One2many(
-        'sale.order',
-        'partner_id',
-        string='Sales Orders',
-    )
-    
     # Status
     active = fields.Boolean(
         string='Active',

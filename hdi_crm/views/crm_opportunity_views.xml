@@ -44,13 +44,6 @@
                             </group>
                         </group>
                         <field name="description" placeholder="Add internal notes..."/>
-                        <field name="order_ids" readonly="1">
-                            <tree>
-                                <field name="name"/>
-                                <field name="state"/>
-                                <field name="amount_total" sum="Total"/>
-                            </tree>
-                        </field>
                     </sheet>
                     <div class="oe_chatter">
                         <field name="message_follower_ids"/>
