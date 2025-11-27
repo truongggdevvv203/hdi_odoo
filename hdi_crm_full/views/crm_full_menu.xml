@@ -20,8 +20,8 @@
     <field name="view_mode">kanban,list,form</field>
   </record>
 
-  <!-- Top-level HDI menu -->
-  <record id="menu_hdi_crm_root" model="ir.ui.menu">
+  <!-- Override core CRM top-level menu to present HDI as the single CRM menu -->
+  <record id="crm_menu_root" model="ir.ui.menu">
     <field name="name">HDI CRM</field>
     <field name="sequence">10</field>
   </record>
@@ -29,19 +29,19 @@
   <!-- Submenus reusing the actions above -->
   <record id="menu_hdi_crm_leads" model="ir.ui.menu">
     <field name="name">Leads</field>
-    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="parent_id" ref="crm_menu_root"/>
     <field name="action" ref="action_hdi_crm_leads"/>
   </record>
 
   <record id="menu_hdi_crm_customers" model="ir.ui.menu">
     <field name="name">Customers</field>
-    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="parent_id" ref="crm_menu_root"/>
     <field name="action" ref="action_hdi_crm_customers"/>
   </record>
 
   <record id="menu_hdi_crm_activities" model="ir.ui.menu">
     <field name="name">Activities</field>
-    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="parent_id" ref="crm_menu_root"/>
     <field name="action" ref="action_hdi_crm_activities"/>
   </record>
 
@@ -54,7 +54,7 @@
 
   <record id="menu_hdi_crm_opportunities" model="ir.ui.menu">
     <field name="name">Opportunities</field>
-    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="parent_id" ref="crm_menu_root"/>
     <field name="action" ref="action_hdi_crm_opportunities"/>
   </record>
 
@@ -67,7 +67,7 @@
 
   <record id="menu_hdi_crm_pipeline" model="ir.ui.menu">
     <field name="name">My Pipeline</field>
-    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="parent_id" ref="crm_menu_root"/>
     <field name="action" ref="action_hdi_crm_pipeline"/>
   </record>
 
