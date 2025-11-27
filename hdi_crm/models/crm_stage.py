@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class CrmStage(models.Model):
@@ -104,11 +104,12 @@ class CrmTeam(models.Model):
     
     member_warning = fields.Text(
         string='Member Warning',
+        compute='_compute_member_warning',
     )
     
     is_membership_multi = fields.Boolean(
         string='Multiple Memberships',
-        default=False,
+        compute='_compute_is_membership_multi',
     )
     
     invoiced_target = fields.Monetary(
@@ -121,6 +122,31 @@ class CrmTeam(models.Model):
         string='Currency',
         default=lambda self: self.env.company.currency_id,
     )
+    
+    member_company_ids = fields.Many2many(
+        'res.company',
+        string='Member Companies',
+        compute='_compute_member_company_ids',
+    )
+
+    @api.depends('member_ids')
+    def _compute_member_warning(self):
+        for team in self:
+            if not team.member_ids:
+                team.member_warning = "Please add at least one member to this sales team."
+            else:
+                team.member_warning = False
+
+    @api.depends('member_ids')
+    def _compute_is_membership_multi(self):
+        for team in self:
+            companies = team.member_ids.mapped('company_id')
+            team.is_membership_multi = len(companies) > 1
+
+    @api.depends('member_ids')
+    def _compute_member_company_ids(self):
+        for team in self:
+            team.member_company_ids = team.member_ids.mapped('company_id')
 
 
 class CrmLostReason(models.Model):
