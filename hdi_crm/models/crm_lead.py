@@ -158,6 +158,12 @@ class CrmLead(models.Model):
         currency_field='company_currency',
         store=False,
     )
+
+    sale_order_count = fields.Integer(
+        string='Sale Order Count',
+        compute='_compute_sale_order_count',
+        store=False,
+    )
     
     def _read_group_stage_ids(self, stages, domain, order=None):
         if order:
@@ -219,20 +225,28 @@ class CrmLead(models.Model):
             },
             'target': 'new',
         }
-        def _compute_quotation_count(self):
-            SaleOrder = self.env['sale.order']
-            for rec in self:
-                try:
-                    rec.quotation_count = SaleOrder.search_count([('opportunity_id', '=', rec.id)])
-                except Exception:
-                    rec.quotation_count = 0
+    def _compute_quotation_count(self):
+        SaleOrder = self.env['sale.order']
+        for rec in self:
+            try:
+                rec.quotation_count = SaleOrder.search_count([('opportunity_id', '=', rec.id)])
+            except Exception:
+                rec.quotation_count = 0
 
-        def _compute_sale_amount_total(self):
-            SaleOrder = self.env['sale.order']
-            for rec in self:
-                try:
-                    orders = SaleOrder.search([('opportunity_id', '=', rec.id)])
-                    rec.sale_amount_total = sum(o.amount_total or 0.0 for o in orders)
-                except Exception:
-                    rec.sale_amount_total = 0.0
+    def _compute_sale_amount_total(self):
+        SaleOrder = self.env['sale.order']
+        for rec in self:
+            try:
+                orders = SaleOrder.search([('opportunity_id', '=', rec.id)])
+                rec.sale_amount_total = sum(o.amount_total or 0.0 for o in orders)
+            except Exception:
+                rec.sale_amount_total = 0.0
+
+    def _compute_sale_order_count(self):
+        SaleOrder = self.env['sale.order']
+        for rec in self:
+            try:
+                rec.sale_order_count = SaleOrder.search_count([('opportunity_id', '=', rec.id)])
+            except Exception:
+                rec.sale_order_count = 0
 
