@@ -95,6 +95,7 @@ class CrmTeam(models.Model):
     member_ids = fields.Many2many(
         'res.users',
         string='Team Members',
+        compute='_compute_member_ids',
     )
     
     user_id = fields.Many2one(
@@ -129,6 +130,17 @@ class CrmTeam(models.Model):
         compute='_compute_member_company_ids',
     )
 
+    crm_team_member_ids = fields.One2many(
+        'crm.team.member',
+        'crm_team_id',
+        string='Team Members',
+    )
+
+    @api.depends('crm_team_member_ids')
+    def _compute_member_ids(self):
+        for team in self:
+            team.member_ids = team.crm_team_member_ids.mapped('user_id')
+
     @api.depends('member_ids')
     def _compute_member_warning(self):
         for team in self:
@@ -147,6 +159,30 @@ class CrmTeam(models.Model):
     def _compute_member_company_ids(self):
         for team in self:
             team.member_company_ids = team.member_ids.mapped('company_id')
+
+
+class CrmTeamMember(models.Model):
+    _name = 'crm.team.member'
+    _description = 'Sales Team Member'
+
+    crm_team_id = fields.Many2one(
+        'crm.team',
+        string='Sales Team',
+        required=True,
+    )
+    
+    user_id = fields.Many2one(
+        'res.users',
+        string='User',
+        required=True,
+    )
+    
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        related='user_id.company_id',
+        store=True,
+    )
 
 
 class CrmLostReason(models.Model):
