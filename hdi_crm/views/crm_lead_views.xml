@@ -56,11 +56,11 @@
         </record>
 
         <!-- CRM Lead List View -->
-        <record id="view_crm_lead_tree" model="ir.ui.view">
-            <field name="name">crm.lead.tree</field>
+        <record id="view_crm_lead_list" model="ir.ui.view">
+            <field name="name">crm.lead.list</field>
             <field name="model">crm.lead</field>
             <field name="arch" type="xml">
-                <tree string="Leads" sample="1">
+                <list string="Leads" sample="1">
                     <field name="name"/>
                     <field name="contact_name"/>
                     <field name="email_from"/>
@@ -70,7 +70,7 @@
                     <field name="probability"/>
                     <field name="expected_revenue" sum="Expected Revenue"/>
                     <field name="date_deadline"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -139,7 +139,7 @@
         <record id="action_crm_lead" model="ir.actions.act_window">
             <field name="name">Leads</field>
             <field name="res_model">crm.lead</field>
-            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_mode">kanban,list,form</field>
             <field name="view_id" ref="view_crm_lead_kanban"/>
             <field name="search_view_id" ref="view_crm_lead_search"/>
             <field name="context">{'search_default_filter_active': 1}</field>
