@@ -183,6 +183,11 @@ class CrmTeamMember(models.Model):
         related='user_id.company_id',
         store=True,
     )
+    
+    active = fields.Boolean(
+        string='Active',
+        default=True,
+    )
 
 
 class CrmLostReason(models.Model):
