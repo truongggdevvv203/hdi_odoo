@@ -5,11 +5,11 @@
         <record id="action_crm_lead" model="ir.actions.act_window">
             <field name="name">Quy trình</field>
             <field name="res_model">crm.lead</field>
-            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_mode">kanban,list,form</field>
             <field name="search_view_id" ref="view_crm_lead_search"/>
             <field name="view_ids" eval="[
                 (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_crm_lead_kanban')}),
-                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_lead_list')}),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('view_crm_lead_list')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_lead_form')})
             ]"/>
             <field name="context">{'search_default_filter_active': 1}</field>
@@ -18,11 +18,11 @@
         <record id="action_crm_opportunity" model="ir.actions.act_window">
             <field name="name">Cơ hội</field>
             <field name="res_model">crm.opportunity</field>
-            <field name="view_mode">kanban,tree,form</field>
+            <field name="view_mode">kanban,list,form</field>
             <field name="search_view_id" ref="view_crm_opportunity_search"/>
             <field name="view_ids" eval="[
                 (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_crm_opportunity_kanban')}),
-                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_opportunity_list')}),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('view_crm_opportunity_list')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_opportunity_form')})
             ]"/>
             <field name="context">{'search_default_filter_active': 1}</field>
@@ -31,10 +31,10 @@
         <record id="action_crm_customer" model="ir.actions.act_window">
             <field name="name">Khách hàng</field>
             <field name="res_model">crm.customer</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="search_view_id" ref="view_crm_customer_search"/>
             <field name="view_ids" eval="[
-                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_customer_list')}),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('view_crm_customer_list')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_customer_form')})
             ]"/>
             <field name="context">{'search_default_filter_active': 1}</field>
@@ -43,10 +43,10 @@
         <record id="action_crm_activity" model="ir.actions.act_window">
             <field name="name">Hoạt động</field>
             <field name="res_model">crm.activity</field>
-            <field name="view_mode">tree,calendar,form</field>
+            <field name="view_mode">list,calendar,form</field>
             <field name="search_view_id" ref="view_crm_activity_search"/>
             <field name="view_ids" eval="[
-                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_crm_activity_list')}),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('view_crm_activity_list')}),
                 (0, 0, {'view_mode': 'calendar', 'view_id': ref('view_crm_activity_calendar')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('view_crm_activity_form')})
             ]"/>
@@ -55,33 +55,33 @@
         <record id="action_crm_stage" model="ir.actions.act_window">
             <field name="name">Giai đoạn</field>
             <field name="res_model">crm.stage</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record id="action_crm_tag" model="ir.actions.act_window">
             <field name="name">Thẻ</field>
             <field name="res_model">crm.tag</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record id="action_crm_source" model="ir.actions.act_window">
             <field name="name">Nguồn khách hàng tiềm năng</field>
             <field name="res_model">crm.source</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record id="action_crm_industry" model="ir.actions.act_window">
             <field name="name">Ngành nghề</field>
             <field name="res_model">crm.industry</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record id="action_crm_team_view" model="ir.actions.act_window">
             <field name="name">Đội bán hàng</field>
             <field name="res_model">crm.team</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="view_ids" eval="[
-                (0, 0, {'view_mode': 'tree', 'view_id': ref('crm_team_list')}),
+                (0, 0, {'view_mode': 'list', 'view_id': ref('crm_team_list')}),
                 (0, 0, {'view_mode': 'form', 'view_id': ref('crm_team_form')})
             ]"/>
         </record>
@@ -89,19 +89,19 @@
         <record id="action_crm_lost_reason" model="ir.actions.act_window">
             <field name="name">Lý do mất</field>
             <field name="res_model">crm.lost.reason</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record id="action_crm_partner_rating" model="ir.actions.act_window">
             <field name="name">Đánh giá đối tác</field>
             <field name="res_model">crm.partner.rating</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record id="action_crm_partner_value" model="ir.actions.act_window">
             <field name="name">Giá trị đối tác</field>
             <field name="res_model">crm.partner.value</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <!-- Override CRM top-level menu to set groups like Odoo base -->
