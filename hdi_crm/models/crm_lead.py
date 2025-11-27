@@ -145,6 +145,12 @@ class CrmLead(models.Model):
         string='Lost Reason',
         tracking=True,
     )
+
+    quotation_count = fields.Integer(
+        string='Quotation Count',
+        compute='_compute_quotation_count',
+        store=False,
+    )
     
     def _read_group_stage_ids(self, stages, domain, order=None):
         if order:
@@ -206,3 +212,11 @@ class CrmLead(models.Model):
             },
             'target': 'new',
         }
+        def _compute_quotation_count(self):
+            SaleOrder = self.env['sale.order']
+            for rec in self:
+                try:
+                    rec.quotation_count = SaleOrder.search_count([('opportunity_id', '=', rec.id)])
+                except Exception:
+                    rec.quotation_count = 0
+
