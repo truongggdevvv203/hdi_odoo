@@ -27,6 +27,7 @@
         'views/crm_customer_views.xml',
         'views/crm_activity_views.xml',
         'views/crm_team_views.xml',
+        'views/crm_partner_views.xml',
         'views/crm_menu.xml',
     ],
     'installable': True,

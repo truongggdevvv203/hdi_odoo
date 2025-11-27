@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Partner Rating List View -->
+        <record id="crm_partner_rating_list" model="ir.ui.view">
+            <field name="name">crm.partner.rating.list</field>
+            <field name="model">crm.partner.rating</field>
+            <field name="arch" type="xml">
+                <list string="Partner Ratings">
+                    <field name="partner_id"/>
+                    <field name="rating"/>
+                    <field name="rater_id"/>
+                    <field name="date_rated"/>
+                    <field name="comment"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Partner Rating Form View -->
+        <record id="crm_partner_rating_form" model="ir.ui.view">
+            <field name="name">crm.partner.rating.form</field>
+            <field name="model">crm.partner.rating</field>
+            <field name="arch" type="xml">
+                <form string="Partner Rating">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="partner_id"/>
+                                <field name="rating"/>
+                            </group>
+                            <group>
+                                <field name="rater_id"/>
+                                <field name="date_rated"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="comment" placeholder="Add your comments here..."/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Partner Value List View -->
+        <record id="crm_partner_value_list" model="ir.ui.view">
+            <field name="name">crm.partner.value.list</field>
+            <field name="model">crm.partner.value</field>
+            <field name="arch" type="xml">
+                <list string="Partner Value">
+                    <field name="partner_id"/>
+                    <field name="value_category"/>
+                    <field name="value"/>
+                    <field name="date"/>
+                    <field name="recorded_by"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Partner Value Form View -->
+        <record id="crm_partner_value_form" model="ir.ui.view">
+            <field name="name">crm.partner.value.form</field>
+            <field name="model">crm.partner.value</field>
+            <field name="arch" type="xml">
+                <form string="Partner Value">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="partner_id"/>
+                                <field name="value_category"/>
+                                <field name="value"/>
+                            </group>
+                            <group>
+                                <field name="date"/>
+                                <field name="recorded_by"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="note" placeholder="Add notes..."/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Extended res.partner Form View for CRM -->
+        <record id="view_res_partner_crm_form" model="ir.ui.view">
+            <field name="name">res.partner.crm.form</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='internal_notes']" position="before">
+                    <page string="CRM Info">
+                        <group>
+                            <group>
+                                <field name="partner_type"/>
+                                <field name="preferred_contact_method"/>
+                                <field name="credit_risk"/>
+                            </group>
+                            <group>
+                                <field name="customer_since"/>
+                                <field name="last_contact_date"/>
+                                <field name="days_since_contact"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="average_rating"/>
+                                <field name="rating_count"/>
+                            </group>
+                            <group>
+                                <field name="partner_value"/>
+                                <field name="total_spent"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="last_activity_date"/>
+                        </group>
+                    </page>
+                    <page string="Ratings">
+                        <field name="rating_ids" nolabel="1">
+                            <tree>
+                                <field name="rating"/>
+                                <field name="rater_id"/>
+                                <field name="date_rated"/>
+                                <field name="comment"/>
+                            </tree>
+                            <form>
+                                <group>
+                                    <field name="rating"/>
+                                    <field name="rater_id"/>
+                                    <field name="date_rated"/>
+                                </group>
+                                <group>
+                                    <field name="comment"/>
+                                </group>
+                            </form>
+                        </field>
+                    </page>
+                    <page string="Value History">
+                        <field name="value_tracking_ids" nolabel="1">
+                            <tree>
+                                <field name="value_category"/>
+                                <field name="value"/>
+                                <field name="date"/>
+                                <field name="recorded_by"/>
+                            </tree>
+                            <form>
+                                <group>
+                                    <field name="value_category"/>
+                                    <field name="value"/>
+                                    <field name="date"/>
+                                    <field name="recorded_by"/>
+                                </group>
+                                <group>
+                                    <field name="note"/>
+                                </group>
+                            </form>
+                        </field>
+                    </page>
+                </xpath>
+                <xpath expr="//div[@name='buttons']" position="inside">
+                    <button name="action_record_contact" type="object" class="btn-secondary" string="Record Contact"/>
+                    <button name="action_add_rating" type="object" class="btn-secondary" string="Add Rating"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Partner Rating Action -->
+        <record id="action_crm_partner_rating" model="ir.actions.act_window">
+            <field name="name">Partner Ratings</field>
+            <field name="res_model">crm.partner.rating</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <!-- Partner Value Action -->
+        <record id="action_crm_partner_value" model="ir.actions.act_window">
+            <field name="name">Partner Value</field>
+            <field name="res_model">crm.partner.value</field>
+            <field name="view_mode">list,form</field>
+        </record>
+    </data>
+</odoo>

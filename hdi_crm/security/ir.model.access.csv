@@ -21,3 +21,7 @@ access_crm_team_member_manager,crm.team.member.manager,model_crm_team_member,gro
 access_crm_team_member_user,crm.team.member.user,model_crm_team_member,group_crm_user,1,0,0,0
 access_crm_lost_reason_manager,crm.lost.reason.manager,model_crm_lost_reason,group_crm_manager,1,1,1,1
 access_crm_lost_reason_user,crm.lost.reason.user,model_crm_lost_reason,group_crm_user,1,0,0,0
+access_crm_partner_rating_manager,crm.partner.rating.manager,model_crm_partner_rating,group_crm_manager,1,1,1,1
+access_crm_partner_rating_user,crm.partner.rating.user,model_crm_partner_rating,group_crm_user,1,1,1,0
+access_crm_partner_value_manager,crm.partner.value.manager,model_crm_partner_value,group_crm_manager,1,1,1,1
+access_crm_partner_value_user,crm.partner.value.user,model_crm_partner_value,group_crm_user,1,1,1,0
