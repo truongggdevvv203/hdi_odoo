@@ -2,9 +2,7 @@ from odoo import models, fields, api
 
 
 class CrmStage(models.Model):
-    _name = 'crm.stage'
-    _description = 'CRM Stage'
-    _order = 'sequence'
+    _inherit = 'crm.stage'
 
     name = fields.Char(
         string='Stage Name',

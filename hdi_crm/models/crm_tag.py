@@ -2,8 +2,7 @@ from odoo import models, fields
 
 
 class CrmTag(models.Model):
-    _name = 'crm.tag'
-    _description = 'CRM Tag'
+    _inherit = 'crm.tag'
 
     name = fields.Char(
         string='Tag Name',

@@ -4,10 +4,7 @@ from odoo.exceptions import ValidationError
 
 
 class CrmLead(models.Model):
-    _name = 'crm.lead'
-    _description = 'Lead'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'priority desc, create_date desc'
+    _inherit = 'crm.lead'
 
     name = fields.Char(
         string='Lead Name',
