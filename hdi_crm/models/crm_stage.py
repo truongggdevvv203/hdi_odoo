@@ -101,6 +101,10 @@ class CrmTeam(models.Model):
         'res.users',
         string='Team Leader',
     )
+    
+    member_warning = fields.Text(
+        string='Member Warning',
+    )
 
 
 class CrmLostReason(models.Model):
