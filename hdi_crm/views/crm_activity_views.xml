@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- CRM Activity Form View -->
+        <record id="view_crm_activity_form" model="ir.ui.view">
+            <field name="name">crm.activity.form</field>
+            <field name="model">crm.activity</field>
+            <field name="arch" type="xml">
+                <form string="Activity">
+                    <header>
+                        <button name="action_mark_in_progress" type="object" string="In Progress" states="scheduled"/>
+                        <button name="action_mark_completed" type="object" string="Mark Completed" class="oe_highlight" states="scheduled,in_progress"/>
+                        <button name="action_mark_cancelled" type="object" string="Cancel" states="scheduled,in_progress"/>
+                        <field name="state" widget="statusbar" options="{'clickable': False}"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" required="1"/>
+                                <field name="activity_type" required="1"/>
+                                <field name="user_id" required="1"/>
+                                <field name="priority"/>
+                            </group>
+                            <group>
+                                <field name="date_scheduled"/>
+                                <field name="date_completed"/>
+                                <field name="company_id"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Related To">
+                                <field name="partner_id"/>
+                                <field name="lead_id"/>
+                                <field name="opportunity_id"/>
+                                <field name="customer_id"/>
+                            </group>
+                        </group>
+                        <field name="description" placeholder="Add activity details..."/>
+                        <field name="outcome" placeholder="Add outcome notes..." />
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- CRM Activity List View -->
+        <record id="view_crm_activity_tree" model="ir.ui.view">
+            <field name="name">crm.activity.tree</field>
+            <field name="model">crm.activity</field>
+            <field name="arch" type="xml">
+                <tree string="Activities" sample="1">
+                    <field name="name"/>
+                    <field name="activity_type"/>
+                    <field name="date_scheduled"/>
+                    <field name="state"/>
+                    <field name="priority"/>
+                    <field name="user_id"/>
+                    <field name="partner_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- CRM Activity Calendar View -->
+        <record id="view_crm_activity_calendar" model="ir.ui.view">
+            <field name="name">crm.activity.calendar</field>
+            <field name="model">crm.activity</field>
+            <field name="arch" type="xml">
+                <calendar string="Activities" date_start="date_scheduled" date_stop="date_scheduled" color="user_id">
+                    <field name="name"/>
+                    <field name="activity_type"/>
+                    <field name="user_id"/>
+                </calendar>
+            </field>
+        </record>
+
+        <!-- CRM Activity Search View -->
+        <record id="view_crm_activity_search" model="ir.ui.view">
+            <field name="name">crm.activity.search</field>
+            <field name="model">crm.activity</field>
+            <field name="arch" type="xml">
+                <search string="Search Activities">
+                    <field name="name"/>
+                    <field name="activity_type"/>
+                    <field name="user_id"/>
+                    <field name="partner_id"/>
+                    <separator/>
+                    <filter name="filter_scheduled" string="Scheduled" domain="[('state', '=', 'scheduled')]"/>
+                    <filter name="filter_in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>
+                    <filter name="filter_completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                    <filter name="filter_today" string="Today" domain="[('date_scheduled', '&gt;=', context_today()), ('date_scheduled', '&lt;', context_today() + relativedelta(days=1))]"/>
+                    <separator/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                        <filter name="group_user" string="Assigned to" context="{'group_by': 'user_id'}"/>
+                        <filter name="group_type" string="Activity Type" context="{'group_by': 'activity_type'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- CRM Activity Action -->
+        <record id="action_crm_activity" model="ir.actions.act_window">
+            <field name="name">Activities</field>
+            <field name="res_model">crm.activity</field>
+            <field name="view_mode">tree,calendar,form</field>
+            <field name="search_view_id" ref="view_crm_activity_search"/>
+        </record>
+    </data>
+</odoo>
