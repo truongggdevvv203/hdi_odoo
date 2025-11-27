@@ -37,10 +37,6 @@
                                 <field name="currency_id"/>
                                 <field name="invoiced_target"/>
                             </group>
-                            <group>
-                                <field name="member_warning"/>
-                                <field name="is_membership_multi"/>
-                            </group>
                         </group>
                         <notebook>
                             <page string="Members">
