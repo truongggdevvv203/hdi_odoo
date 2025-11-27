@@ -27,9 +27,6 @@ msgstr "Hoạt động"
 msgid "Stages"
 msgstr "Giai đoạn"
 
-msgid "Tags"
-msgstr "Thẻ"
-
 msgid "Lead Sources"
 msgstr "Nguồn khách hàng tiềm năng"
 
