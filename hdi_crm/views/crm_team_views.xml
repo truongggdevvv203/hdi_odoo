@@ -64,13 +64,5 @@
                 </form>
             </field>
         </record>
-
-        <!-- Update the action to use the views -->
-        <record id="action_crm_team" model="ir.actions.act_window">
-            <field name="name">Sales Teams</field>
-            <field name="res_model">crm.team</field>
-            <field name="view_mode">list,form</field>
-            <field name="view_id" ref="crm_team_tree"/>
-        </record>
     </data>
 </odoo></content>
