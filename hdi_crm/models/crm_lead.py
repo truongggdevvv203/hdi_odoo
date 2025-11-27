@@ -151,6 +151,13 @@ class CrmLead(models.Model):
         compute='_compute_quotation_count',
         store=False,
     )
+
+    sale_amount_total = fields.Monetary(
+        string='Total Quotation Amount',
+        compute='_compute_sale_amount_total',
+        currency_field='company_currency',
+        store=False,
+    )
     
     def _read_group_stage_ids(self, stages, domain, order=None):
         if order:
@@ -219,4 +226,13 @@ class CrmLead(models.Model):
                     rec.quotation_count = SaleOrder.search_count([('opportunity_id', '=', rec.id)])
                 except Exception:
                     rec.quotation_count = 0
+
+        def _compute_sale_amount_total(self):
+            SaleOrder = self.env['sale.order']
+            for rec in self:
+                try:
+                    orders = SaleOrder.search([('opportunity_id', '=', rec.id)])
+                    rec.sale_amount_total = sum(o.amount_total or 0.0 for o in orders)
+                except Exception:
+                    rec.sale_amount_total = 0.0
 
