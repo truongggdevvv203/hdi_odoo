@@ -8,9 +8,9 @@
             <field name="arch" type="xml">
                 <form string="Activity">
                     <header>
-                        <button name="action_mark_in_progress" type="object" string="In Progress" states="scheduled"/>
-                        <button name="action_mark_completed" type="object" string="Mark Completed" class="oe_highlight" states="scheduled,in_progress"/>
-                        <button name="action_mark_cancelled" type="object" string="Cancel" states="scheduled,in_progress"/>
+                        <button name="action_mark_in_progress" type="object" string="In Progress" invisible="state != 'scheduled'"/>
+                        <button name="action_mark_completed" type="object" string="Mark Completed" class="oe_highlight" invisible="state not in ('scheduled', 'in_progress')"/>
+                        <button name="action_mark_cancelled" type="object" string="Cancel" invisible="state not in ('scheduled', 'in_progress')"/>
                         <field name="state" widget="statusbar" options="{'clickable': False}"/>
                     </header>
                     <sheet>
