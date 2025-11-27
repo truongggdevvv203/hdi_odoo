@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- CRM Team Tree View -->
-        <record id="crm_team_tree" model="ir.ui.view">
-            <field name="name">crm.team.tree</field>
+        <!-- CRM Team List View -->
+        <record id="crm_team_list" model="ir.ui.view">
+            <field name="name">crm.team.list</field>
             <field name="model">crm.team</field>
             <field name="arch" type="xml">
                 <list>
@@ -45,11 +45,11 @@
                         <notebook>
                             <page string="Members">
                                 <field name="crm_team_member_ids">
-                                    <tree>
+                                    <list>
                                         <field name="user_id"/>
                                         <field name="company_id"/>
                                         <field name="active"/>
-                                    </tree>
+                                    </list>
                                     <form>
                                         <group>
                                             <field name="user_id"/>
@@ -63,6 +63,33 @@
                     </sheet>
                 </form>
             </field>
+        </record>
+
+        <!-- CRM Team Search View -->
+        <record id="view_crm_team_search" model="ir.ui.view">
+            <field name="name">crm.team.search</field>
+            <field name="model">crm.team</field>
+            <field name="arch" type="xml">
+                <search string="Search Sales Teams">
+                    <field name="name"/>
+                    <field name="user_id"/>
+                    <field name="company_id"/>
+                    <separator/>
+                    <filter name="filter_active" string="Active" domain="[('active', '=', True)]"/>
+                    <separator/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_company" string="Company" context="{'group_by': 'company_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- CRM Team Action -->
+        <record id="action_crm_team_view" model="ir.actions.act_window">
+            <field name="name">Sales Teams</field>
+            <field name="res_model">crm.team</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_crm_team_search"/>
         </record>
     </data>
 </odoo>

@@ -17,5 +17,7 @@ access_crm_industry_manager,crm.industry.manager,model_crm_industry,group_crm_ma
 access_crm_industry_user,crm.industry.user,model_crm_industry,group_crm_user,1,0,0,0
 access_crm_team_manager,crm.team.manager,model_crm_team,group_crm_manager,1,1,1,1
 access_crm_team_user,crm.team.user,model_crm_team,group_crm_user,1,0,0,0
+access_crm_team_member_manager,crm.team.member.manager,model_crm_team_member,group_crm_manager,1,1,1,1
+access_crm_team_member_user,crm.team.member.user,model_crm_team_member,group_crm_user,1,0,0,0
 access_crm_lost_reason_manager,crm.lost.reason.manager,model_crm_lost_reason,group_crm_manager,1,1,1,1
 access_crm_lost_reason_user,crm.lost.reason.user,model_crm_lost_reason,group_crm_user,1,0,0,0
