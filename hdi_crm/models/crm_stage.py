@@ -110,6 +110,17 @@ class CrmTeam(models.Model):
         string='Multiple Memberships',
         default=False,
     )
+    
+    invoiced_target = fields.Monetary(
+        string='Invoiced Target',
+        currency_field='currency_id',
+    )
+    
+    currency_id = fields.Many2one(
+        'res.currency',
+        string='Currency',
+        default=lambda self: self.env.company.currency_id,
+    )
 
 
 class CrmLostReason(models.Model):
