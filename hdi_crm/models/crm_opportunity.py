@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 
 
 class CrmOpportunity(models.Model):
-    _inherit = ['crm.opportunity', 'mail.thread', 'mail.activity.mixin']
+    _name = 'crm.opportunity'
+    _inherit = 'crm.lead'
     _order = 'probability desc, date_deadline, create_date desc'
 
     name = fields.Char(

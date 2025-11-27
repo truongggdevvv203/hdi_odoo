@@ -2,7 +2,8 @@ from odoo import models, fields, api
 
 
 class CrmCustomer(models.Model):
-    _inherit = ['crm.customer', 'mail.thread', 'mail.activity.mixin']
+    _name = 'crm.customer'
+    _inherit = 'res.partner'
     _order = 'name'
 
     name = fields.Char(

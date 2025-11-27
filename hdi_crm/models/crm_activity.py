@@ -2,7 +2,8 @@ from odoo import models, fields, api
 
 
 class CrmActivity(models.Model):
-    _inherit = ['crm.activity', 'mail.thread', 'mail.activity.mixin']
+    _name = 'crm.activity'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date_scheduled desc'
 
     name = fields.Char(
