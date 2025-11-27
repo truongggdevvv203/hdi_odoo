@@ -69,10 +69,16 @@ class CrmIndustry(models.Model):
 class CrmTeam(models.Model):
     _name = 'crm.team'
     _description = 'Sales Team'
+    _order = 'sequence'
 
     name = fields.Char(
         string='Team Name',
         required=True,
+    )
+    
+    sequence = fields.Integer(
+        string='Sequence',
+        default=10,
     )
     
     member_ids = fields.Many2many(
