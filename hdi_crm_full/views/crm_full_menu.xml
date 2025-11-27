@@ -4,20 +4,20 @@
   <record id="action_hdi_crm_leads" model="ir.actions.act_window">
     <field name="name">Leads</field>
     <field name="res_model">crm.lead</field>
-    <field name="view_mode">kanban,tree,form</field>
+    <field name="view_mode">kanban,list,form</field>
   </record>
 
   <record id="action_hdi_crm_customers" model="ir.actions.act_window">
     <field name="name">Customers</field>
     <field name="res_model">res.partner</field>
-    <field name="view_mode">kanban,tree,form</field>
+    <field name="view_mode">kanban,list,form</field>
     <field name="domain">[("is_company","=",True)]</field>
   </record>
 
   <record id="action_hdi_crm_activities" model="ir.actions.act_window">
     <field name="name">Activities</field>
     <field name="res_model">mail.activity</field>
-    <field name="view_mode">kanban,tree,form</field>
+    <field name="view_mode">kanban,list,form</field>
   </record>
 
   <!-- Top-level HDI menu -->
