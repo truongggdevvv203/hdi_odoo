@@ -45,6 +45,44 @@
     <field name="action" ref="action_hdi_crm_activities"/>
   </record>
 
+  <!-- Additional HDI actions/menus -->
+  <record id="action_hdi_crm_opportunities" model="ir.actions.act_window">
+    <field name="name">Opportunities</field>
+    <field name="res_model">crm.opportunity</field>
+    <field name="view_mode">kanban,list,form</field>
+  </record>
+
+  <record id="menu_hdi_crm_opportunities" model="ir.ui.menu">
+    <field name="name">Opportunities</field>
+    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="action" ref="action_hdi_crm_opportunities"/>
+  </record>
+
+  <record id="action_hdi_crm_pipeline" model="ir.actions.act_window">
+    <field name="name">My Pipeline</field>
+    <field name="res_model">crm.opportunity</field>
+    <field name="view_mode">kanban,list,form</field>
+    <field name="context">{}</field>
+  </record>
+
+  <record id="menu_hdi_crm_pipeline" model="ir.ui.menu">
+    <field name="name">My Pipeline</field>
+    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="action" ref="action_hdi_crm_pipeline"/>
+  </record>
+
+  <record id="action_hdi_crm_teams" model="ir.actions.act_window">
+    <field name="name">Teams</field>
+    <field name="res_model">crm.team</field>
+    <field name="view_mode">kanban,list,form</field>
+  </record>
+
+  <record id="menu_hdi_crm_teams" model="ir.ui.menu">
+    <field name="name">Teams</field>
+    <field name="parent_id" ref="menu_hdi_crm_root"/>
+    <field name="action" ref="action_hdi_crm_teams"/>
+  </record>
+
   <!-- Shortcut under Contacts to show related customers (optional) -->
   <record id="menu_hdi_crm_customers_contacts" model="ir.ui.menu">
     <field name="name">HDI Customers</field>
