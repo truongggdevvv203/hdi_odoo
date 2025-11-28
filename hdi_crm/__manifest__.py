@@ -18,7 +18,6 @@
     'security/ir.model.access.csv',
 
     'views/hdi_crm_lead_views.xml',
-    'views/crm_menu.xml',
   ],
 
   'installable': True,
