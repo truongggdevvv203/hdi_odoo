@@ -5,13 +5,8 @@ class HdiProductType(models.Model):
     _name = 'hdi.product.type'
     _description = 'HDI Product Type'
 
-    name = fields.Char(string='Loại', required=True)
-    code = fields.Selection(
-        [('product', 'Storable Product'), ('consu', 'Consumable'), ('service', 'Service')],
-        string='Mã (map tới product.template.type)',
-        required=True,
-        help='Giá trị code sẽ map tới field `product.template.type` (product/consu/service)'
-    )
+    name = fields.Char(string='Tên loại sản phẩm', required=True)
+    code = fields.Char(string='Mã', required=True)
     active = fields.Boolean(string='Active', default=True)
 
     _sql_constraints = [
