@@ -17,4 +17,9 @@
               parent="hdi_product_config_menu"
               action="hdi_product_category_action"
               sequence="10"/>
+    <menuitem id="hdi_product_types_menu"
+              name="Loại sản phẩm"
+              parent="hdi_product_root"
+              action="action_hdi_product_type"
+              sequence="3"/>
 </odoo>
