@@ -1,16 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <menuitem id="menu_hdi_product_root" name="HDI Product" sequence="30"/>
+    <menuitem id="hdi_product_root" name="HDI Sản phẩm" sequence="10"/>
 
-  <menuitem id="menu_hdi_products" name="Sản phẩm" parent="menu_hdi_product_root" action="action_hdi_product_template" sequence="1"/>
+    <menuitem id="hdi_product_menu"
+              name="Sản phẩm"
+              parent="hdi_product_root"
+              action="hdi_product_action"/>
 
-  <!-- Category management action and menu -->
-  <record id="action_hdi_product_category" model="ir.actions.act_window">
-    <field name="name">Danh mục sản phẩm (HDI)</field>
-    <field name="res_model">product.category</field>
-    <field name="view_mode">list,form</field>
-  </record>
-
-  <menuitem id="menu_hdi_product_categories" name="Danh mục" parent="menu_hdi_product_root" action="action_hdi_product_category" sequence="2"/>
-
+    <menuitem id="hdi_product_category_menu"
+              name="Danh mục sản phẩm"
+              parent="hdi_product_root"
+              action="hdi_product_category_action"/>
 </odoo>
