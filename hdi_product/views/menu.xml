@@ -12,14 +12,27 @@
               parent="hdi_product_root"
               sequence="20"/>
 
-    <menuitem id="hdi_product_category_menu"
-              name="Danh mục sản phẩm"
-              parent="hdi_product_config_menu"
-              action="hdi_product_category_action"
-              sequence="10"/>
     <menuitem id="hdi_product_types_menu"
               name="Loại sản phẩm"
               parent="hdi_product_config_menu"
               action="action_hdi_product_type"
-              sequence="3"/>
+              sequence="10"/>
+
+    <menuitem id="hdi_product_category_menu"
+          name="Danh mục sản phẩm"
+          parent="hdi_product_config_menu"
+          action="product.product_category_action_form"
+          sequence="20"/>
+
+    <menuitem id="hdi_product_tag_menu"
+          name="Thẻ sản phẩm"
+          parent="hdi_product_config_menu"
+          action="product.product_tag_action"
+          sequence="30"/>
+
+    <menuitem id="hdi_product_combo_menu"
+          name="Lựa chọn combo"
+          parent="hdi_product_config_menu"
+          action="product.product_combo_action"
+          sequence="40"/>
 </odoo>
