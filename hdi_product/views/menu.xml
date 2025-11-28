@@ -4,10 +4,17 @@
     <menuitem id="hdi_product_menu"
               name="Sản phẩm"
               parent="hdi_product_root"
-              action="hdi_product_action"/>
+              action="hdi_product_action"
+              sequence="10"/>
+
+    <menuitem id="hdi_product_config_menu"
+              name="Cấu hình"
+              parent="hdi_product_root"
+              sequence="20"/>
 
     <menuitem id="hdi_product_category_menu"
-              name="Danh mục sản phẩm"
-              parent="hdi_product_root"
-              action="hdi_product_category_action"/>
+              name="Danh mục sản phẩm"
+              parent="hdi_product_config_menu"
+              action="hdi_product_category_action"
+              sequence="10"/>
 </odoo>
