@@ -170,6 +170,19 @@
     sequence="6"/>
 
   <menuitem
+    id="crm_menu_lead_generation"
+    name="Tạo lead"
+    parent="crm_menu_config"
+    sequence="20"/>
+
+  <menuitem
+    id="crm_iap_lead_mining_request_menu_action"
+    name="Yêu cầu khai thác lead"
+    action="crm_iap_mine.crm_iap_lead_mining_request_action"
+    parent="crm_menu_lead_generation"
+    sequence="0"/>
+
+  <menuitem
     id="menu_import_crm"
     name="Nhập &amp; Đồng bộ"
     parent="hdi_crm_menu_root"/>
