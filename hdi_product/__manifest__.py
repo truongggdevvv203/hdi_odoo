@@ -11,9 +11,9 @@
         'uom',
     ],
     'data': [
-        'views/menu.xml',
         'views/product_category_views.xml',
         'views/product_views.xml',
+        'views/menu.xml',
     ],
     'installable': True,
     'application': True,
