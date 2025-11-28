@@ -10,5 +10,4 @@ class ProductTemplate(models.Model):
     hdi_type_id = fields.Many2one(
         'hdi.product.type',
         string='Loại sản phẩm (HDI)',
-        help='Loại sản phẩm do HDI quản lý. Không tự động đồng bộ với trường core `type`.',
     )

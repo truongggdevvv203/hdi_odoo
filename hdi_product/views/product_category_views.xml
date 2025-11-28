@@ -6,7 +6,6 @@
             <list>
                 <field name="name"/>
                 <field name="parent_id"/>
-                <field name="hdi_description"/>
             </list>
         </field>
     </record>
@@ -20,8 +19,6 @@
                     <group>
                         <field name="name"/>
                         <field name="parent_id"/>
-                        <field name="hdi_description"/>
-                        <field name="hdi_image"/>
                     </group>
                 </sheet>
             </form>
