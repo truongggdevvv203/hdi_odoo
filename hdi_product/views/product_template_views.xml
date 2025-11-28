@@ -22,4 +22,16 @@
         <field name="view_mode">list,form</field>
     </record>
 
+    <!-- Ensure core `type` field is visible even if a view replaced it with hdi_type_id -->
+    <record id="hdi_product_restore_type_field" model="ir.ui.view">
+        <field name="name">hdi.product.template.restore.type</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='hdi_type_id']" position="before">
+                <field name="type"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
