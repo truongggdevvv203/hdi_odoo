@@ -7,8 +7,8 @@
     'depends': ['sale_management'],
     'data': [
         'security/ir.model.access.csv',
-        'views/menu.xml',
         'views/sale_order_views.xml',
+        'views/menu.xml',
     ],
     'installable': True,
     'application': False,
