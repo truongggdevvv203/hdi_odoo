@@ -1,7 +1,7 @@
 {
     'name': 'HDI Sale Management',
     'version': '18.0.1.0.0',
-    'category': 'Sales',
+    'category': 'hdi',
     'description': 'Extended sales management features for HDI',
     'author': 'HDI',
     'depends': ['sale_management'],
