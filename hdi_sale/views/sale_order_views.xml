@@ -7,8 +7,10 @@
     <field name="arch" type="xml">
       <form>
         <header>
-          <button name="action_submit_shipping" string="Gửi Hàng" type="object" class="oe_highlight" invisible="is_shipping_order"/>
-          <button name="action_cancel" string="Hủy" type="object" invisible="state not in ['draft', 'sent']"/>
+          <button name="action_submit_shipping" string="Gửi Hàng" type="object"
+                  class="oe_highlight" invisible="is_shipping_order"/>
+          <button name="action_cancel" string="Hủy" type="object"
+                  invisible="state not in ['draft', 'sent']"/>
           <field name="state" widget="statusbar"/>
         </header>
         <sheet>
@@ -20,59 +22,149 @@
 
           <!-- 3.1 Thông tin người gửi -->
           <group string="3.1 Thông tin người gửi" name="sender_group">
-            <field name="sender_address_id" widget="many2one" options="{'no_create': False}"/>
-            <field name="sender_name"/>
-            <field name="sender_phone"/>
-            <field name="sender_street"/>
+            <group>
+              <field name="sender_name" placeholder="Nhập tên người gửi" required="1"/>
+              <field name="sender_phone" placeholder="Nhập số điện thoại" required="1"/>
+            </group>
+            <group>
+              <field name="sender_street" placeholder="Nhập địa chỉ gửi" required="1"/>
+            </group>
           </group>
 
           <!-- 3.2 Thông tin người nhận -->
           <group string="3.2 Thông tin người nhận" name="receiver_group">
-            <field name="receiver_address_id" widget="many2one" options="{'no_create': False}"/>
-            <field name="receiver_name"/>
-            <field name="receiver_phone"/>
-            <field name="receiver_street"/>
-            <field name="receiver_city"/>
-            <field name="receiver_state"/>
-            <field name="delivery_time_slot"/>
+            <group>
+              <field name="receiver_name" placeholder="Nhập tên người nhận" required="1"/>
+              <field name="receiver_phone" placeholder="Nhập số điện thoại" required="1"/>
+              <field name="receiver_street" placeholder="Nhập địa chỉ nhận" required="1"/>
+            </group>
+            <group>
+              <field name="receiver_city" placeholder="Nhập thành phố"/>
+              <field name="receiver_state" placeholder="Nhập tỉnh/thành"/>
+              <field name="delivery_time_slot"/>
+            </group>
           </group>
 
           <!-- 3.3 Thông tin hàng hóa -->
           <group string="3.3 Thông tin hàng hóa" name="goods_group">
-            <field name="goods_description"/>
-            <field name="reference_code" placeholder="Mã tham chiếu (có thể bỏ trống)"/>
-            <field name="goods_value"/>
-            <field name="allow_view_goods"/>
+            <group>
+              <field name="goods_description" placeholder="Mô tả hàng hóa"/>
+              <field name="reference_code" placeholder="Mã tham chiếu (có thể bỏ trống)"/>
+            </group>
+            <group>
+              <field name="goods_value" widget="monetary"/>
+              <field name="allow_view_goods"/>
+            </group>
           </group>
 
           <!-- 3.4 Dịch vụ vận chuyển -->
           <group string="3.4 Dịch vụ vận chuyển" name="service_group">
-            <field name="shipping_service_id" widget="many2one" options="{'no_create': True}"/>
-            <field name="base_shipping_cost" readonly="1"/>
+            <group>
+              <field name="shipping_service_id"
+                     options="{'no_create': True, 'no_open': True}"
+                     required="1"/>
+              <field name="base_shipping_cost"
+                     readonly="1"
+                     widget="monetary"
+                     options="{'currency_field': 'currency_id'}"/>
+            </group>
           </group>
 
           <!-- 3.5 Thông tin cước phí -->
           <group string="3.5 Thông tin cước phí" name="fee_group">
-            <field name="receiver_pay_fee"/>
-            <field name="cod_amount" invisible="not receiver_pay_fee"/>
-            <field name="pickup_at_office"/>
-            <field name="total_shipping_fee" readonly="1"/>
-            <field name="shipping_notes" nolabel="1" colspan="2" placeholder="Ghi chú đơn hàng"/>
+            <group>
+              <field name="receiver_pay_fee"/>
+              <field name="cod_amount"
+                     invisible="not receiver_pay_fee"
+                     widget="monetary"/>
+              <field name="pickup_at_office"/>
+            </group>
+            <group>
+              <field name="total_shipping_fee"
+                     readonly="1"
+                     widget="monetary"
+                     options="{'currency_field': 'currency_id'}"/>
+            </group>
+          </group>
+
+          <!-- Ghi chú -->
+          <group string="Ghi chú" name="notes_group">
+            <field name="shipping_notes"
+                   nolabel="1"
+                   placeholder="Nhập ghi chú đơn hàng (nếu có)"/>
           </group>
         </sheet>
       </form>
     </field>
   </record>
 
+  <!-- List View for Shipping Orders -->
+  <record id="view_shipping_order_list" model="ir.ui.view">
+    <field name="name">sale.order.shipping.list</field>
+    <field name="model">sale.order</field>
+    <field name="arch" type="xml">
+      <list string="Danh sách phiếu gửi hàng">
+        <field name="name"/>
+        <field name="sender_name"/>
+        <field name="sender_phone"/>
+        <field name="receiver_name"/>
+        <field name="receiver_phone"/>
+        <field name="receiver_city"/>
+        <field name="total_shipping_fee" widget="monetary"/>
+        <field name="state"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Search View for Shipping Orders -->
+  <record id="view_shipping_order_search" model="ir.ui.view">
+    <field name="name">sale.order.shipping.search</field>
+    <field name="model">sale.order</field>
+    <field name="arch" type="xml">
+      <search string="Tìm kiếm phiếu gửi hàng">
+        <field name="name" string="Số phiếu"/>
+        <field name="sender_name" string="Người gửi"/>
+        <field name="sender_phone" string="SĐT người gửi"/>
+        <field name="receiver_name" string="Người nhận"/>
+        <field name="receiver_phone" string="SĐT người nhận"/>
+        <field name="receiver_city" string="Thành phố"/>
+
+        <filter string="Phiếu gửi hàng" name="is_shipping"
+                domain="[('is_shipping_order', '=', True)]"/>
+        <filter string="Nháp" name="draft"
+                domain="[('state', '=', 'draft')]"/>
+        <filter string="Đã gửi" name="sent"
+                domain="[('state', '=', 'sent')]"/>
+
+        <group expand="0" string="Nhóm theo">
+          <filter string="Trạng thái" name="group_state"
+                  context="{'group_by': 'state'}"/>
+          <filter string="Thành phố" name="group_city"
+                  context="{'group_by': 'receiver_city'}"/>
+          <filter string="Dịch vụ vận chuyển" name="group_service"
+                  context="{'group_by': 'shipping_service_id'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
   <!-- Action: Create Shipping Order -->
   <record id="action_hdi_sale_order" model="ir.actions.act_window">
-    <field name="name">Tạo phiếu gửi hàng</field>
+    <field name="name">Phiếu gửi hàng</field>
     <field name="res_model">sale.order</field>
-    <field name="view_mode">form,list</field>
-    <field name="view_id" ref="view_shipping_order_form"/>
+    <field name="view_mode">list,form</field>
+    <field name="view_ids" eval="[(5, 0, 0),
+                                    (0, 0, {'view_mode': 'list', 'view_id': ref('view_shipping_order_list')}),
+                                    (0, 0, {'view_mode': 'form', 'view_id': ref('view_shipping_order_form')})]"/>
     <field name="context">{'default_is_shipping_order': True}</field>
+    <field name="domain">[('is_shipping_order', '=', True)]</field>
     <field name="help" type="html">
-      <p class="oe_view_nocontent_create">Tạo phiếu gửi hàng mới</p>
+      <p class="o_view_nocontent_smiling_face">
+        Tạo phiếu gửi hàng mới
+      </p>
+      <p>
+        Nhấn nút "Tạo" để tạo phiếu gửi hàng mới
+      </p>
     </field>
   </record>
 </odoo>
