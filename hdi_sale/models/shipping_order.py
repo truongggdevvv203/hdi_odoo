@@ -8,9 +8,14 @@ class ShippingOrder(models.Model):
   code = fields.Char(string='Số phiếu', readonly=True, copy=False,
                      default=lambda self: self.env['ir.sequence'].next_by_code('shipping.order'))
   state = fields.Selection([
-    ('draft', 'Nháp'),
-    ('sent', 'Đã gửi'),
+    ('draft', 'Đơn nháp'),
+    ('waiting_pickup', 'Chờ lấy hàng'),
+    ('in_transit', 'Đang vận chuyển'),
+    ('delivered', 'Phát thành công'),
     ('cancelled', 'Đã hủy'),
+    ('return_approved', 'Duyệt hoàn'),
+    ('return_completed', 'Hoàn thành công'),
+    ('forwarded', 'Phát tiếp'),
   ], string='Trạng thái', default='draft', readonly=True)
   
   is_shipping_order = fields.Boolean(string='Là phiếu gửi hàng', default=True)
@@ -174,7 +179,7 @@ class ShippingOrder(models.Model):
   def action_submit_shipping(self):
     """Submit as shipping order"""
     self.write({
-      'state': 'sent'
+      'state': 'waiting_pickup'
     })
     return {'type': 'ir.actions.client', 'tag': 'reload'}
 

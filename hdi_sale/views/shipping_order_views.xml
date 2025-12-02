@@ -12,7 +12,7 @@
           <button name="action_reset_form" string="Làm mới" type="object"
             class="btn-secondary" invisible="state != 'draft'"/>
           <button name="action_cancel" string="Hủy" type="object"
-            invisible="state not in ['draft', 'sent']"/>
+            invisible="state not in ['draft', 'waiting_pickup', 'in_transit']"/>
           <field name="state" widget="statusbar"/>
         </header>
         <sheet>
@@ -162,8 +162,20 @@
           domain="[('is_shipping_order', '=', True)]"/>
         <filter string="Nháp" name="draft"
           domain="[('state', '=', 'draft')]"/>
-        <filter string="Đã gửi" name="sent"
-          domain="[('state', '=', 'sent')]"/>
+        <filter string="Chờ lấy hàng" name="waiting_pickup"
+          domain="[('state', '=', 'waiting_pickup')]"/>
+        <filter string="Đang vận chuyển" name="in_transit"
+          domain="[('state', '=', 'in_transit')]"/>
+        <filter string="Phát thành công" name="delivered"
+          domain="[('state', '=', 'delivered')]"/>
+        <filter string="Đã hủy" name="cancelled"
+          domain="[('state', '=', 'cancelled')]"/>
+        <filter string="Duyệt hoàn" name="return_approved"
+          domain="[('state', '=', 'return_approved')]"/>
+        <filter string="Hoàn thành công" name="return_completed"
+          domain="[('state', '=', 'return_completed')]"/>
+        <filter string="Phát tiếp" name="forwarded"
+          domain="[('state', '=', 'forwarded')]"/>
 
         <group expand="0" string="Nhóm theo">
           <filter string="Trạng thái" name="group_state"
