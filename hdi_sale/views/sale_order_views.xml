@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Sale Order Form View - Extended -->
+  <record id="view_hdi_sale_order_form" model="ir.ui.view">
+    <field name="name">sale.order.form.hdi</field>
+    <field name="model">sale.order</field>
+    <field name="inherit_id" ref="sale.view_order_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//group[@name='sales_person']" position="after">
+        <group string="HDI - Thông tin bổ sung" name="hdi_info">
+          <field name="hdi_order_type"/>
+          <field name="hdi_priority"/>
+          <field name="hdi_sale_channel"/>
+        </group>
+      </xpath>
+      <xpath expr="//notebook" position="inside">
+        <page string="Ghi chú nội bộ" name="hdi_notes">
+          <field name="hdi_notes" nolabel="1"/>
+        </page>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Sale Order List View - Extended -->
+  <record id="view_hdi_sale_order_list" model="ir.ui.view">
+    <field name="name">sale.order.list.hdi</field>
+    <field name="model">sale.order</field>
+    <field name="inherit_id" ref="sale.view_order_tree"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='partner_id']" position="after">
+        <field name="hdi_order_type"/>
+        <field name="hdi_priority"/>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Action: Create Sale Order -->
+  <record id="action_hdi_sale_order" model="ir.actions.act_window">
+    <field name="name">Tạo đơn hàng</field>
+    <field name="res_model">sale.order</field>
+    <field name="view_mode">form,list</field>
+    <field name="context">{'default_hdi_order_type': 'standard'}</field>
+    <field name="help" type="html">
+      <p class="oe_view_nocontent_create">Tạo đơn hàng bán hàng mới</p>
+    </field>
+  </record>
+</odoo>

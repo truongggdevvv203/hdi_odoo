@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Main Menu -->
+  <menuitem id="hdi_sale_root" name="HDI Bán hàng" sequence="60"/>
+
+  <!-- Create Sale Order Menu -->
+  <menuitem id="hdi_sale_orders" 
+            name="Tạo đơn hàng" 
+            parent="hdi_sale_root" 
+            action="hdi_sale.action_hdi_sale_order" 
+            sequence="10"/>
+
+  <!-- Sale Order List Menu -->
+  <menuitem id="hdi_sale_orders_list" 
+            name="Danh sách đơn hàng" 
+            parent="hdi_sale_root" 
+            action="sale.action_orders" 
+            sequence="20"/>
+</odoo>
