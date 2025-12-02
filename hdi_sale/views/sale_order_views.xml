@@ -51,10 +51,6 @@
             </group>
           </group>
 
-          <group string="Dịch vụ vận chuyển được đề xuất" name="suggested_service_group">
-            <field name="suggested_service_ids" nolabel="1" widget="many2many_tags" options="{'no_create': True}"/>
-          </group>
-
           <group string="Dịch vụ vận chuyển" name="service_group">
             <group>
               <field name="shipping_service_id"

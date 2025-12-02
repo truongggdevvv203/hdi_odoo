@@ -38,17 +38,12 @@ class SaleOrder(models.Model):
     goods_value = fields.Float(string='Giá trị hàng hóa (VND)')
     goods_description = fields.Text(string='Mô tả hàng hóa')
 
-    # 3.4 Dịch vụ vận chuyển chính
+    # 3.4 Dịch vụ vận chuyển
     shipping_service_id = fields.Many2one('shipping.service',
                                           string='Dịch vụ vận chuyển',
                                           domain=[('service_type', '=', 'main')],
                                           required=True)
-    suggested_service_ids = fields.Many2many('shipping.service',
-                                            'sale_order_suggested_service',
-                                            'order_id', 'service_id',
-                                            string='Dịch vụ được đề xuất',
-                                            compute='_compute_suggested_services',
-                                            domain=[('service_type', '=', 'main')])
+
     base_shipping_cost = fields.Float(string='Cước phí (VND)',
                                       compute='_compute_base_shipping_cost',
                                       store=True)
