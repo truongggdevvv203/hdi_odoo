@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Shipping Order List View -->
+  <record id="view_shipping_order_list" model="ir.ui.view">
+    <field name="name">shipping.order.list</field>
+    <field name="model">shipping.order</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="order_number"/>
+        <field name="receiver_name"/>
+        <field name="receiver_city"/>
+        <field name="shipping_service_id"/>
+        <field name="state"/>
+        <field name="total_fee"/>
+        <field name="created_date"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Shipping Order Form View -->
+  <record id="view_shipping_order_form" model="ir.ui.view">
+    <field name="name">shipping.order.form</field>
+    <field name="model">shipping.order</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_submit" string="Gửi đơn" type="object" class="oe_highlight" states="draft"/>
+          <button name="action_cancel" string="Hủy" type="object" states="draft,submitted"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <div class="oe_title">
+            <h1><field name="order_number" readonly="1"/></h1>
+          </div>
+
+          <!-- Sender Information -->
+          <group string="Thông tin người gửi" name="sender_group">
+            <field name="sender_address_id" widget="many2one" options="{'no_create': True}"/>
+            <field name="sender_name" readonly="1"/>
+            <field name="sender_phone" readonly="1"/>
+          </group>
+
+          <!-- Receiver Information -->
+          <group string="Thông tin người nhận" name="receiver_group">
+            <field name="receiver_name"/>
+            <field name="receiver_phone"/>
+            <field name="receiver_street"/>
+            <field name="receiver_city"/>
+            <field name="receiver_state"/>
+            <field name="receiver_zip"/>
+            <field name="time_slot"/>
+          </group>
+
+          <!-- Shipment Items -->
+          <group string="Thông tin hàng hóa" name="shipment_group">
+            <field name="allow_view"/>
+            <field name="reference_code"/>
+            <field name="note" placeholder="Ghi chú về hàng hóa"/>
+            <field name="total_weight" readonly="1"/>
+            <field name="total_value" readonly="1"/>
+          </group>
+
+          <!-- Shipment Items Table -->
+          <field name="shipment_item_ids" mode="tree">
+            <tree editable="bottom">
+              <field name="name" required="1"/>
+              <field name="category"/>
+              <field name="quantity"/>
+              <field name="weight" required="1"/>
+              <field name="value"/>
+            </tree>
+          </field>
+
+          <!-- Shipping Service & Cost -->
+          <group string="Dịch vụ vận chuyển" name="service_group">
+            <field name="shipping_service_id" widget="many2one" options="{'no_create': True}"/>
+            <field name="shipping_cost" readonly="1"/>
+          </group>
+
+          <!-- Fee Information -->
+          <group string="Thông tin cước phí" name="fee_group">
+            <field name="is_receiver_pay"/>
+            <field name="cod_amount" attrs="{'invisible': [('is_receiver_pay', '=', False)]}"/>
+            <field name="total_fee" readonly="1"/>
+            <field name="pickup_at_office"/>
+          </group>
+
+          <!-- Order Notes -->
+          <group string="Ghi chú đơn hàng" name="notes_group">
+            <field name="order_notes" nolabel="1" colspan="4"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- Shipping Order Action -->
+  <record id="action_shipping_order" model="ir.actions.act_window">
+    <field name="name">Tạo đơn hàng</field>
+    <field name="res_model">shipping.order</field>
+    <field name="view_mode">list,form</field>
+    <field name="help" type="html">
+      <p class="oe_view_nocontent_create">Tạo đơn hàng vận chuyển mới</p>
+    </field>
+  </record>
+</odoo>

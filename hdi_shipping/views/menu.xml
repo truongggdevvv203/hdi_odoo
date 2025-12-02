@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Main Menu -->
+  <menuitem id="hdi_shipping_root" name="Vận chuyển HDI" sequence="50"/>
+
+  <!-- Create Shipping Order Menu -->
+  <menuitem id="hdi_shipping_orders" 
+            name="Tạo đơn hàng" 
+            parent="hdi_shipping_root" 
+            action="action_shipping_order" 
+            sequence="10"/>
+
+  <!-- Configuration Menu -->
+  <menuitem id="hdi_shipping_config" name="Cấu hình" parent="hdi_shipping_root" sequence="20"/>
+  
+  <menuitem id="hdi_shipping_services" 
+            name="Dịch vụ vận chuyển" 
+            parent="hdi_shipping_config" 
+            action="action_shipping_service" 
+            sequence="10"/>
+
+  <menuitem id="hdi_sender_addresses" 
+            name="Địa chỉ gửi hàng" 
+            parent="hdi_shipping_config" 
+            action="action_sender_address" 
+            sequence="20"/>
+</odoo>
