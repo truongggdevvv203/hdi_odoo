@@ -28,6 +28,10 @@ class SaleOrder(models.Model):
     ], string='Khung giờ nhận hàng', default='anytime')
 
     # 3.3 Thông tin hàng hóa
+    goods_type = fields.Selection([
+        ('document', 'Thư từ'),
+        ('parcel', 'Hàng hóa thường'),
+    ], string='Loại bưu phẩm', default='parcel')
     allow_view_goods = fields.Boolean(string='Cho phép khách xem hàng',
                                       default=True)
     reference_code = fields.Char(string='Mã tham chiếu')
@@ -37,9 +41,23 @@ class SaleOrder(models.Model):
     # 3.4 Dịch vụ vận chuyển
     shipping_service_id = fields.Many2one('shipping.service',
                                           string='Dịch vụ vận chuyển')
+    suggested_service_ids = fields.Many2many('shipping.service',
+                                            'sale_order_suggested_service',
+                                            'order_id', 'service_id',
+                                            string='Dịch vụ được đề xuất',
+                                            compute='_compute_suggested_services')
     base_shipping_cost = fields.Float(string='Cước phí cơ bản (VND)',
                                       compute='_compute_base_shipping_cost',
                                       store=True)
+    
+    # Dịch vụ cộng thêm
+    additional_service_ids = fields.Many2many('shipping.service',
+                                            'sale_order_additional_service',
+                                            'order_id', 'service_id',
+                                            string='Dịch vụ cộng thêm')
+    additional_cost = fields.Float(string='Phí dịch vụ cộng thêm (VND)',
+                                  compute='_compute_additional_cost',
+                                  store=True)
 
     # 3.5 Thông tin cước phí
     receiver_pay_fee = fields.Boolean(string='Người nhận trả cước',
@@ -54,21 +72,38 @@ class SaleOrder(models.Model):
                                       compute='_compute_total_shipping_fee',
                                       store=True)
 
-    @api.depends('shipping_service_id')
-    def _compute_base_shipping_cost(self):
+    @api.depends('sender_name', 'receiver_city', 'goods_type')
+    def _compute_suggested_services(self):
+        """Suggest services based on sender/receiver info and goods type"""
         for order in self:
-            if order.shipping_service_id:
-                order.base_shipping_cost = order.shipping_service_id.base_price
+            if order.sender_name and order.receiver_city:
+                # Get all active shipping services
+                all_services = self.env['shipping.service'].search([('active', '=', True)])
+                # Return up to 3 suggested services (you can customize this logic)
+                order.suggested_service_ids = all_services[:3] if all_services else False
             else:
-                order.base_shipping_cost = 0
+                order.suggested_service_ids = False
 
-    @api.depends('base_shipping_cost', 'cod_amount', 'receiver_pay_fee')
+    @api.depends('additional_service_ids')
+    def _compute_additional_cost(self):
+        """Calculate additional fees from selected additional services"""
+        for order in self:
+            order.additional_cost = sum(order.additional_service_ids.mapped('base_price'))
+
+    @api.depends('base_shipping_cost', 'cod_amount', 'receiver_pay_fee', 'additional_cost')
     def _compute_total_shipping_fee(self):
         for order in self:
-            fee = order.base_shipping_cost or 0
+            fee = (order.base_shipping_cost or 0) + (order.additional_cost or 0)
             if order.receiver_pay_fee and order.cod_amount > 0:
                 fee += order.cod_amount * 0.01  # Thêm phí thu hộ 1%
             order.total_shipping_fee = fee
+    
+    @api.onchange('goods_type')
+    def _onchange_goods_type(self):
+        """Clear goods description when changing goods type"""
+        if self.goods_type == 'document':
+            self.goods_value = 0
+            self.allow_view_goods = False
 
     def action_submit_shipping(self):
         """Submit as shipping order"""

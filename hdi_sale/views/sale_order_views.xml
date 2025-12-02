@@ -41,13 +41,18 @@
 
           <group string="Thông tin hàng hóa" name="goods_group">
             <group>
+              <field name="goods_type" required="1"/>
               <field name="goods_description" placeholder="Mô tả hàng hóa"/>
               <field name="reference_code" placeholder="Mã tham chiếu (có thể bỏ trống)"/>
             </group>
             <group>
-              <field name="goods_value" widget="monetary"/>
-              <field name="allow_view_goods"/>
+              <field name="goods_value" widget="monetary" invisible="goods_type == 'document'"/>
+              <field name="allow_view_goods" invisible="goods_type == 'document'"/>
             </group>
+          </group>
+
+          <group string="Dịch vụ vận chuyển được đề xuất" name="suggested_service_group">
+            <field name="suggested_service_ids" nolabel="1" widget="many2many_tags" options="{'no_create': True}"/>
           </group>
 
           <group string="Dịch vụ vận chuyển" name="service_group">
@@ -60,6 +65,11 @@
                      widget="monetary"
                      options="{'currency_field': 'currency_id'}"/>
             </group>
+          </group>
+
+          <group string="Dịch vụ cộng thêm" name="additional_service_group">
+            <field name="additional_service_ids" nolabel="1" widget="many2many_checkboxes" options="{'no_create': True}"/>
+            <field name="additional_cost" readonly="1" widget="monetary"/>
           </group>
 
           <group string="Thông tin cước phí" name="fee_group">
