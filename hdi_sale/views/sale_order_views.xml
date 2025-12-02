@@ -20,10 +20,6 @@
             </h1>
           </div>
 
-          <group>
-            <field name="partner_id" required="1" options="{'no_create': False}"/>
-          </group>
-
           <group string="Thông tin người gửi" name="sender_group">
             <group>
               <field name="sender_street" placeholder="Nhập địa chỉ gửi" required="1"/>
