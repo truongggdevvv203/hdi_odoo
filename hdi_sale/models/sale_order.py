@@ -62,6 +62,12 @@ class SaleOrder(models.Model):
                                       compute='_compute_base_shipping_cost',
                                       store=True)
 
+  shipping_service_estimated_time = fields.Char(
+      string='Thời gian dự kiến',
+      compute='_compute_shipping_service_estimated_time',
+      readonly=True
+  )
+
   # Dịch vụ cộng thêm
   goods_type = fields.Selection([
     ('document', 'Thư từ'),
@@ -119,6 +125,12 @@ class SaleOrder(models.Model):
     for order in self:
       order.base_shipping_cost = int(
         order.shipping_service_id.base_price) if order.shipping_service_id else 0
+
+  @api.depends('shipping_service_id')
+  def _compute_shipping_service_estimated_time(self):
+    """Get estimated time from selected shipping service"""
+    for order in self:
+      order.shipping_service_estimated_time = order.shipping_service_id.estimated_time if order.shipping_service_id else ''
 
   @api.depends('base_shipping_cost', 'cod_amount', 'receiver_pay_fee',
                'additional_cost')
