@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
   <!-- Main Menu -->
-  <menuitem id="hdi_shipping_root" name="Vận chuyển HDI" sequence="50"/>
+  <menuitem id="hdi_shipping_root" name="HDI Express" sequence="50"/>
 
   <!-- Create Shipping Order Menu -->
   <menuitem id="hdi_shipping_orders" 
