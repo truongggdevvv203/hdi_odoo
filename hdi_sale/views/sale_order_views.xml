@@ -20,15 +20,13 @@
             </h1>
           </div>
 
-          <!-- 3.1 Thông tin người gửi -->
-          <group string="3.1 Thông tin người gửi" name="sender_group">
+          <group string="Thông tin người gửi" name="sender_group">
             <group>
               <field name="sender_street" placeholder="Nhập địa chỉ gửi" required="1"/>
             </group>
           </group>
 
-          <!-- 3.2 Thông tin người nhận -->
-          <group string="3.2 Thông tin người nhận" name="receiver_group">
+          <group string="Thông tin người nhận" name="receiver_group">
             <group>
               <field name="receiver_name" placeholder="Nhập tên người nhận" required="1"/>
               <field name="receiver_phone" placeholder="Nhập số điện thoại" required="1"/>
@@ -41,8 +39,7 @@
             </group>
           </group>
 
-          <!-- 3.3 Thông tin hàng hóa -->
-          <group string="3.3 Thông tin hàng hóa" name="goods_group">
+          <group string="Thông tin hàng hóa" name="goods_group">
             <group>
               <field name="goods_description" placeholder="Mô tả hàng hóa"/>
               <field name="reference_code" placeholder="Mã tham chiếu (có thể bỏ trống)"/>
@@ -53,8 +50,7 @@
             </group>
           </group>
 
-          <!-- 3.4 Dịch vụ vận chuyển -->
-          <group string="3.4 Dịch vụ vận chuyển" name="service_group">
+          <group string="Dịch vụ vận chuyển" name="service_group">
             <group>
               <field name="shipping_service_id"
                      options="{'no_create': True, 'no_open': True}"
@@ -66,8 +62,7 @@
             </group>
           </group>
 
-          <!-- 3.5 Thông tin cước phí -->
-          <group string="3.5 Thông tin cước phí" name="fee_group">
+          <group string="Thông tin cước phí" name="fee_group">
             <group>
               <field name="receiver_pay_fee"/>
               <field name="cod_amount"
@@ -83,7 +78,7 @@
             </group>
           </group>
 
-          <!-- Ghi chú -->
+
           <group string="Ghi chú" name="notes_group">
             <field name="shipping_notes"
                    nolabel="1"
