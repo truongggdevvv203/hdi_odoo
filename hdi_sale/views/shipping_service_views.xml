@@ -34,6 +34,8 @@
           </group>
           <group>
             <field name="base_price" required="1"/>
+            <field name="estimated_time"
+              attrs="{'invisible': [('show_estimated_time','=',False)]}"/>
           </group>
           <group string="Mô tả">
             <field name="description" nolabel="1"/>
@@ -43,7 +45,7 @@
     </field>
   </record>
 
-  <!-- Shipping Service Search View -->
+  <!-- Search View -->
   <record id="view_shipping_service_search" model="ir.ui.view">
     <field name="name">shipping.service.search</field>
     <field name="model">shipping.service</field>
@@ -62,31 +64,21 @@
     </field>
   </record>
 
-  <!-- Action: Shipping Services -->
+  <!-- Actions -->
   <record id="action_shipping_service" model="ir.actions.act_window">
     <field name="name">Dịch vụ vận chuyển</field>
     <field name="res_model">shipping.service</field>
     <field name="view_mode">list,form</field>
-    <field name="help" type="html">
-      <p class="o_view_nocontent_smiling_face">
-        Quản lý dịch vụ vận chuyển
-      </p>
-      <p>
-        Tạo và quản lý các dịch vụ vận chuyển có sẵn
-      </p>
-    </field>
   </record>
 
-  <!-- Action: Main Services Only -->
   <record id="action_main_shipping_service" model="ir.actions.act_window">
-    <field name="name">Dịch vụ vận chuyển chính</field>
+    <field name="name">Dịch vụ vận chuyển</field>
     <field name="res_model">shipping.service</field>
     <field name="view_mode">list,form</field>
     <field name="domain">[('service_type', '=', 'main')]</field>
     <field name="context">{'default_service_type': 'main'}</field>
   </record>
 
-  <!-- Action: Additional Services Only -->
   <record id="action_additional_shipping_service" model="ir.actions.act_window">
     <field name="name">Dịch vụ cộng thêm</field>
     <field name="res_model">shipping.service</field>

@@ -8,9 +8,9 @@
       <form>
         <header>
           <button name="action_submit_shipping" string="Gửi Hàng" type="object"
-                  class="oe_highlight" invisible="is_shipping_order"/>
+            class="oe_highlight" invisible="is_shipping_order"/>
           <button name="action_cancel" string="Hủy" type="object"
-                  invisible="state not in ['draft', 'sent']"/>
+            invisible="state not in ['draft', 'sent']"/>
           <field name="state" widget="statusbar"/>
         </header>
         <sheet>
@@ -28,39 +28,72 @@
 
           <group string="Thông tin người nhận" name="receiver_group">
             <group>
-              <field name="receiver_name" placeholder="Nhập tên người nhận" required="1"/>
-              <field name="receiver_phone" placeholder="Nhập số điện thoại" required="1"/>
-              <field name="receiver_street" placeholder="Nhập địa chỉ nhận" required="1"/>
+              <field name="receiver_phone"
+                placeholder="Nhập số điện thoại"
+                required="1"/>
+
+              <field name="receiver_name"
+                placeholder="Nhập tên người nhận"
+                required="1"/>
+
+              <field name="receiver_district"
+                placeholder="Quận/Huyện"
+                required="1"/>
+
+              <field name="receiver_ward"
+                placeholder="Phường/Xã"
+                required="1"/>
             </group>
+
             <group>
-              <field name="receiver_city" placeholder="Nhập thành phố"/>
-              <field name="receiver_state" placeholder="Nhập tỉnh/thành"/>
+              <field name="receiver_house_number"
+                placeholder="Số nhà"
+                required="1"/>
+
+              <field name="receiver_street"
+                placeholder="Tên đường"
+                required="1"/>
+
+              <field name="receiver_city"
+                placeholder="Tỉnh/Thành phố"
+                required="1"/>
+
               <field name="delivery_time_slot"/>
             </group>
           </group>
 
           <group string="Thông tin hàng hóa" name="goods_group">
             <group>
-              <field name="goods_type" required="1"/>
-              <field name="goods_description" placeholder="Mô tả hàng hóa"/>
-              <field name="reference_code" placeholder="Mã tham chiếu (có thể bỏ trống)"/>
+              <field name="goods_description" placeholder="Nội dung hàng hóa"/>
+              <field name="reference_code" placeholder="Mã đơn tham chiếu"/>
             </group>
             <group>
-              <field name="goods_value" invisible="goods_type == 'document'"/>
-              <field name="allow_view_goods" invisible="goods_type == 'document'"/>
+              <field name="goods_value"/>
+              <field name="allow_view_goods"/>
+            </group>
+            <group>
+              <field name="quantity"/>
+              <field name="weight"/>
+            </group>
+            <group>
+              <field name="length"/>
+              <field name="width"/>
+              <field name="height"/>
+              <field name="convert_weight"/>
             </group>
           </group>
 
           <group string="Dịch vụ vận chuyển" name="service_group">
             <group>
               <field name="shipping_service_id"
-                     options="{'no_create': True, 'no_open': True}"
-                     required="1"/>
+                options="{'no_create': True, 'no_open': True}"
+                required="1"/>
               <field name="base_shipping_cost" readonly="1"/>
             </group>
           </group>
 
           <group string="Dịch vụ cộng thêm" name="additional_service_group">
+            <field name="goods_type" required="1"/>
             <field name="additional_service_ids" nolabel="1" widget="many2many_checkboxes" options="{'no_create': True}"/>
             <field name="additional_cost" readonly="1"/>
           </group>
@@ -79,8 +112,8 @@
 
           <group string="Ghi chú" name="notes_group">
             <field name="shipping_notes"
-                   nolabel="1"
-                   placeholder="Nhập ghi chú đơn hàng (nếu có)"/>
+              nolabel="1"
+              placeholder="Nhập ghi chú đơn hàng (nếu có)"/>
           </group>
         </sheet>
       </form>
@@ -119,19 +152,19 @@
         <field name="receiver_city" string="Thành phố"/>
 
         <filter string="Phiếu gửi hàng" name="is_shipping"
-                domain="[('is_shipping_order', '=', True)]"/>
+          domain="[('is_shipping_order', '=', True)]"/>
         <filter string="Nháp" name="draft"
-                domain="[('state', '=', 'draft')]"/>
+          domain="[('state', '=', 'draft')]"/>
         <filter string="Đã gửi" name="sent"
-                domain="[('state', '=', 'sent')]"/>
+          domain="[('state', '=', 'sent')]"/>
 
         <group expand="0" string="Nhóm theo">
           <filter string="Trạng thái" name="group_state"
-                  context="{'group_by': 'state'}"/>
+            context="{'group_by': 'state'}"/>
           <filter string="Thành phố" name="group_city"
-                  context="{'group_by': 'receiver_city'}"/>
+            context="{'group_by': 'receiver_city'}"/>
           <filter string="Dịch vụ vận chuyển" name="group_service"
-                  context="{'group_by': 'shipping_service_id'}"/>
+            context="{'group_by': 'shipping_service_id'}"/>
         </group>
       </search>
     </field>
