@@ -24,8 +24,8 @@
     <field name="arch" type="xml">
       <form>
         <header>
-          <button name="action_submit" string="Gửi đơn" type="object" class="oe_highlight" states="draft"/>
-          <button name="action_cancel" string="Hủy" type="object" states="draft,submitted"/>
+          <button name="action_submit" string="Gửi đơn" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+          <button name="action_cancel" string="Hủy" type="object" invisible="state not in ['draft', 'submitted']"/>
           <field name="state" widget="statusbar"/>
         </header>
         <sheet>
@@ -80,7 +80,7 @@
           <!-- Fee Information -->
           <group string="Thông tin cước phí" name="fee_group">
             <field name="is_receiver_pay"/>
-            <field name="cod_amount" attrs="{'invisible': [('is_receiver_pay', '=', False)]}"/>
+            <field name="cod_amount" invisible="not is_receiver_pay"/>
             <field name="total_fee" readonly="1"/>
             <field name="pickup_at_office"/>
           </group>
