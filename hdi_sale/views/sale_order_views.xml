@@ -90,6 +90,9 @@
                 required="1"/>
               <field name="base_shipping_cost" readonly="1"/>
             </group>
+            <group>
+              <field name="shipping_service_id.estimated_time" readonly="1"/>
+            </group>
           </group>
 
           <group string="Dịch vụ cộng thêm" name="additional_service_group">
