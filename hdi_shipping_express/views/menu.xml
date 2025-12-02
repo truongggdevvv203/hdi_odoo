@@ -24,4 +24,10 @@
             parent="hdi_shipping_config" 
             action="action_sender_address" 
             sequence="20"/>
+
+  <menuitem id="hdi_receiver_addresses" 
+            name="Địa chỉ nhận hàng" 
+            parent="hdi_shipping_config" 
+            action="action_receiver_address" 
+            sequence="30"/>
 </odoo>

@@ -40,12 +40,7 @@
 
           <!-- Receiver Information -->
           <group string="Thông tin người nhận" name="receiver_group">
-            <field name="receiver_name"/>
-            <field name="receiver_phone"/>
-            <field name="receiver_street"/>
-            <field name="receiver_city"/>
-            <field name="receiver_state"/>
-            <field name="receiver_zip"/>
+            <field name="receiver_address_id" widget="many2one" options="{'no_create': True}"/>
             <field name="time_slot"/>
           </group>
 

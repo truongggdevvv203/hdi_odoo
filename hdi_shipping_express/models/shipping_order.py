@@ -26,12 +26,13 @@ class ShippingOrder(models.Model):
     sender_phone = fields.Char(string='Điện thoại người gửi', related='sender_address_id.phone', readonly=True)
 
     # Receiver information
-    receiver_name = fields.Char(string='Tên người nhận', required=True)
-    receiver_phone = fields.Char(string='Điện thoại người nhận', required=True)
-    receiver_street = fields.Char(string='Đường')
-    receiver_city = fields.Char(string='Thành phố', required=True)
-    receiver_state = fields.Char(string='Tỉnh/Thành')
-    receiver_zip = fields.Char(string='Mã bưu điện')
+    receiver_address_id = fields.Many2one('receiver.address', string='Địa chỉ nhận', required=True)
+    receiver_name = fields.Char(string='Tên người nhận', related='receiver_address_id.name', readonly=True)
+    receiver_phone = fields.Char(string='Điện thoại người nhận', related='receiver_address_id.phone', readonly=True)
+    receiver_street = fields.Char(string='Đường', related='receiver_address_id.street', readonly=True)
+    receiver_city = fields.Char(string='Thành phố', related='receiver_address_id.city', readonly=True)
+    receiver_state = fields.Char(string='Tỉnh/Thành', related='receiver_address_id.state_id.name', readonly=True)
+    receiver_zip = fields.Char(string='Mã bưu điện', related='receiver_address_id.zip', readonly=True)
     
     # Time slot for delivery
     time_slot = fields.Selection([

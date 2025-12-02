@@ -3,6 +3,8 @@ access_shipping_order_user,access_shipping_order_user,model_shipping_order,base.
 access_shipping_order_manager,access_shipping_order_manager,model_shipping_order,base.group_system,1,1,1,1
 access_sender_address_user,access_sender_address_user,model_sender_address,base.group_user,1,1,1,0
 access_sender_address_manager,access_sender_address_manager,model_sender_address,base.group_system,1,1,1,1
+access_receiver_address_user,access_receiver_address_user,model_receiver_address,base.group_user,1,1,1,0
+access_receiver_address_manager,access_receiver_address_manager,model_receiver_address,base.group_system,1,1,1,1
 access_shipping_service_user,access_shipping_service_user,model_shipping_service,base.group_user,1,0,0,0
 access_shipping_service_manager,access_shipping_service_manager,model_shipping_service,base.group_system,1,1,1,1
 access_shipment_item_user,access_shipment_item_user,model_shipment_item,base.group_user,1,1,1,0
