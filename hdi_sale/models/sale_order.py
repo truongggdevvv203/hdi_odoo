@@ -38,15 +38,18 @@ class SaleOrder(models.Model):
     goods_value = fields.Float(string='Giá trị hàng hóa (VND)')
     goods_description = fields.Text(string='Mô tả hàng hóa')
 
-    # 3.4 Dịch vụ vận chuyển
+    # 3.4 Dịch vụ vận chuyển chính
     shipping_service_id = fields.Many2one('shipping.service',
-                                          string='Dịch vụ vận chuyển')
+                                          string='Dịch vụ vận chuyển',
+                                          domain=[('service_type', '=', 'main')],
+                                          required=True)
     suggested_service_ids = fields.Many2many('shipping.service',
                                             'sale_order_suggested_service',
                                             'order_id', 'service_id',
                                             string='Dịch vụ được đề xuất',
-                                            compute='_compute_suggested_services')
-    base_shipping_cost = fields.Float(string='Cước phí cơ bản (VND)',
+                                            compute='_compute_suggested_services',
+                                            domain=[('service_type', '=', 'main')])
+    base_shipping_cost = fields.Float(string='Cước phí (VND)',
                                       compute='_compute_base_shipping_cost',
                                       store=True)
     
@@ -54,7 +57,8 @@ class SaleOrder(models.Model):
     additional_service_ids = fields.Many2many('shipping.service',
                                             'sale_order_additional_service',
                                             'order_id', 'service_id',
-                                            string='Dịch vụ cộng thêm')
+                                            string='Dịch vụ cộng thêm',
+                                            domain=[('service_type', '=', 'additional')])
     additional_cost = fields.Float(string='Phí dịch vụ cộng thêm (VND)',
                                   compute='_compute_additional_cost',
                                   store=True)
@@ -74,13 +78,16 @@ class SaleOrder(models.Model):
 
     @api.depends('sender_name', 'receiver_city', 'goods_type')
     def _compute_suggested_services(self):
-        """Suggest services based on sender/receiver info and goods type"""
+        """Suggest main shipping services based on sender/receiver info"""
         for order in self:
             if order.sender_name and order.receiver_city:
-                # Get all active shipping services
-                all_services = self.env['shipping.service'].search([('active', '=', True)])
-                # Return up to 3 suggested services (you can customize this logic)
-                order.suggested_service_ids = all_services[:3] if all_services else False
+                # Get all active main shipping services only
+                suggested = self.env['shipping.service'].search([
+                    ('active', '=', True),
+                    ('service_type', '=', 'main')
+                ])
+                # Return up to 3 suggested services
+                order.suggested_service_ids = suggested[:3] if suggested else False
             else:
                 order.suggested_service_ids = False
 
@@ -92,10 +99,12 @@ class SaleOrder(models.Model):
 
     @api.depends('base_shipping_cost', 'cod_amount', 'receiver_pay_fee', 'additional_cost')
     def _compute_total_shipping_fee(self):
+        """Calculate total fee = base shipping + additional services + COD fee"""
         for order in self:
             fee = (order.base_shipping_cost or 0) + (order.additional_cost or 0)
+            # Add COD collection fee only if receiver pays and COD amount > 0
             if order.receiver_pay_fee and order.cod_amount > 0:
-                fee += order.cod_amount * 0.01  # Thêm phí thu hộ 1%
+                fee += order.cod_amount * 0.01  # 1% collection fee
             order.total_shipping_fee = fee
     
     @api.onchange('goods_type')
