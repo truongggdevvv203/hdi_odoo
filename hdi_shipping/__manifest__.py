@@ -7,7 +7,6 @@
     'author': 'HDI Development Team',
     'license': 'LGPL-3',
     'depends': [
-        'stock',
         'contacts',
     ],
     'data': [
