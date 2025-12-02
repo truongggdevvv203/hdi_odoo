@@ -81,12 +81,12 @@ class SaleOrder(models.Model):
   receiver_pay_fee = fields.Boolean(string='Người nhận trả cước',
                                     default=False)
   cod_amount = fields.Integer(string='Tiền thu hộ (COD)')
-  pickup_at_office = fields.Boolean(string='Tới văn phòng gửi',
+  pickup_at_office = fields.Boolean(string='Đến phòng giao dịch gửi',
                                     default=False)
-  shipping_notes = fields.Text(string='Ghi chú đơn hàng')
+  shipping_notes = fields.Text(string='Ghi chú nhận hàng')
 
   # Tính toán tổng cước phí
-  total_shipping_fee = fields.Integer(string='Tổng cước phí (VND)',
+  total_shipping_fee = fields.Integer(string='Tổng cước',
                                       compute='_compute_total_shipping_fee',
                                       store=True)
 
@@ -123,14 +123,10 @@ class SaleOrder(models.Model):
   @api.depends('base_shipping_cost', 'cod_amount', 'receiver_pay_fee',
                'additional_cost')
   def _compute_total_shipping_fee(self):
-    """Calculate total fee = base shipping + additional services + COD fee"""
+    """Calculate total fee = base shipping + additional services"""
     for order in self:
       fee = (int(order.base_shipping_cost or 0)) + (
         int(order.additional_cost or 0))
-      # Add COD collection fee only if receiver pays and COD amount > 0
-      if order.receiver_pay_fee and (order.cod_amount or 0) > 0:
-        # 1% of COD, round to nearest VND
-        fee += int(round((order.cod_amount or 0) * 0.01))
       order.total_shipping_fee = int(fee)
 
   def action_submit_shipping(self):
