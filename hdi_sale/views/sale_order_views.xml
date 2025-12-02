@@ -104,19 +104,14 @@
           <group string="Thông tin cước phí" name="fee_group">
             <group>
               <field name="receiver_pay_fee"/>
-              <field name="cod_amount" invisible="not receiver_pay_fee"/>
+              <field name="cod_amount"/>
               <field name="pickup_at_office"/>
             </group>
             <group>
+              <field name="shipping_notes"/>
+              <field name="sender_pay_fee" readonly="1"/>
               <field name="total_shipping_fee" readonly="1"/>
             </group>
-          </group>
-
-
-          <group string="Ghi chú" name="notes_group">
-            <field name="shipping_notes"
-              nolabel="1"
-              placeholder="Nhập ghi chú đơn hàng (nếu có)"/>
           </group>
         </sheet>
       </form>

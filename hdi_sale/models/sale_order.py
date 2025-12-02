@@ -89,12 +89,24 @@ class SaleOrder(models.Model):
   cod_amount = fields.Integer(string='Tiền thu hộ (COD)')
   pickup_at_office = fields.Boolean(string='Đến phòng giao dịch gửi',
                                     default=False)
+  sender_pay_fee = fields.Integer(string='Tiền trả người gửi', compute='_compute_sender_pay_fee', store=True)
   shipping_notes = fields.Text(string='Ghi chú nhận hàng')
 
   # Tính toán tổng cước phí
   total_shipping_fee = fields.Integer(string='Tổng cước',
                                       compute='_compute_total_shipping_fee',
                                       store=True)
+
+  @api.depends('cod_amount', 'total_shipping_fee', 'receiver_pay_fee')
+  def _compute_sender_pay_fee(self):
+    for rec in self:
+      if rec.receiver_pay_fee:
+        # Nếu người nhận trả cước thì tiền người gửi = COD - tổng cước
+        rec.sender_pay_fee = (rec.cod_amount or 0) - (
+              rec.total_shipping_fee or 0)
+      else:
+        # Nếu không, giữ nguyên hoặc bằng 0
+        rec.sender_pay_fee = 0
 
   @api.depends('sender_name', 'receiver_city', 'goods_type')
   def _compute_suggested_services(self):
