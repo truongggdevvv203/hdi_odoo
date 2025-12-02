@@ -23,4 +23,16 @@
                 parent="hdi_express_config"
                 action="hdi_sale.action_shipping_service"
                 sequence="10"/>
+
+        <menuitem id="hdi_main_shipping_services"
+                name="Dịch vụ chính"
+                parent="hdi_express_config"
+                action="hdi_sale.action_main_shipping_service"
+                sequence="15"/>
+
+        <menuitem id="hdi_additional_shipping_services"
+                name="Dịch vụ cộng thêm"
+                parent="hdi_express_config"
+                action="hdi_sale.action_additional_shipping_service"
+                sequence="20"/>
 </odoo>
