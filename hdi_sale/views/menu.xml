@@ -23,7 +23,7 @@
     <menuitem id="hdi_express_manage_send"
               name="Quản lý đơn hàng gửi"
               parent="hdi_express_manage"
-              action=""
+              action="hdi_sale.action_hdi_sale_order"
               sequence="10"/>
 
     <!-- Menu con: Quản lý đơn hàng nhận -->
@@ -31,7 +31,8 @@
               name="Quản lý đơn hàng nhận"
               parent="hdi_express_manage"
               action=""
-              sequence="20"/>
+              sequence="20"
+              groups="base.group_no_one"/>
 
     <!-- Menu cấu hình / dịch vụ vận chuyển -->
     <menuitem id="hdi_express_config"
