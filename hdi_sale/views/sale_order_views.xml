@@ -23,10 +23,6 @@
           <!-- 3.1 Thông tin người gửi -->
           <group string="3.1 Thông tin người gửi" name="sender_group">
             <group>
-              <field name="sender_name" placeholder="Nhập tên người gửi" required="1"/>
-              <field name="sender_phone" placeholder="Nhập số điện thoại" required="1"/>
-            </group>
-            <group>
               <field name="sender_street" placeholder="Nhập địa chỉ gửi" required="1"/>
             </group>
           </group>
