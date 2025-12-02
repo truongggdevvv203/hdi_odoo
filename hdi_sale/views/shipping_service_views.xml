@@ -9,7 +9,7 @@
         <field name="name"/>
         <field name="code"/>
         <field name="service_type"/>
-        <field name="base_price" widget="monetary"/>
+        <field name="base_price"/>
         <field name="active"/>
       </list>
     </field>
@@ -33,7 +33,7 @@
             </group>
           </group>
           <group>
-            <field name="base_price" required="1" widget="monetary"/>
+            <field name="base_price" required="1"/>
           </group>
           <group string="Mô tả">
             <field name="description" nolabel="1"/>

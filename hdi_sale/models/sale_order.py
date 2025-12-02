@@ -35,7 +35,7 @@ class SaleOrder(models.Model):
     allow_view_goods = fields.Boolean(string='Cho phép khách xem hàng',
                                       default=True)
     reference_code = fields.Char(string='Mã tham chiếu')
-    goods_value = fields.Float(string='Giá trị hàng hóa (VND)')
+    goods_value = fields.Integer(string='Giá trị hàng hóa (VND)')
     goods_description = fields.Text(string='Mô tả hàng hóa')
 
     # 3.4 Dịch vụ vận chuyển
@@ -44,7 +44,7 @@ class SaleOrder(models.Model):
                                           domain=[('service_type', '=', 'main')],
                                           required=True)
 
-    base_shipping_cost = fields.Float(string='Cước phí (VND)',
+    base_shipping_cost = fields.Integer(string='Cước phí (VND)',
                                       compute='_compute_base_shipping_cost',
                                       store=True)
     
@@ -54,20 +54,20 @@ class SaleOrder(models.Model):
                                             'order_id', 'service_id',
                                             string='Dịch vụ cộng thêm',
                                             domain=[('service_type', '=', 'additional')])
-    additional_cost = fields.Float(string='Phí dịch vụ cộng thêm (VND)',
+    additional_cost = fields.Integer(string='Phí dịch vụ cộng thêm (VND)',
                                   compute='_compute_additional_cost',
                                   store=True)
 
     # 3.5 Thông tin cước phí
     receiver_pay_fee = fields.Boolean(string='Người nhận trả cước',
                                       default=False)
-    cod_amount = fields.Float(string='Tiền thu hộ (COD)')
+    cod_amount = fields.Integer(string='Tiền thu hộ (COD)')
     pickup_at_office = fields.Boolean(string='Tới văn phòng gửi',
                                       default=False)
     shipping_notes = fields.Text(string='Ghi chú đơn hàng')
 
     # Tính toán tổng cước phí
-    total_shipping_fee = fields.Float(string='Tổng cước phí (VND)',
+    total_shipping_fee = fields.Integer(string='Tổng cước phí (VND)',
                                       compute='_compute_total_shipping_fee',
                                       store=True)
 
@@ -90,22 +90,24 @@ class SaleOrder(models.Model):
     def _compute_additional_cost(self):
         """Calculate additional fees from selected additional services"""
         for order in self:
-            order.additional_cost = sum(order.additional_service_ids.mapped('base_price'))
+            # base_price is integer (VND), sum will be integer
+            order.additional_cost = int(sum(order.additional_service_ids.mapped('base_price') or [0]))
 
     @api.depends('shipping_service_id')
     def _compute_base_shipping_cost(self):
         """Compute base shipping cost from the selected main shipping service"""
         for order in self:
-            order.base_shipping_cost = order.shipping_service_id.base_price if order.shipping_service_id else 0.0
+            order.base_shipping_cost = int(order.shipping_service_id.base_price) if order.shipping_service_id else 0
     @api.depends('base_shipping_cost', 'cod_amount', 'receiver_pay_fee', 'additional_cost')
     def _compute_total_shipping_fee(self):
         """Calculate total fee = base shipping + additional services + COD fee"""
         for order in self:
-            fee = (order.base_shipping_cost or 0) + (order.additional_cost or 0)
+            fee = (int(order.base_shipping_cost or 0)) + (int(order.additional_cost or 0))
             # Add COD collection fee only if receiver pays and COD amount > 0
-            if order.receiver_pay_fee and order.cod_amount > 0:
-                fee += order.cod_amount * 0.01  # 1% collection fee
-            order.total_shipping_fee = fee
+            if order.receiver_pay_fee and (order.cod_amount or 0) > 0:
+                # 1% of COD, round to nearest VND
+                fee += int(round((order.cod_amount or 0) * 0.01))
+            order.total_shipping_fee = int(fee)
     
     @api.onchange('goods_type')
     def _onchange_goods_type(self):

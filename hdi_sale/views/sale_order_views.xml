@@ -46,7 +46,7 @@
               <field name="reference_code" placeholder="Mã tham chiếu (có thể bỏ trống)"/>
             </group>
             <group>
-              <field name="goods_value" widget="monetary" invisible="goods_type == 'document'"/>
+              <field name="goods_value" invisible="goods_type == 'document'"/>
               <field name="allow_view_goods" invisible="goods_type == 'document'"/>
             </group>
           </group>
@@ -56,31 +56,23 @@
               <field name="shipping_service_id"
                      options="{'no_create': True, 'no_open': True}"
                      required="1"/>
-              <field name="base_shipping_cost"
-                     readonly="1"
-                     widget="monetary"
-                     options="{'currency_field': 'currency_id'}"/>
+              <field name="base_shipping_cost" readonly="1"/>
             </group>
           </group>
 
           <group string="Dịch vụ cộng thêm" name="additional_service_group">
             <field name="additional_service_ids" nolabel="1" widget="many2many_checkboxes" options="{'no_create': True}"/>
-            <field name="additional_cost" readonly="1" widget="monetary"/>
+            <field name="additional_cost" readonly="1"/>
           </group>
 
           <group string="Thông tin cước phí" name="fee_group">
             <group>
               <field name="receiver_pay_fee"/>
-              <field name="cod_amount"
-                     invisible="not receiver_pay_fee"
-                     widget="monetary"/>
+              <field name="cod_amount" invisible="not receiver_pay_fee"/>
               <field name="pickup_at_office"/>
             </group>
             <group>
-              <field name="total_shipping_fee"
-                     readonly="1"
-                     widget="monetary"
-                     options="{'currency_field': 'currency_id'}"/>
+              <field name="total_shipping_fee" readonly="1"/>
             </group>
           </group>
 
@@ -107,7 +99,7 @@
         <field name="receiver_name"/>
         <field name="receiver_phone"/>
         <field name="receiver_city"/>
-        <field name="total_shipping_fee" widget="monetary"/>
+        <field name="total_shipping_fee"/>
         <field name="state"/>
       </list>
     </field>

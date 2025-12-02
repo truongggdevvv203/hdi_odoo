@@ -11,6 +11,6 @@ class ShippingService(models.Model):
         ('main', 'Dịch vụ vận chuyển'),
         ('additional', 'Dịch vụ cộng thêm'),
     ], string='Loại dịch vụ', default='main', required=True)
-    base_price = fields.Float(string='Giá (VND)', required=True)
+    base_price = fields.Integer(string='Giá (VND)', required=True)
     description = fields.Text(string='Mô tả')
     active = fields.Boolean(string='Kích hoạt', default=True)
