@@ -7,8 +7,20 @@
             sequence="5"/>
 
     <menuitem id="sale_order_hdi_create"
-            name="Tạo phiếu gửi hàng"
+            name="Tạo phiếu gửi hàng"
             parent="hdi_express"
             action="hdi_sale.action_hdi_sale_order"
             sequence="10"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="hdi_express_config"
+            name="Cài đặt"
+            parent="hdi_express"
+            sequence="20"/>
+
+        <menuitem id="hdi_shipping_services"
+                name="Dịch vụ vận chuyển"
+                parent="hdi_express_config"
+                action="hdi_sale.action_shipping_service"
+                sequence="10"/>
 </odoo>

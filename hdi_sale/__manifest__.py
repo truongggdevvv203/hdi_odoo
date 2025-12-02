@@ -7,6 +7,7 @@
     'depends': ['sale_management'],
     'data': [
         'security/ir.model.access.csv',
+        'views/shipping_service_views.xml',
         'views/sale_order_views.xml',
         'views/menu.xml',
     ],

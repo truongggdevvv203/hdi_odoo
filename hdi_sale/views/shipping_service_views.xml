@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Shipping Service List View -->
+  <record id="view_shipping_service_list" model="ir.ui.view">
+    <field name="name">shipping.service.list</field>
+    <field name="model">shipping.service</field>
+    <field name="arch" type="xml">
+      <list string="Dịch vụ vận chuyển">
+        <field name="name"/>
+        <field name="code"/>
+        <field name="base_price" widget="monetary"/>
+        <field name="active"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Shipping Service Form View -->
+  <record id="view_shipping_service_form" model="ir.ui.view">
+    <field name="name">shipping.service.form</field>
+    <field name="model">shipping.service</field>
+    <field name="arch" type="xml">
+      <form string="Dịch vụ vận chuyển">
+        <sheet>
+          <group>
+            <group>
+              <field name="name" required="1"/>
+              <field name="code" required="1"/>
+            </group>
+            <group>
+              <field name="base_price" required="1" widget="monetary"/>
+              <field name="active"/>
+            </group>
+          </group>
+          <group string="Mô tả">
+            <field name="description" nolabel="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- Shipping Service Search View -->
+  <record id="view_shipping_service_search" model="ir.ui.view">
+    <field name="name">shipping.service.search</field>
+    <field name="model">shipping.service</field>
+    <field name="arch" type="xml">
+      <search string="Tìm kiếm dịch vụ vận chuyển">
+        <field name="name"/>
+        <field name="code"/>
+        <filter string="Đang hoạt động" name="active" domain="[('active', '=', True)]"/>
+        <filter string="Không hoạt động" name="inactive" domain="[('active', '=', False)]"/>
+      </search>
+    </field>
+  </record>
+</odoo>
