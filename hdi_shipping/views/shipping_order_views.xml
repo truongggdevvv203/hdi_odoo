@@ -61,14 +61,14 @@
           </group>
 
           <!-- Shipment Items Table -->
-          <field name="shipment_item_ids" mode="tree">
-            <tree editable="bottom">
+          <field name="shipment_item_ids">
+            <list editable="bottom">
               <field name="name" required="1"/>
               <field name="category"/>
               <field name="quantity"/>
               <field name="weight" required="1"/>
               <field name="value"/>
-            </tree>
+            </list>
           </field>
 
           <!-- Shipping Service & Cost -->
