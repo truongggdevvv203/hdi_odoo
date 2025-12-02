@@ -36,8 +36,6 @@
           <!-- Sender Information -->
           <group string="Thông tin người gửi" name="sender_group">
             <field name="sender_address_id" widget="many2one" options="{'no_create': True}"/>
-            <field name="sender_name" readonly="1"/>
-            <field name="sender_phone" readonly="1"/>
           </group>
 
           <!-- Receiver Information -->
