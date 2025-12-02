@@ -97,6 +97,11 @@ class SaleOrder(models.Model):
         for order in self:
             order.additional_cost = sum(order.additional_service_ids.mapped('base_price'))
 
+    @api.depends('shipping_service_id')
+    def _compute_base_shipping_cost(self):
+        """Compute base shipping cost from the selected main shipping service"""
+        for order in self:
+            order.base_shipping_cost = order.shipping_service_id.base_price if order.shipping_service_id else 0.0
     @api.depends('base_shipping_cost', 'cod_amount', 'receiver_pay_fee', 'additional_cost')
     def _compute_total_shipping_fee(self):
         """Calculate total fee = base shipping + additional services + COD fee"""
