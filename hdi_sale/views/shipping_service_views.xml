@@ -34,8 +34,7 @@
           </group>
           <group>
             <field name="base_price" required="1"/>
-            <field name="estimated_time"
-              attrs="{'invisible': [('show_estimated_time','=',False)]}"/>
+            <field name="estimated_time" invisible="service_type != 'main'"/>
           </group>
           <group string="Mô tả">
             <field name="description" nolabel="1"/>
