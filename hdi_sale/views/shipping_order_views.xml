@@ -18,7 +18,7 @@
         <sheet>
           <div class="oe_title">
             <h1>
-              <field name="name" readonly="1"/>
+              <field name="code" readonly="1"/>
             </h1>
           </div>
 
@@ -126,14 +126,16 @@
     <field name="model">shipping.order</field>
     <field name="arch" type="xml">
       <list string="Danh sách phiếu gửi hàng">
-        <field name="name"/>
-        <field name="sender_name"/>
-        <field name="sender_phone"/>
-        <field name="receiver_name"/>
-        <field name="receiver_phone"/>
-        <field name="receiver_city"/>
-        <field name="total_shipping_fee"/>
-        <field name="state"/>
+        <field name="code" string="Mã phiếu gửi"/>
+        <field name="reference_code" string="Mã tham chiếu"/>
+        <field name="sender_name" string="Người gửi"/>
+        <field name="receiver_name" string="Người nhận"/>
+        <field name="receiver_phone" string="SĐT người nhận"/>
+        <field name="goods_description" string="Hàng hóa"/>
+        <field name="state" string="Trạng thái"/>
+        <field name="create_date" string="Ngày tạo"/>
+        <field name="cod_amount" string="Thu hộ"/>
+        <field name="total_shipping_fee" string="Tổng cước"/>
       </list>
     </field>
   </record>
@@ -144,12 +146,17 @@
     <field name="model">shipping.order</field>
     <field name="arch" type="xml">
       <search string="Tìm kiếm phiếu gửi hàng">
-        <field name="name" string="Số phiếu"/>
+        <field name="code" string="Mã phiếu gửi"/>
+        <field name="reference_code" string="Mã tham chiếu"/>
         <field name="sender_name" string="Người gửi"/>
-        <field name="sender_phone" string="SĐT người gửi"/>
         <field name="receiver_name" string="Người nhận"/>
         <field name="receiver_phone" string="SĐT người nhận"/>
-        <field name="receiver_city" string="Thành phố"/>
+        <field name="goods_description" string="Hàng hóa"/>
+        <field name="state" string="Trạng thái"/>
+        <field name="create_date" string="Ngày tạo"/>
+        <field name="cod_amount" string="Thu hộ"/>
+        <field name="total_shipping_fee" string="Tổng cước"/>
+
 
         <filter string="Phiếu gửi hàng" name="is_shipping"
           domain="[('is_shipping_order', '=', True)]"/>

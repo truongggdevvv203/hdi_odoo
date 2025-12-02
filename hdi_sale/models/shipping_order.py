@@ -5,7 +5,7 @@ class ShippingOrder(models.Model):
   _name = 'shipping.order'
   _description = 'Phiếu Gửi Hàng'
 
-  name = fields.Char(string='Số phiếu', readonly=True, copy=False, 
+  code = fields.Char(string='Số phiếu', readonly=True, copy=False,
                      default=lambda self: self.env['ir.sequence'].next_by_code('shipping.order'))
   state = fields.Selection([
     ('draft', 'Nháp'),
@@ -16,8 +16,17 @@ class ShippingOrder(models.Model):
   is_shipping_order = fields.Boolean(string='Là phiếu gửi hàng', default=True)
 
   # 3.1 Thông tin người gửi
-  sender_name = fields.Char(string='Tên người gửi')
-  sender_phone = fields.Char(string='Điện thoại người gửi')
+  sender_id = fields.Many2one(
+      comodel_name='res.users',
+      string='Người gửi',
+      default=lambda self: self.env.user
+  )
+  sender_name = fields.Char(
+      string='Tên người gửi',
+      related='sender_id.name',
+      store=True,
+      readonly=True
+  )
   sender_street = fields.Char(string='Địa chỉ gửi')
 
   # 3.2. Thông tin người nhận
