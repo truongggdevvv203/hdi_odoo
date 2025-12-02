@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
   <!-- Add action to existing Sales menu -->
-  <menuitem id="sale_order_hdi_create" 
-            name="Tạo đơn hàng HDI" 
-            parent="sale.menu_sale_order" 
-            action="hdi_sale.action_hdi_sale_order" 
+  <menuitem id="hdi_express"
+            name="Express"
+            parent="sale.sale_menu_root"
             sequence="5"/>
+
+    <menuitem id="sale_order_hdi_create"
+            name="Tạo phiếu gửi hàng"
+            parent="hdi_express"
+            action="hdi_sale.action_hdi_sale_order"
+            sequence="10"/>
 </odoo>
