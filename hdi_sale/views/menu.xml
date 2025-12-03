@@ -11,7 +11,7 @@
     <menuitem id="hdi_express_dashboard"
               name="Trang chủ"
               parent="hdi_express"
-              action="hdi_sale.action_shipping_order_dashboard"
+              action="hdi_sale.action_shipping_dashboard_owl"
               sequence="5"/>
 
        <!-- Menu tạo phiếu gửi hàng -->
