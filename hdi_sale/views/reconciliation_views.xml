@@ -81,24 +81,22 @@
     <record id="view_shipping_order_form_payment" model="ir.ui.view">
         <field name="name">Shipping Order - Payment Tab</field>
         <field name="model">shipping.order</field>
-        <field name="inherit_id" ref="hdi_sale.view_hdi_sale_order_form"/>
+        <field name="inherit_id" ref="hdi_sale.view_shipping_order_form"/>
         <field name="arch" type="xml">
-            <notebook position="inside">
-                <page string="Thanh toán / Đối soát">
+            <sheet position="inside">
+                <group string="Thanh toán / Đối soát" name="payment_group">
                     <group>
-                        <group string="Trạng thái thanh toán">
-                            <field name="payment_status"/>
-                            <field name="payment_date"/>
-                            <field name="payment_deadline"/>
-                        </group>
-                        <group string="Số tiền">
-                            <field name="paid_amount" widget="monetary"/>
-                            <field name="payment_note"/>
-                            <field name="invoice_code"/>
-                        </group>
+                        <field name="payment_status"/>
+                        <field name="payment_date"/>
+                        <field name="payment_deadline"/>
                     </group>
-                </page>
-            </notebook>
+                    <group>
+                        <field name="paid_amount"/>
+                        <field name="payment_note"/>
+                        <field name="invoice_code"/>
+                    </group>
+                </group>
+            </sheet>
         </field>
     </record>
 
@@ -106,7 +104,20 @@
     <record id="view_shipping_order_list_payment" model="ir.ui.view">
         <field name="name">Shipping Order - Payment Filter</field>
         <field name="model">shipping.order</field>
-        <field name="inherit_id" ref="hdi_sale.view_hdi_sale_order_list"/>
+        <field name="inherit_id" ref="hdi_sale.view_shipping_order_list"/>
+        <field name="arch" type="xml">
+            <tree position="inside">
+                <field name="payment_status" string="Trạng thái thanh toán"/>
+                <field name="paid_amount" string="Tiền đã trả"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ====== SHIPPING ORDER SEARCH VIEW EXTENSION (Add Payment Filters) ====== -->
+    <record id="view_shipping_order_search_payment" model="ir.ui.view">
+        <field name="name">Shipping Order - Payment Search</field>
+        <field name="model">shipping.order</field>
+        <field name="inherit_id" ref="hdi_sale.view_shipping_order_search"/>
         <field name="arch" type="xml">
             <search position="inside">
                 <filter name="filter_paid" string="Đã trả tiền" domain="[('payment_status', '=', 'paid')]"/>
