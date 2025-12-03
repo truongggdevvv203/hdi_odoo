@@ -69,3 +69,12 @@ class ShippingOrderDashboard(models.TransientModel):
             record.pending_orders = pending
             record.cancelled_orders = cancelled
             record.success_rate = success_rate
+
+    def action_refresh_dashboard(self):
+        """Refresh dashboard data"""
+        # Force recompute all statistics
+        self._compute_statistics()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload'
+        }
