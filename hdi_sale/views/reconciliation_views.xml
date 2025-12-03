@@ -38,11 +38,27 @@
                     <div class="alert alert-secondary" role="alert" invisible="hide_no_data_alert">
                         <p>Chưa có dữ liệu. Vui lòng thay đổi bộ lọc và tìm kiếm lại.</p>
                     </div>
+
+                    <!-- Data List Section -->
+                    <group string="Danh sách đơn hàng" invisible="hide_no_data_alert">
+                        <field name="reconciliation_line_ids" nolabel="1" widget="one2many">
+                            <list create="false" delete="false" edit="false">
+                                <field name="order_code"/>
+                                <field name="sender_name"/>
+                                <field name="receiver_name"/>
+                                <field name="receiver_phone"/>
+                                <field name="total_shipping_fee"/>
+                                <field name="paid_amount"/>
+                                <field name="unpaid_amount"/>
+                                <field name="payment_status"/>
+                                <field name="payment_date"/>
+                            </list>
+                        </field>
+                    </group>
                 </sheet>
 
                 <footer>
                     <button name="action_refresh_data" type="object" string="Tìm kiếm" class="btn-primary"/>
-                    <button name="action_view_details" type="object" string="Xem danh sách chi tiết" class="btn-secondary" invisible="hide_no_data_alert"/>
                     <button name="action_export_reconciliation" type="object" string="Xuất Excel" class="btn-secondary" invisible="hide_export_button"/>
                 </footer>
             </form>
