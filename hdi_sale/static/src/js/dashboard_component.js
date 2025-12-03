@@ -12,6 +12,8 @@ export class ShippingDashboardComponent extends Component {
         this.orm = useService("orm");
         this.bus = useService("bus_service");
         this.notification = useService("notification");
+        this.user = useService("user");
+        this.action = useService("action");
         
         this.state = useState({
             dashboardData: {
@@ -72,14 +74,14 @@ export class ShippingDashboardComponent extends Component {
 
     subscribeToUpdates() {
         // Subscribe to shipping order updates for current user
-        const userId = this.env.services.user.userId;
+        const userId = this.user.userId;
         this.bus.subscribe(`shipping_order_update_${userId}`, (notification) => {
             this.handleRealtimeUpdate(notification.detail);
         });
     }
 
     unsubscribeFromUpdates() {
-        const userId = this.env.services.user.userId;
+        const userId = this.user.userId;
         this.bus.unsubscribe(`shipping_order_update_${userId}`);
     }
 
@@ -139,42 +141,42 @@ export class ShippingDashboardComponent extends Component {
 
     // Drill-down actions
     onViewAllOrders() {
-        this.env.services.action.doAction({
+        this.action.doAction({
             name: _t("All Orders"),
             type: "ir.actions.act_window",
             res_model: "shipping.order",
             view_mode: "tree,form",
-            domain: [['sender_id', '=', this.env.services.user.userId]],
+            domain: [['sender_id', '=', this.user.userId]],
         });
     }
 
     onViewDeliveredOrders() {
-        this.env.services.action.doAction({
+        this.action.doAction({
             name: _t("Delivered Orders"),
             type: "ir.actions.act_window",
             res_model: "shipping.order",
             view_mode: "tree,form",
-            domain: [['sender_id', '=', this.env.services.user.userId], ['state', '=', 'delivered']],
+            domain: [['sender_id', '=', this.user.userId], ['state', '=', 'delivered']],
         });
     }
 
     onViewPendingOrders() {
-        this.env.services.action.doAction({
+        this.action.doAction({
             name: _t("Pending Orders"),
             type: "ir.actions.act_window",
             res_model: "shipping.order",
             view_mode: "tree,form",
-            domain: [['sender_id', '=', this.env.services.user.userId], ['state', 'in', ['waiting_pickup', 'in_transit', 'forwarded']]],
+            domain: [['sender_id', '=', this.user.userId], ['state', 'in', ['waiting_pickup', 'in_transit', 'forwarded']]],
         });
     }
 
     onViewCancelledOrders() {
-        this.env.services.action.doAction({
+        this.action.doAction({
             name: _t("Cancelled Orders"),
             type: "ir.actions.act_window",
             res_model: "shipping.order",
             view_mode: "tree,form",
-            domain: [['sender_id', '=', this.env.services.user.userId], ['state', '=', 'cancelled']],
+            domain: [['sender_id', '=', this.user.userId], ['state', '=', 'cancelled']],
         });
     }
 }
