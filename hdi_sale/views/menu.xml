@@ -52,19 +52,19 @@
   <menuitem id="hdi_express_reconcile_paid"
     name="Danh sách đã trả tiền"
     parent="hdi_express_reconcile"
-    action=""
+    action="hdi_sale.action_reconciliation_paid"
     sequence="1"/>
 
   <menuitem id="hdi_express_reconcile_waiting"
     name="Danh sách chờ trả tiền"
     parent="hdi_express_reconcile"
-    action=""
+    action="hdi_sale.action_reconciliation_waiting"
     sequence="2"/>
 
   <menuitem id="hdi_express_reconcile_unpaid"
     name="Danh sách chưa trả tiền"
     parent="hdi_express_reconcile"
-    action=""
+    action="hdi_sale.action_reconciliation_unpaid"
     sequence="3"/>
 
   <!-- Menu cấu hình / dịch vụ vận chuyển -->

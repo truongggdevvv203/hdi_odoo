@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ====== RECONCILIATION WIZARD FORM VIEW ====== -->
+    <record id="view_shipping_order_reconciliation_form" model="ir.ui.view">
+        <field name="name">Đối soát Công nợ</field>
+        <field name="model">shipping.order.reconciliation</field>
+        <field name="arch" type="xml">
+            <form string="Đối soát Công nợ">
+                <sheet>
+                    <group>
+                        <group string="Bộ lọc thời gian">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group string="Thông tin">
+                            <field name="user_id"/>
+                            <field name="payment_status"/>
+                        </group>
+                    </group>
+
+                    <group string="Thống kê">
+                        <field name="total_orders"/>
+                        <field name="total_amount" widget="monetary"/>
+                        <field name="total_paid" widget="monetary"/>
+                        <field name="total_unpaid" widget="monetary"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Danh sách đơn hàng">
+                            <field name="order_line_ids" readonly="1">
+                                <tree>
+                                    <field name="code"/>
+                                    <field name="sender_name"/>
+                                    <field name="receiver_name"/>
+                                    <field name="total_shipping_fee" widget="monetary"/>
+                                    <field name="paid_amount" widget="monetary"/>
+                                    <field name="payment_status"/>
+                                    <field name="payment_date"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+
+                <footer>
+                    <button name="action_view_details" type="object" string="Xem chi tiết" class="btn-primary"/>
+                    <button name="action_export_reconciliation" type="object" string="Xuất báo cáo"/>
+                    <button string="Đóng" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ====== ACTIONS FOR THREE RECONCILIATION TYPES ====== -->
+    
+    <!-- Action: Đã trả tiền -->
+    <record id="action_reconciliation_paid" model="ir.actions.act_window">
+        <field name="name">Danh sách đã trả tiền</field>
+        <field name="res_model">shipping.order.reconciliation</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_shipping_order_reconciliation_form"/>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_payment_status': 'paid'
+        }</field>
+    </record>
+
+    <!-- Action: Chờ trả tiền -->
+    <record id="action_reconciliation_waiting" model="ir.actions.act_window">
+        <field name="name">Danh sách chờ trả tiền</field>
+        <field name="res_model">shipping.order.reconciliation</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_shipping_order_reconciliation_form"/>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_payment_status': 'waiting_payment'
+        }</field>
+    </record>
+
+    <!-- Action: Chưa trả tiền -->
+    <record id="action_reconciliation_unpaid" model="ir.actions.act_window">
+        <field name="name">Danh sách chưa trả tiền</field>
+        <field name="res_model">shipping.order.reconciliation</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_shipping_order_reconciliation_form"/>
+        <field name="target">new</field>
+        <field name="context">{
+            'default_payment_status': 'unpaid'
+        }</field>
+    </record>
+
+    <!-- ====== SHIPPING ORDER FORM EXTENSION (Add Payment Section) ====== -->
+    <record id="view_shipping_order_form_payment" model="ir.ui.view">
+        <field name="name">Shipping Order - Payment Tab</field>
+        <field name="model">shipping.order</field>
+        <field name="inherit_id" ref="hdi_sale.view_hdi_sale_order_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Thanh toán / Đối soát">
+                    <group>
+                        <group string="Trạng thái thanh toán">
+                            <field name="payment_status"/>
+                            <field name="payment_date"/>
+                            <field name="payment_deadline"/>
+                        </group>
+                        <group string="Số tiền">
+                            <field name="paid_amount" widget="monetary"/>
+                            <field name="payment_note"/>
+                            <field name="invoice_code"/>
+                        </group>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+
+    <!-- ====== SHIPPING ORDER LIST VIEW EXTENSION (Add Payment Status Filter) ====== -->
+    <record id="view_shipping_order_list_payment" model="ir.ui.view">
+        <field name="name">Shipping Order - Payment Filter</field>
+        <field name="model">shipping.order</field>
+        <field name="inherit_id" ref="hdi_sale.view_hdi_sale_order_list"/>
+        <field name="arch" type="xml">
+            <search position="inside">
+                <filter name="filter_paid" string="Đã trả tiền" domain="[('payment_status', '=', 'paid')]"/>
+                <filter name="filter_waiting" string="Chờ trả tiền" domain="[('payment_status', '=', 'waiting_payment')]"/>
+                <filter name="filter_unpaid" string="Chưa trả tiền" domain="[('payment_status', '=', 'unpaid')]"/>
+                <separator/>
+            </search>
+        </field>
+    </record>
+
+</odoo>

@@ -127,6 +127,24 @@ class ShippingOrder(models.Model):
                                            compute='_compute_suggested_services',
                                            store=True)
 
+  # 3.6 Thông tin thanh toán / Đối soát công nợ
+  payment_status = fields.Selection([
+    ('unpaid', 'Chưa trả tiền'),
+    ('waiting_payment', 'Chờ trả tiền'),
+    ('paid', 'Đã trả tiền'),
+    ('cancelled', 'Hủy thanh toán'),
+  ], string='Trạng thái thanh toán', default='unpaid', help='Trạng thái thanh toán của đơn hàng')
+
+  payment_date = fields.Date(string='Ngày thanh toán', readonly=True, help='Ngày thực hiện thanh toán')
+  
+  paid_amount = fields.Integer(string='Tiền đã trả (VND)', default=0, readonly=True, help='Số tiền đã thanh toán')
+  
+  payment_deadline = fields.Date(string='Hạn thanh toán', help='Hạn chót thanh toán')
+  
+  payment_note = fields.Text(string='Ghi chú thanh toán', help='Ghi chú liên quan đến thanh toán')
+  
+  invoice_code = fields.Char(string='Mã hóa đơn', readonly=True, help='Mã hóa đơn liên quan (nếu có)')
+
   @api.depends('cod_amount', 'total_shipping_fee', 'receiver_pay_fee')
   def _compute_sender_pay_fee(self):
     for rec in self:
