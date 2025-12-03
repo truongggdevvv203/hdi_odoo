@@ -7,25 +7,12 @@
         <field name="arch" type="xml">
             <form>
                 <sheet>
-                    <!-- Search Input Section -->
-                    <div class="alert alert-info" role="alert">
-                        <strong>Hướng dẫn:</strong> Nhập mã phiếu gửi hàng và nhấn nút "Tìm kiếm" để xem thông tin chi tiết.
-                    </div>
-
                     <group>
                         <group>
-                            <field name="search_code" 
-                                   widget="char" 
-                                   placeholder="Ví dụ: 1590750887"/>
+                            <field name="search_code"
+                                   widget="char"/>
                         </group>
                     </group>
-
-                    <!-- Results Section -->
-                    <div class="alert alert-secondary" 
-                         invisible="not order_id" 
-                         role="alert">
-                        Chưa có kết quả tìm kiếm
-                    </div>
 
                     <div invisible="not order_id">
                         <group>
