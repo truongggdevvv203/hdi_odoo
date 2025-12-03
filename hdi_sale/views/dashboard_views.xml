@@ -5,66 +5,180 @@
     <field name="name">shipping.order.dashboard.form</field>
     <field name="model">shipping.order.dashboard</field>
     <field name="arch" type="xml">
-      <form string="Bảng Điều Khiển Phiếu Gửi Hàng">
+      <form string="HDI Express - Trang chủ">
         <header>
-          <button name="action_refresh_dashboard" string="Làm mới" type="object"
+          <button name="action_refresh_dashboard" string="🔄 Làm mới" type="object"
             class="btn-primary"/>
         </header>
-        <sheet>
-          <div class="oe_title">
-            <h1>
-              <span>Bảng Điều Khiển Phiếu Gửi Hàng</span>
-            </h1>
-          </div>
-
-          <div class="row mt-4">
-            <div class="col-md-3">
-              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-                <h2 style="color: #0275d8;"><field name="total_orders" widget="statinfo"/></h2>
-                <p style="margin: 0; color: #666;">Tổng số đơn hàng</p>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-                <h2 style="color: #28a745;"><field name="delivered_orders" widget="statinfo"/></h2>
-                <p style="margin: 0; color: #666;">Đơn phát thành công</p>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-                <h2 style="color: #ffc107;"><field name="pending_orders" widget="statinfo"/></h2>
-                <p style="margin: 0; color: #666;">Đơn chờ xử lý</p>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-                <h2 style="color: #dc3545;"><field name="cancelled_orders" widget="statinfo"/></h2>
-                <p style="margin: 0; color: #666;">Đơn đã hủy</p>
-              </div>
+        <sheet style="background: #f8f9fa;">
+          <!-- Header Title -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h2 style="color: #ff6600; font-weight: bold; margin-bottom: 5px;">
+                <i class="fa fa-tachometer-alt"/> HDI Express Dashboard
+              </h2>
+              <p class="text-muted">Báo cáo thống kê</p>
             </div>
           </div>
 
-          <div class="row mt-4">
-            <div class="col-md-6 offset-md-3">
-              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-                <h2 style="color: #17a2b8;">
-                  <field name="success_rate" widget="float" digits="[16, 1]"/>%
-                </h2>
-                <p style="margin: 0; color: #666;">Tỷ lệ thành công</p>
+          <!-- Top Statistics Cards -->
+          <div class="row mb-4">
+            <div class="col-md-3">
+              <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px;">
+                <div class="d-flex align-items-center">
+                  <div class="me-3">
+                    <i class="fa fa-boxes fa-2x"/>
+                  </div>
+                  <div>
+                    <h3 class="mb-0"><field name="total_orders"/></h3>
+                    <small>Tổng đơn hàng</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 10px;">
+                <div class="d-flex align-items-center">
+                  <div class="me-3">
+                    <i class="fa fa-check-circle fa-2x"/>
+                  </div>
+                  <div>
+                    <h3 class="mb-0"><field name="delivered_orders"/></h3>
+                    <small>Phát thành công</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 10px;">
+                <div class="d-flex align-items-center">
+                  <div class="me-3">
+                    <i class="fa fa-truck fa-2x"/>
+                  </div>
+                  <div>
+                    <h3 class="mb-0"><field name="pending_orders"/></h3>
+                    <small>Đang vận chuyển</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 10px;">
+                <div class="d-flex align-items-center">
+                  <div class="me-3">
+                    <i class="fa fa-percentage fa-2x"/>
+                  </div>
+                  <div>
+                    <h3 class="mb-0"><field name="success_rate" digits="[16,1]"/>%</h3>
+                    <small>Tỷ lệ thành công</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Section -->
+          <div class="row mb-4">
+            <!-- Pie Chart -->
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm" style="padding: 20px; border-radius: 10px;">
+                <h5 class="card-title mb-3">
+                  <i class="fa fa-chart-pie text-primary"/> Thống kê đơn hàng theo trạng thái
+                </h5>
+                <div id="pieChart" style="height: 300px;"/>
+                <field name="chart_data" invisible="1"/>
+              </div>
+            </div>
+
+            <!-- Detailed Statistics -->
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm" style="padding: 20px; border-radius: 10px;">
+                <h5 class="card-title mb-3">
+                  <i class="fa fa-list text-success"/> Thống kê chi tiết
+                </h5>
+                <div class="list-group list-group-flush">
+                  <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                    <span><i class="fa fa-clock text-warning me-2"/>Chờ lấy hàng</span>
+                    <span class="badge bg-warning rounded-pill"><field name="waiting_pickup_orders"/></span>
+                  </div>
+                  <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                    <span><i class="fa fa-shipping-fast text-info me-2"/>Đang vận chuyển</span>
+                    <span class="badge bg-info rounded-pill"><field name="in_transit_orders"/></span>
+                  </div>
+                  <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                    <span><i class="fa fa-redo text-secondary me-2"/>Đơn hoàn</span>
+                    <span class="badge bg-secondary rounded-pill"><field name="return_orders"/></span>
+                  </div>
+                  <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                    <span><i class="fa fa-arrow-right text-primary me-2"/>Phát tiếp</span>
+                    <span class="badge bg-primary rounded-pill"><field name="forwarded_orders"/></span>
+                  </div>
+                  <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                    <span><i class="fa fa-times-circle text-danger me-2"/>Đã hủy</span>
+                    <span class="badge bg-danger rounded-pill"><field name="cancelled_orders"/></span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
         </sheet>
-        <script>
-            // Auto-refresh dashboard every 30 seconds
-            setInterval(function() {
-                // Trigger refresh by clicking the refresh button
-                var refreshBtn = document.querySelector('button[name="action_refresh_dashboard"]');
-                if (refreshBtn) {
-                    refreshBtn.click();
+        
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"/>
+        <script type="text/javascript">
+          function initDashboard() {
+            // Get chart data
+            var chartDataField = document.querySelector('field[name="chart_data"] input') || 
+                                document.querySelector('span[name="chart_data"]');
+            if (!chartDataField) return;
+            
+            var chartData = JSON.parse(chartDataField.textContent || chartDataField.value || '{"pie_data": [], "total": 0}');
+            
+            // Pie Chart
+            var ctx = document.getElementById('pieChart');
+            if (ctx && chartData.pie_data.length > 0) {
+              ctx.innerHTML = '<canvas id="pieChartCanvas" width="300" height="300"></canvas>';
+              var canvas = document.getElementById('pieChartCanvas');
+              
+              new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                  labels: chartData.pie_data.map(item => item.label),
+                  datasets: [{
+                    data: chartData.pie_data.map(item => item.value),
+                    backgroundColor: chartData.pie_data.map(item => item.color),
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        padding: 20,
+                        usePointStyle: true
+                      }
+                    }
+                  }
                 }
-            }, 30000); // 30 seconds
+              });
+            }
+          }
+          
+          // Initialize when page loads
+          setTimeout(initDashboard, 1000);
+          
+          // Auto-refresh every 30 seconds
+          setInterval(function() {
+            var refreshBtn = document.querySelector('button[name="action_refresh_dashboard"]');
+            if (refreshBtn) {
+              refreshBtn.click();
+              setTimeout(initDashboard, 500);
+            }
+          }, 30000);
         </script>
       </form>
     </field>
