@@ -27,28 +27,10 @@
                     <div class="alert alert-secondary" role="alert" attrs="{'invisible': [('total_orders', '!=', 0)]}">
                         <p>Chưa có dữ liệu. Vui lòng thay đổi bộ lọc và tìm kiếm lại.</p>
                     </div>
-
-                    <!-- Data List Section -->
-                    <div attrs="{'invisible': [('total_orders', '=', 0)]}">
-                        <h3 class="mt-4 mb-3">Danh sách đơn hàng</h3>
-                        <field name="reconciliation_line_ids" nolabel="1">
-                            <tree create="false" delete="false" edit="false">
-                                <field name="order_code"/>
-                                <field name="sender_name"/>
-                                <field name="receiver_name"/>
-                                <field name="receiver_phone"/>
-                                <field name="total_shipping_fee"/>
-                                <field name="paid_amount"/>
-                                <field name="unpaid_amount"/>
-                                <field name="payment_status"/>
-                                <field name="payment_date"/>
-                            </tree>
-                        </field>
-                    </div>
                 </sheet>
 
                 <footer>
-                    <button name="action_search_reconciliation" type="object" string="Tìm kiếm" class="btn-primary"/>
+                    <button name="action_view_details" type="object" string="Tìm kiếm" class="btn-primary"/>
                     <button name="action_export_reconciliation" type="object" string="Xuất Excel" class="btn-secondary" attrs="{'invisible': [('total_orders', '=', 0)]}"/>
                 </footer>
             </form>
