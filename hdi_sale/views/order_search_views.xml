@@ -5,7 +5,7 @@
         <field name="name">Tìm kiếm Phiếu Gửi Hàng</field>
         <field name="model">shipping.order.search</field>
         <field name="arch" type="xml">
-            <form>
+            <form create="false" edit="false" delete="false">
                 <sheet>
                     <group>
                         <group>
