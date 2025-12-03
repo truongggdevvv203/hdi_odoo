@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form view for searching shipping orders -->
+    <record id="view_shipping_order_search_form" model="ir.ui.view">
+        <field name="name">Tìm kiếm Phiếu Gửi Hàng</field>
+        <field name="model">shipping.order.search</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <!-- Search Input Section -->
+                    <div class="alert alert-info" role="alert">
+                        <strong>Hướng dẫn:</strong> Nhập mã phiếu gửi hàng và nhấn nút "Tìm kiếm" để xem thông tin chi tiết.
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="search_code" 
+                                   widget="char" 
+                                   placeholder="Ví dụ: 1590750887"
+                                   attrs="{'readonly': [('order_id', '!=', False)]}"/>
+                        </group>
+                    </group>
+
+                    <!-- Results Section -->
+                    <div class="alert alert-secondary" 
+                         invisible="order_id" 
+                         role="alert">
+                        Chưa có kết quả tìm kiếm
+                    </div>
+
+                    <div invisible="not order_id">
+                        <group>
+                            <group string="Thông tin chung">
+                                <field name="order_code" readonly="1"/>
+                                <field name="state" readonly="1"/>
+                                <field name="payment_status" readonly="1"/>
+                            </group>
+                            <group string="Người gửi">
+                                <field name="sender_name" readonly="1"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Người nhận">
+                                <field name="receiver_name" readonly="1"/>
+                                <field name="receiver_phone" readonly="1"/>
+                                <field name="receiver_address" readonly="1"/>
+                            </group>
+                            <group string="Nội dung">
+                                <field name="goods_description" readonly="1" nolabel="1"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group string="Thông tin thanh toán">
+                                <field name="total_shipping_fee" readonly="1"/>
+                                <field name="paid_amount" readonly="1"/>
+                                <field name="payment_date" readonly="1"/>
+                            </group>
+                        </group>
+                    </div>
+
+                    <field name="order_id" invisible="1"/>
+                </sheet>
+
+                <footer>
+                    <button name="action_search" 
+                            string="Tìm kiếm" 
+                            type="object"
+                            class="btn-primary"
+                            attrs="{'invisible': [('order_id', '!=', False)]}"/>
+                    <button name="action_view_order" 
+                            string="Xem chi tiết" 
+                            type="object"
+                            class="btn-primary"
+                            attrs="{'invisible': [('order_id', '=', False)]}"/>
+                    <button name="action_clear" 
+                            string="Tìm kiếm mới" 
+                            type="object"
+                            class="btn-secondary"
+                            attrs="{'invisible': [('order_id', '=', False)]}"/>
+                    <button string="Đóng" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open search form -->
+    <record id="action_shipping_order_search" model="ir.actions.act_window">
+        <field name="name">Tìm kiếm Phiếu Gửi Hàng</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">shipping.order.search</field>
+        <field name="view_mode">form</field>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'form', 'view_id': ref('view_shipping_order_search_form')})]"/>
+        <field name="target">new</field>
+        <field name="help">Tìm kiếm thông tin chi tiết phiếu gửi hàng theo mã</field>
+    </record>
+
+    <!-- Menu item for search -->
+    <menuitem id="hdi_express_search_order"
+        name="Tìm kiếm phiếu gửi"
+        parent="hdi_express"
+        action="hdi_sale.action_shipping_order_search"
+        sequence="15"/>
+</odoo>
