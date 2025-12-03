@@ -17,8 +17,8 @@
     ],
     'assets': {
         'web.assets_backend': [
-            'hdi_sale/static/src/js/dashboard_component.js',
-            'hdi_sale/static/src/xml/dashboard_template.xml',
+            'hdi_express_sale/static/src/js/express_dashboard_component.js',
+            'hdi_express_sale/static/src/xml/express_dashboard_template.xml',
         ],
     },
     'installable': True,

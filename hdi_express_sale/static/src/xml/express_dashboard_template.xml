@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <t t-name="hdi_sale.ShippingDashboard" owl="1">
+    <t t-name="hdi_express_sale.ShippingDashboard" owl="1">
         <div class="o_dashboard_view o_view_controller" style="background: #f8f9fa; padding: 24px;">
             
             <!-- Loading Spinner -->

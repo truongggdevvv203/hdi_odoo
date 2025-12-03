@@ -6,7 +6,7 @@ import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
 
 export class ShippingDashboardComponent extends Component {
-    static template = "hdi_sale.ShippingDashboard";
+    static template = "hdi_express_sale.ShippingDashboard";
 
     setup() {
         this.orm = useService("orm");
