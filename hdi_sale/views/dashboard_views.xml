@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
   <!-- Real-time Dashboard Action using Owl Component -->
+  <!-- This replaces the old form-based dashboard with an Owl component -->
   <record id="action_shipping_order_dashboard" model="ir.actions.client">
     <field name="name">HDI Express Dashboard</field>
     <field name="tag">hdi_sale.dashboard_action</field>

@@ -9,7 +9,7 @@
 
     <!-- Menu Dashboard/Trang chủ -->
     <menuitem id="hdi_express_dashboard"
-              name="Trang chủ"
+              name="Trang chủ"
               parent="hdi_express"
               action="hdi_sale.action_shipping_order_dashboard"
               sequence="5"/>
