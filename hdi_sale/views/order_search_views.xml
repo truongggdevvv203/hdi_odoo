@@ -60,7 +60,6 @@
                     </div>
 
                     <field name="order_id" invisible="1"/>
-                    <field name="search_disabled" invisible="1"/>
                     <field name="has_results" invisible="1"/>
                 </sheet>
 
