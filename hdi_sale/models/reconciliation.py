@@ -64,6 +64,21 @@ class ShippingOrderReconciliation(models.TransientModel):
         store=False
     )
 
+    # Visibility fields for Odoo 17+ (replacing attrs)
+    hide_no_data_alert = fields.Boolean(
+        string='Ẩn cảnh báo không có dữ liệu',
+        compute='_compute_visibility',
+        readonly=True,
+        store=False
+    )
+    
+    hide_export_button = fields.Boolean(
+        string='Ẩn nút xuất Excel',
+        compute='_compute_visibility',
+        readonly=True,
+        store=False
+    )
+
     @api.depends('date_from', 'date_to', 'payment_status', 'user_id')
     def _get_filtered_orders(self):
         """Get orders based on filters"""
@@ -99,10 +114,20 @@ class ShippingOrderReconciliation(models.TransientModel):
             record.total_paid = sum(orders.mapped('paid_amount') or [0])
             record.total_unpaid = record.total_amount - record.total_paid
 
+    @api.depends('total_orders')
+    def _compute_visibility(self):
+        """Compute visibility fields for UI elements"""
+        for record in self:
+            record.hide_no_data_alert = record.total_orders != 0
+            record.hide_export_button = record.total_orders == 0
+
     def action_view_details(self):
         """Open detail list view for reconciliation"""
         self.ensure_one()
+        # Force computation of stats and visibility
         self._compute_stats()
+        self._compute_visibility()
+        
         orders = self._get_filtered_orders()
         
         domain = [('id', 'in', orders.ids)] if orders else []
