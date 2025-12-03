@@ -60,14 +60,12 @@ class ShippingOrderReconciliation(models.TransientModel):
         help='Người dùng hiện tại'
     )
 
-    # Reconciliation lines
+    # Reconciliation lines (will be dynamically populated)
     reconciliation_line_ids = fields.One2many(
         'shipping.order.reconciliation.line',
         'reconciliation_id',
         string='Chi tiết đơn hàng',
-        compute='_compute_reconciliation_lines',
-        readonly=True,
-        store=False
+        readonly=True
     )
 
     # Stats
@@ -149,37 +147,6 @@ class ShippingOrderReconciliation(models.TransientModel):
             record.total_paid = sum(orders.mapped('paid_amount') or [0])
             record.total_unpaid = record.total_amount - record.total_paid
 
-    @api.depends('date_from', 'date_to', 'payment_status', 'user_id')
-    def _compute_reconciliation_lines(self):
-        """Populate reconciliation lines from filtered orders"""
-        for record in self:
-            try:
-                orders = record._get_filtered_orders()
-                lines = []
-                
-                for order in orders:
-                    lines.append({
-                        'order_code': order.code,
-                        'sender_name': order.sender_name,
-                        'receiver_name': order.receiver_name,
-                        'receiver_phone': order.receiver_phone,
-                        'total_shipping_fee': order.total_shipping_fee or 0,
-                        'paid_amount': order.paid_amount or 0,
-                        'unpaid_amount': (order.total_shipping_fee or 0) - (order.paid_amount or 0),
-                        'payment_status': order.payment_status,
-                        'payment_date': order.payment_date,
-                    })
-                
-                # Create in-memory lines (transient model)
-                if lines:
-                    reconciliation_line_model = self.env['shipping.order.reconciliation.line']
-                    record.reconciliation_line_ids = [reconciliation_line_model.new(vals) for vals in lines]
-                else:
-                    record.reconciliation_line_ids = []
-            except Exception as e:
-                # If there's an error, set empty list
-                record.reconciliation_line_ids = []
-
     @api.depends('total_orders')
     def _compute_visibility(self):
         """Compute visibility fields for UI elements"""
@@ -213,10 +180,33 @@ class ShippingOrderReconciliation(models.TransientModel):
     def action_refresh_data(self):
         """Refresh data in the form"""
         self.ensure_one()
-        # Force computation of all dependent fields
+        
+        # Clear existing lines
+        self.reconciliation_line_ids.unlink()
+        
+        # Get filtered orders
+        orders = self._get_filtered_orders()
+        
+        # Create new lines from filtered orders
+        line_model = self.env['shipping.order.reconciliation.line']
+        for order in orders:
+            line_model.create({
+                'reconciliation_id': self.id,
+                'order_code': order.code,
+                'sender_name': order.sender_name,
+                'receiver_name': order.receiver_name,
+                'receiver_phone': order.receiver_phone,
+                'total_shipping_fee': order.total_shipping_fee or 0,
+                'paid_amount': order.paid_amount or 0,
+                'unpaid_amount': (order.total_shipping_fee or 0) - (order.paid_amount or 0),
+                'payment_status': order.payment_status,
+                'payment_date': order.payment_date,
+            })
+        
+        # Force computation of stats and visibility
         self._compute_stats()
-        self._compute_reconciliation_lines()
         self._compute_visibility()
+        
         # Return True to stay on the same form
         return True
 
