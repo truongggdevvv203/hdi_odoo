@@ -39,25 +39,29 @@ class ShippingOrderReconciliation(models.TransientModel):
     total_orders = fields.Integer(
         string='Tổng đơn hàng',
         compute='_compute_stats',
-        readonly=True
+        readonly=True,
+        store=False
     )
     
     total_amount = fields.Integer(
         string='Tổng tiền (VND)',
         compute='_compute_stats',
-        readonly=True
+        readonly=True,
+        store=False
     )
     
     total_paid = fields.Integer(
         string='Tổng tiền đã trả (VND)',
         compute='_compute_stats',
-        readonly=True
+        readonly=True,
+        store=False
     )
     
     total_unpaid = fields.Integer(
         string='Tổng tiền còn lại (VND)',
         compute='_compute_stats',
-        readonly=True
+        readonly=True,
+        store=False
     )
 
     @api.depends('date_from', 'date_to', 'payment_status', 'user_id')
@@ -94,6 +98,24 @@ class ShippingOrderReconciliation(models.TransientModel):
             record.total_amount = sum(orders.mapped('total_shipping_fee') or [0])
             record.total_paid = sum(orders.mapped('paid_amount') or [0])
             record.total_unpaid = record.total_amount - record.total_paid
+
+    def action_search_reconciliation(self):
+        """Search and open list view with filtered orders"""
+        self.ensure_one()
+        orders = self._get_filtered_orders()
+        
+        domain = [('id', 'in', orders.ids)] if orders else []
+        
+        status_label = dict(self._fields['payment_status'].selection).get(self.payment_status, self.payment_status)
+        
+        return {
+            'name': f'Danh sách {status_label} ({self.date_from} → {self.date_to})',
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipping.order',
+            'view_mode': 'list,form',
+            'domain': domain,
+            'context': {'default_sender_id': self.user_id.id}
+        }
 
     def action_view_details(self):
         """Open detail list view for reconciliation"""
