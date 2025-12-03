@@ -216,8 +216,6 @@
     <field name="context">{'form_view_ref': 'hdi_express_sale.view_shipping_order_form'}</field>
     <field name="target">current</field>
   </record>
-    </field>
-  </record>
 
   <!-- Action: Shipping Services -->
   <record id="action_shipping_service" model="ir.actions.act_window">
