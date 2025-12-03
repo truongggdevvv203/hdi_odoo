@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ====== RECONCILIATION WIZARD FORM VIEW ====== -->
+    <!-- ====== RECONCILIATION MAIN SCREEN (Form + List) ====== -->
     <record id="view_shipping_order_reconciliation_form" model="ir.ui.view">
         <field name="name">Đối soát Công nợ</field>
         <field name="model">shipping.order.reconciliation</field>
         <field name="arch" type="xml">
             <form string="Đối soát Công nợ">
                 <sheet>
+                    <!-- Search/Filter Section -->
                     <div class="alert alert-info" role="alert">
                         <p>Chọn khoảng thời gian để tìm kiếm danh sách đơn hàng theo trạng thái thanh toán</p>
                     </div>
@@ -22,22 +23,32 @@
                         </group>
                     </group>
 
-                    <group string="Thống kê kết quả" attrs="{'invisible': [('total_orders', '=', 0)]}">
-                        <field name="total_orders" string="Tổng đơn hàng" readonly="1"/>
-                        <field name="total_amount" string="Tổng tiền (VND)" readonly="1"/>
-                        <field name="total_paid" string="Tiền đã trả (VND)" readonly="1"/>
-                        <field name="total_unpaid" string="Tiền còn lại (VND)" readonly="1"/>
-                    </group>
-
                     <div class="alert alert-secondary" role="alert" attrs="{'invisible': [('total_orders', '!=', 0)]}">
                         <p>Chưa có dữ liệu. Vui lòng thay đổi bộ lọc và tìm kiếm lại.</p>
+                    </div>
+
+                    <!-- Data List Section -->
+                    <div attrs="{'invisible': [('total_orders', '=', 0)]}">
+                        <h3 class="mt-4 mb-3">Danh sách đơn hàng</h3>
+                        <field name="reconciliation_line_ids" nolabel="1">
+                            <tree create="false" delete="false" edit="false">
+                                <field name="order_code"/>
+                                <field name="sender_name"/>
+                                <field name="receiver_name"/>
+                                <field name="receiver_phone"/>
+                                <field name="total_shipping_fee"/>
+                                <field name="paid_amount"/>
+                                <field name="unpaid_amount"/>
+                                <field name="payment_status"/>
+                                <field name="payment_date"/>
+                            </tree>
+                        </field>
                     </div>
                 </sheet>
 
                 <footer>
                     <button name="action_search_reconciliation" type="object" string="Tìm kiếm" class="btn-primary"/>
-                    <button name="action_view_details" type="object" string="Xem chi tiết" class="btn-secondary" attrs="{'invisible': [('total_orders', '=', 0)]}"/>
-                    <button string="Đóng" class="btn-secondary" special="cancel"/>
+                    <button name="action_export_reconciliation" type="object" string="Xuất Excel" class="btn-secondary" attrs="{'invisible': [('total_orders', '=', 0)]}"/>
                 </footer>
             </form>
         </field>
@@ -47,34 +58,40 @@
     
     <!-- Action: Đã trả tiền -->
     <record id="action_reconciliation_paid" model="ir.actions.act_window">
-        <field name="name">Danh sách đã trả tiền</field>
+        <field name="name">Đối soát Công nợ - Đã trả tiền</field>
         <field name="res_model">shipping.order.reconciliation</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_shipping_order_reconciliation_form"/>
+        <field name="target">new</field>
         <field name="context">{
-            'default_payment_status': 'paid'
+            'default_payment_status': 'paid',
+            'form_view_initial_mode': 'view'
         }</field>
     </record>
 
     <!-- Action: Chờ trả tiền -->
     <record id="action_reconciliation_waiting" model="ir.actions.act_window">
-        <field name="name">Danh sách chờ trả tiền</field>
+        <field name="name">Đối soát Công nợ - Chờ trả tiền</field>
         <field name="res_model">shipping.order.reconciliation</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_shipping_order_reconciliation_form"/>
+        <field name="target">new</field>
         <field name="context">{
-            'default_payment_status': 'waiting_payment'
+            'default_payment_status': 'waiting_payment',
+            'form_view_initial_mode': 'view'
         }</field>
     </record>
 
     <!-- Action: Chưa trả tiền -->
     <record id="action_reconciliation_unpaid" model="ir.actions.act_window">
-        <field name="name">Danh sách chưa trả tiền</field>
+        <field name="name">Đối soát Công nợ - Chưa trả tiền</field>
         <field name="res_model">shipping.order.reconciliation</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_shipping_order_reconciliation_form"/>
+        <field name="target">new</field>
         <field name="context">{
-            'default_payment_status': 'unpaid'
+            'default_payment_status': 'unpaid',
+            'form_view_initial_mode': 'view'
         }</field>
     </record>
 
