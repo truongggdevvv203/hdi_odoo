@@ -1,62 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Menu gốc HDI Express -->
-    <menuitem id="hdi_express"
-              name="HDI Express"
-              parent="sale.sale_menu_root"
-              sequence="5"/>
+  <!-- Menu gốc HDI Express -->
+  <menuitem id="hdi_express"
+    name="HDI Express"
+    parent="sale.sale_menu_root"
+    sequence="5"/>
 
 
-    <!-- Menu Dashboard/Trang chủ -->
-    <menuitem id="hdi_express_dashboard"
-              name="Trang chủ"
-              parent="hdi_express"
-              action="hdi_sale.action_shipping_dashboard_owl"
-              sequence="5"/>
+  <!-- Menu Dashboard/Trang chủ -->
+  <menuitem id="hdi_express_dashboard"
+    name="Trang chủ"
+    parent="hdi_express"
+    action="hdi_sale.action_shipping_dashboard_owl"
+    sequence="5"/>
 
-       <!-- Menu tạo phiếu gửi hàng -->
-    <menuitem id="sale_order_hdi_create"
-              name="Tạo phiếu gửi hàng"
-              parent="hdi_express"
-              action="hdi_sale.action_hdi_sale_order"
-              sequence="10"/>
+  <!-- Menu tạo phiếu gửi hàng -->
+  <menuitem id="sale_order_hdi_create"
+    name="Tạo phiếu gửi hàng"
+    parent="hdi_express"
+    action="hdi_sale.action_hdi_sale_order"
+    sequence="10"/>
 
-    <!-- Menu Quản lý -->
-    <menuitem id="hdi_express_manage"
-              name="Quản lý"
-              parent="hdi_express"
-              sequence="20"/>
+  <!-- Menu Quản lý -->
+  <menuitem id="hdi_express_manage"
+    name="Quản lý"
+    parent="hdi_express"
+    sequence="20"/>
 
-    <!-- Menu con: Quản lý đơn hàng gửi -->
-    <menuitem id="hdi_express_manage_send"
-              name="Quản lý đơn hàng gửi"
-              parent="hdi_express_manage"
-              action="hdi_sale.action_hdi_sale_order"
-              sequence="10"/>
+  <!-- Menu con: Quản lý đơn hàng gửi -->
+  <menuitem id="hdi_express_manage_send"
+    name="Quản lý đơn hàng gửi"
+    parent="hdi_express_manage"
+    action="hdi_sale.action_hdi_sale_order"
+    sequence="10"/>
 
-    <!-- Menu con: Quản lý đơn hàng nhận -->
-    <menuitem id="hdi_express_manage_receive"
-              name="Quản lý đơn hàng nhận"
-              parent="hdi_express_manage"
-              action=""
-              sequence="20"
-              groups="base.group_no_one"/>
+  <!-- Menu con: Quản lý đơn hàng nhận -->
+  <menuitem id="hdi_express_manage_receive"
+    name="Quản lý đơn hàng nhận"
+    parent="hdi_express_manage"
+    action=""
+    sequence="20"
+    groups="base.group_no_one"/>
 
-    <!-- Menu cấu hình / dịch vụ vận chuyển -->
-    <menuitem id="hdi_express_config"
-              name="Cài đặt"
-              parent="hdi_express"
-              sequence="30"/>
+  <!-- Menu Đối soát, công nợ -->
+  <menuitem id="hdi_express_reconcile"
+    name="Đối soát, công nợ"
+    parent="hdi_express"
+    sequence="25"/>
 
-        <menuitem id="hdi_shipping_services"
-                  name="Dịch vụ vận chuyển"
-                  parent="hdi_express_config"
-                  action="hdi_sale.action_main_shipping_service"
-                  sequence="10"/>
+  <!-- Menu con cho Đối soát, công nợ -->
+  <menuitem id="hdi_express_reconcile_paid"
+    name="Danh sách đã trả tiền"
+    parent="hdi_express_reconcile"
+    action=""
+    sequence="1"/>
 
-        <menuitem id="hdi_additional_shipping_services"
-                  name="Dịch vụ cộng thêm"
-                  parent="hdi_express_config"
-                  action="hdi_sale.action_additional_shipping_service"
-                  sequence="20"/>
+  <menuitem id="hdi_express_reconcile_waiting"
+    name="Danh sách chờ trả tiền"
+    parent="hdi_express_reconcile"
+    action=""
+    sequence="2"/>
+
+  <menuitem id="hdi_express_reconcile_unpaid"
+    name="Danh sách chưa trả tiền"
+    parent="hdi_express_reconcile"
+    action=""
+    sequence="3"/>
+
+  <!-- Menu cấu hình / dịch vụ vận chuyển -->
+  <menuitem id="hdi_express_config"
+    name="Cài đặt"
+    parent="hdi_express"
+    sequence="30"/>
+
+  <menuitem id="hdi_shipping_services"
+    name="Dịch vụ vận chuyển"
+    parent="hdi_express_config"
+    action="hdi_sale.action_main_shipping_service"
+    sequence="10"/>
+
+  <menuitem id="hdi_additional_shipping_services"
+    name="Dịch vụ cộng thêm"
+    parent="hdi_express_config"
+    action="hdi_sale.action_additional_shipping_service"
+    sequence="20"/>
 </odoo>
