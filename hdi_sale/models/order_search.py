@@ -7,7 +7,6 @@ class ShippingOrderSearch(models.TransientModel):
 
     search_code = fields.Char(
         string='Mã phiếu gửi',
-        required=True,
         placeholder='Nhập mã phiếu gửi hàng'
     )
 
@@ -134,7 +133,7 @@ class ShippingOrderSearch(models.TransientModel):
         """Search for shipping order by code"""
         self.ensure_one()
         
-        if not self.search_code:
+        if not self.search_code or not self.search_code.strip():
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -166,7 +165,10 @@ class ShippingOrderSearch(models.TransientModel):
         self.order_id = order.id
         
         # Reload the form to show results
-        return True
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload'
+        }
 
     def action_view_order(self):
         """Open the found order in detail view"""
@@ -197,4 +199,7 @@ class ShippingOrderSearch(models.TransientModel):
         """Clear search results"""
         self.search_code = ''
         self.order_id = False
-        return True
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload'
+        }
