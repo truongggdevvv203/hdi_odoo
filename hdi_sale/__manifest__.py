@@ -12,6 +12,7 @@
         'views/shipping_service_views.xml',
         'views/shipping_order_views.xml',
         'views/order_search_views.xml',
+        'views/express_debt_reconciliation_views.xml',
         'views/menu.xml',
     ],
     'assets': {
