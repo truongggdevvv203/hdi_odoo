@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Dashboard View -->
+  <record id="view_shipping_order_dashboard_form" model="ir.ui.view">
+    <field name="name">shipping.order.dashboard.form</field>
+    <field name="model">shipping.order.dashboard</field>
+    <field name="arch" type="xml">
+      <form string="Bảng Điều Khiển Phiếu Gửi Hàng">
+        <sheet>
+          <div class="oe_title">
+            <h1>
+              <span>Bảng Điều Khiển Phiếu Gửi Hàng</span>
+            </h1>
+          </div>
+
+          <div class="row mt-4">
+            <div class="col-md-3">
+              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                <h2 style="color: #0275d8;"><field name="total_orders" widget="statinfo"/></h2>
+                <p style="margin: 0; color: #666;">Tổng số đơn hàng</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                <h2 style="color: #28a745;"><field name="delivered_orders" widget="statinfo"/></h2>
+                <p style="margin: 0; color: #666;">Đơn phát thành công</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                <h2 style="color: #ffc107;"><field name="pending_orders" widget="statinfo"/></h2>
+                <p style="margin: 0; color: #666;">Đơn chờ xử lý</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                <h2 style="color: #dc3545;"><field name="cancelled_orders" widget="statinfo"/></h2>
+                <p style="margin: 0; color: #666;">Đơn đã hủy</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-4">
+            <div class="col-md-6 offset-md-3">
+              <div class="card" style="text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                <h2 style="color: #17a2b8;">
+                  <field name="success_rate" widget="float" digits="[16, 1]"/>%
+                </h2>
+                <p style="margin: 0; color: #666;">Tỷ lệ thành công</p>
+              </div>
+            </div>
+          </div>
+
+          <group name="info_group" class="mt-4">
+            <field name="current_user_id" widget="many2one_avatar_user"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <!-- Action cho Dashboard -->
+  <record id="action_shipping_order_dashboard" model="ir.actions.act_window">
+    <field name="name">Bảng Điều Khiển</field>
+    <field name="res_model">shipping.order.dashboard</field>
+    <field name="view_mode">form</field>
+    <field name="view_id" ref="view_shipping_order_dashboard_form"/>
+    <field name="target">new</field>
+  </record>
+</odoo>

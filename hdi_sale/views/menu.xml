@@ -6,7 +6,15 @@
               parent="sale.sale_menu_root"
               sequence="5"/>
 
-    <!-- Menu tạo phiếu gửi hàng -->
+
+    <!-- Menu Dashboard/Trang chủ -->
+    <menuitem id="hdi_express_dashboard"
+              name="Trang chủ"
+              parent="hdi_express"
+              action="hdi_sale.action_shipping_order_dashboard"
+              sequence="5"/>
+
+       <!-- Menu tạo phiếu gửi hàng -->
     <menuitem id="sale_order_hdi_create"
               name="Tạo phiếu gửi hàng"
               parent="hdi_express"
