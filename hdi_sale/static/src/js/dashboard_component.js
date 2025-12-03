@@ -197,7 +197,7 @@ export class ShippingDashboardComponent extends Component {
             name: _t("All Orders"),
             type: "ir.actions.act_window",
             res_model: "shipping.order",
-            view_mode: "tree,form",
+            view_mode: "list,form",
             domain: [['sender_id', '=', this.state.userId]],
         });
     }
@@ -209,7 +209,7 @@ export class ShippingDashboardComponent extends Component {
             name: _t("Delivered Orders"),
             type: "ir.actions.act_window",
             res_model: "shipping.order",
-            view_mode: "tree,form",
+            view_mode: "list,form",
             domain: [['sender_id', '=', this.state.userId], ['state', '=', 'delivered']],
         });
     }
@@ -221,7 +221,7 @@ export class ShippingDashboardComponent extends Component {
             name: _t("Pending Orders"),
             type: "ir.actions.act_window",
             res_model: "shipping.order",
-            view_mode: "tree,form",
+            view_mode: "list,form",
             domain: [['sender_id', '=', this.state.userId], ['state', 'in', ['waiting_pickup', 'in_transit', 'forwarded']]],
         });
     }
@@ -233,7 +233,7 @@ export class ShippingDashboardComponent extends Component {
             name: _t("Cancelled Orders"),
             type: "ir.actions.act_window",
             res_model: "shipping.order",
-            view_mode: "tree,form",
+            view_mode: "list,form",
             domain: [['sender_id', '=', this.state.userId], ['state', '=', 'cancelled']],
         });
     }
