@@ -12,28 +12,14 @@
                     </div>
 
                     <group>
-                        <group string="Bộ lọc thời gian">
-                            <field name="date_from"/>
-                            <field name="date_to"/>
-                        </group>
-                        <group string="Thông tin">
-                            <field name="user_id"/>
-                            <field name="payment_status"/>
-                        </group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
                     </group>
 
                     <!-- Hidden fields for visibility computation -->
                     <field name="total_orders" invisible="1"/>
                     <field name="hide_no_data_alert" invisible="1"/>
                     <field name="hide_export_button" invisible="1"/>
-
-                    <!-- Statistics Section -->
-                    <group string="Thống kê kết quả" invisible="hide_no_data_alert">
-                        <field name="total_orders" string="Tổng đơn hàng" readonly="1"/>
-                        <field name="total_amount" string="Tổng tiền (VND)" readonly="1"/>
-                        <field name="total_paid" string="Tiền đã trả (VND)" readonly="1"/>
-                        <field name="total_unpaid" string="Tiền còn lại (VND)" readonly="1"/>
-                    </group>
 
                     <div class="alert alert-secondary" role="alert" invisible="hide_no_data_alert">
                         <p>Chưa có dữ liệu. Vui lòng thay đổi bộ lọc và tìm kiếm lại.</p>

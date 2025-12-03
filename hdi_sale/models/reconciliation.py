@@ -153,25 +153,32 @@ class ShippingOrderReconciliation(models.TransientModel):
     def _compute_reconciliation_lines(self):
         """Populate reconciliation lines from filtered orders"""
         for record in self:
-            orders = record._get_filtered_orders()
-            lines = []
-            
-            for order in orders:
-                lines.append({
-                    'order_code': order.code,
-                    'sender_name': order.sender_name,
-                    'receiver_name': order.receiver_name,
-                    'receiver_phone': order.receiver_phone,
-                    'total_shipping_fee': order.total_shipping_fee or 0,
-                    'paid_amount': order.paid_amount or 0,
-                    'unpaid_amount': (order.total_shipping_fee or 0) - (order.paid_amount or 0),
-                    'payment_status': order.payment_status,
-                    'payment_date': order.payment_date,
-                })
-            
-            # Create in-memory lines (transient model)
-            reconciliation_line_model = self.env['shipping.order.reconciliation.line']
-            record.reconciliation_line_ids = [reconciliation_line_model.new(vals) for vals in lines]
+            try:
+                orders = record._get_filtered_orders()
+                lines = []
+                
+                for order in orders:
+                    lines.append({
+                        'order_code': order.code,
+                        'sender_name': order.sender_name,
+                        'receiver_name': order.receiver_name,
+                        'receiver_phone': order.receiver_phone,
+                        'total_shipping_fee': order.total_shipping_fee or 0,
+                        'paid_amount': order.paid_amount or 0,
+                        'unpaid_amount': (order.total_shipping_fee or 0) - (order.paid_amount or 0),
+                        'payment_status': order.payment_status,
+                        'payment_date': order.payment_date,
+                    })
+                
+                # Create in-memory lines (transient model)
+                if lines:
+                    reconciliation_line_model = self.env['shipping.order.reconciliation.line']
+                    record.reconciliation_line_ids = [reconciliation_line_model.new(vals) for vals in lines]
+                else:
+                    record.reconciliation_line_ids = []
+            except Exception as e:
+                # If there's an error, set empty list
+                record.reconciliation_line_ids = []
 
     @api.depends('total_orders')
     def _compute_visibility(self):
