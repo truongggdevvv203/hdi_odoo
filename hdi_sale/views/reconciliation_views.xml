@@ -100,19 +100,6 @@
         </field>
     </record>
 
-    <!-- ====== SHIPPING ORDER LIST VIEW EXTENSION (Add Payment Status Filter) ====== -->
-    <record id="view_shipping_order_list_payment" model="ir.ui.view">
-        <field name="name">Shipping Order - Payment Filter</field>
-        <field name="model">shipping.order</field>
-        <field name="inherit_id" ref="hdi_sale.view_shipping_order_list"/>
-        <field name="arch" type="xml">
-            <tree position="inside">
-                <field name="payment_status" string="Trạng thái thanh toán"/>
-                <field name="paid_amount" string="Tiền đã trả"/>
-            </tree>
-        </field>
-    </record>
-
     <!-- ====== SHIPPING ORDER SEARCH VIEW EXTENSION (Add Payment Filters) ====== -->
     <record id="view_shipping_order_search_payment" model="ir.ui.view">
         <field name="name">Shipping Order - Payment Search</field>
