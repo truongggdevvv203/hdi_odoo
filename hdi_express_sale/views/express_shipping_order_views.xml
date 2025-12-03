@@ -207,6 +207,18 @@
     </field>
   </record>
 
+  <!-- Action mở form tạo phiếu gửi hàng mới -->
+  <record id="action_create_shipping_order" model="ir.actions.act_window">
+    <field name="name">Tạo phiếu gửi hàng</field>
+    <field name="res_model">shipping.order</field>
+    <field name="view_mode">form</field>
+    <field name="view_ids" eval="[(0, 0, {'view_mode': 'form', 'view_id': ref('view_shipping_order_form')})]"/>
+    <field name="context">{'form_view_ref': 'hdi_express_sale.view_shipping_order_form'}</field>
+    <field name="target">current</field>
+  </record>
+    </field>
+  </record>
+
   <!-- Action: Shipping Services -->
   <record id="action_shipping_service" model="ir.actions.act_window">
     <field name="name">Dịch vụ vận chuyển</field>
