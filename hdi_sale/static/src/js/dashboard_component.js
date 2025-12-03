@@ -11,6 +11,7 @@ export class ShippingDashboardComponent extends Component {
     setup() {
         this.orm = useService("orm");
         this.notification = useService("notification");
+        this.session = useService("session");
         
         // Try to get bus and action services, but don't fail if unavailable
         try {
@@ -46,8 +47,14 @@ export class ShippingDashboardComponent extends Component {
 
         onWillStart(async () => {
             try {
-                // Get current user ID from context
-                this.state.userId = this.env.ctx?.uid || await this.getCurrentUserId();
+                // Get current user ID from session
+                this.state.userId = this.session.uid;
+                
+                if (!this.state.userId) {
+                    this.notification.add(_t("Unable to identify user session"), { type: "warning" });
+                    return;
+                }
+                
                 await this.loadDashboardData();
                 if (this.bus && this.state.userId) {
                     this.subscribeToUpdates();
@@ -67,19 +74,6 @@ export class ShippingDashboardComponent extends Component {
                 this.unsubscribeFromUpdates();
             }
         });
-    }
-
-    async getCurrentUserId() {
-        try {
-            // Fetch current user from res.users model
-            const users = await this.orm.searchRead("res.users", [["id", "=", this.orm.context?.uid]], ["id"], { limit: 1 });
-            if (users.length > 0) {
-                return users[0].id;
-            }
-        } catch (error) {
-            console.warn("Could not get current user ID:", error);
-        }
-        return null;
     }
 
     async loadDashboardData() {
