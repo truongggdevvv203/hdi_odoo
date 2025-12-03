@@ -51,7 +51,7 @@
   <menuitem id="hdi_express_reconcile_paid"
     name="Danh sách đã trả tiền"
     parent="hdi_express_reconcile"
-    action="hdi_sale.action_reconciliation_paid"
+    action=""
     sequence="1"/>
 
   <!-- Menu Tra cứu -->
