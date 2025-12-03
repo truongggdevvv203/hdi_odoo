@@ -22,7 +22,7 @@
 
                     <!-- Results Section -->
                     <div class="alert alert-secondary" 
-                         invisible="order_id" 
+                         invisible="not order_id" 
                          role="alert">
                         Chưa có kết quả tìm kiếm
                     </div>

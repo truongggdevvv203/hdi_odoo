@@ -164,10 +164,14 @@ class ShippingOrderSearch(models.TransientModel):
         # Set the found order
         self.order_id = order.id
         
-        # Reload the form to show results
+        # Return the form with results
         return {
-            'type': 'ir.actions.client',
-            'tag': 'reload'
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipping.order.search',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'target': 'current',
         }
 
     def action_view_order(self):
@@ -200,6 +204,10 @@ class ShippingOrderSearch(models.TransientModel):
         self.search_code = ''
         self.order_id = False
         return {
-            'type': 'ir.actions.client',
-            'tag': 'reload'
+            'type': 'ir.actions.act_window',
+            'res_model': 'shipping.order.search',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'target': 'current',
         }
