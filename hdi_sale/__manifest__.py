@@ -11,7 +11,6 @@
         'views/dashboard_views.xml',
         'views/shipping_service_views.xml',
         'views/shipping_order_views.xml',
-        'views/reconciliation_views.xml',
         'views/menu.xml',
     ],
     'assets': {
