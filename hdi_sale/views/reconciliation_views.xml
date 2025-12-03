@@ -4,8 +4,9 @@
     <record id="view_shipping_order_reconciliation_form" model="ir.ui.view">
         <field name="name">Đối soát Công nợ</field>
         <field name="model">shipping.order.reconciliation</field>
+        <field name="type">form</field>
         <field name="arch" type="xml">
-            <form string="Đối soát Công nợ">
+            <form>
                 <sheet>
                     <!-- Search/Filter Section -->
                     <div class="alert alert-info" role="alert">
