@@ -17,6 +17,18 @@ class ShippingOrderSearch(models.TransientModel):
         readonly=True
     )
 
+    has_results = fields.Boolean(
+        string='Có kết quả',
+        compute='_compute_has_results',
+        store=False
+    )
+
+    @api.depends('order_id')
+    def _compute_has_results(self):
+        """Check if search found results"""
+        for record in self:
+            record.has_results = bool(record.order_id)
+
     # Display fields
     order_code = fields.Char(
         string='Số phiếu',

@@ -16,8 +16,7 @@
                         <group>
                             <field name="search_code" 
                                    widget="char" 
-                                   placeholder="Ví dụ: 1590750887"
-                                   attrs="{'readonly': [('order_id', '!=', False)]}"/>
+                                   placeholder="Ví dụ: 1590750887"/>
                         </group>
                     </group>
 
@@ -61,6 +60,8 @@
                     </div>
 
                     <field name="order_id" invisible="1"/>
+                    <field name="search_disabled" invisible="1"/>
+                    <field name="has_results" invisible="1"/>
                 </sheet>
 
                 <footer>
@@ -68,17 +69,17 @@
                             string="Tìm kiếm" 
                             type="object"
                             class="btn-primary"
-                            attrs="{'invisible': [('order_id', '!=', False)]}"/>
+                            invisible="has_results"/>
                     <button name="action_view_order" 
                             string="Xem chi tiết" 
                             type="object"
                             class="btn-primary"
-                            attrs="{'invisible': [('order_id', '=', False)]}"/>
+                            invisible="not has_results"/>
                     <button name="action_clear" 
                             string="Tìm kiếm mới" 
                             type="object"
                             class="btn-secondary"
-                            attrs="{'invisible': [('order_id', '=', False)]}"/>
+                            invisible="not has_results"/>
                     <button string="Đóng" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -103,3 +104,4 @@
         action="hdi_sale.action_shipping_order_search"
         sequence="15"/>
 </odoo>
+
