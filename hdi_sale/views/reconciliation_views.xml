@@ -47,7 +47,6 @@
         <field name="res_model">shipping.order.reconciliation</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_shipping_order_reconciliation_form"/>
-        <field name="target">new</field>
         <field name="context">{
             'default_payment_status': 'paid'
         }</field>
@@ -59,7 +58,6 @@
         <field name="res_model">shipping.order.reconciliation</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_shipping_order_reconciliation_form"/>
-        <field name="target">new</field>
         <field name="context">{
             'default_payment_status': 'waiting_payment'
         }</field>
@@ -71,7 +69,6 @@
         <field name="res_model">shipping.order.reconciliation</field>
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_shipping_order_reconciliation_form"/>
-        <field name="target">new</field>
         <field name="context">{
             'default_payment_status': 'unpaid'
         }</field>
