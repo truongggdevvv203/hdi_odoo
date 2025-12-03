@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+import json
 
 
 class ShippingOrder(models.Model):
@@ -184,16 +185,20 @@ class ShippingOrder(models.Model):
 
   def action_submit_shipping(self):
     """Submit as shipping order"""
+    old_state = self.state
     self.write({
       'state': 'waiting_pickup'
     })
+    self._send_bus_notification('Đơn hàng đã được gửi đi', old_state, 'waiting_pickup')
     return {'type': 'ir.actions.client', 'tag': 'reload'}
 
   def action_cancel(self):
     """Cancel shipping order"""
+    old_state = self.state
     self.write({
       'state': 'cancelled'
     })
+    self._send_bus_notification('Đơn hàng đã bị hủy', old_state, 'cancelled')
     return {'type': 'ir.actions.client', 'tag': 'reload'}
 
   def action_reset_form(self):
@@ -230,3 +235,53 @@ class ShippingOrder(models.Model):
       'shipping_notes': False,
     })
     return {'type': 'ir.actions.client', 'tag': 'reload'}
+
+  def _send_bus_notification(self, message, old_state=None, new_state=None):
+    """Send bus notification to update dashboard in real-time"""
+    if self.sender_id:
+      # Send notification to the sender user
+      notification_data = {
+        'user_id': self.sender_id.id,
+        'message': message,
+        'order_code': self.code,
+        'old_state': old_state,
+        'new_state': new_state or self.state,
+        'timestamp': fields.Datetime.now().isoformat()
+      }
+      
+      self.env['bus.bus']._sendone(
+        f'shipping_order_update_{self.sender_id.id}',
+        'shipping_order_update',
+        notification_data
+      )
+
+  @api.model_create_multi
+  def create(self, vals_list):
+    """Override create to send bus notification for new orders"""
+    records = super().create(vals_list)
+    for record in records:
+      record._send_bus_notification('Đơn hàng mới được tạo', None, record.state)
+    return records
+
+  def write(self, vals):
+    """Override write to send bus notification on state changes"""
+    # Track state changes for each record
+    state_changes = {}
+    if 'state' in vals:
+      for record in self:
+        state_changes[record.id] = record.state
+    
+    result = super().write(vals)
+    
+    # Send notifications for state changes
+    if 'state' in vals:
+      new_state = vals['state']
+      for record in self:
+        if record.id in state_changes:
+          old_state = state_changes[record.id]
+          if old_state != new_state:
+            state_names = dict(self._fields['state'].selection)
+            message = f'Trạng thái đơn hàng thay đổi: {state_names.get(old_state, old_state)} → {state_names.get(new_state, new_state)}'
+            record._send_bus_notification(message, old_state, new_state)
+    
+    return result

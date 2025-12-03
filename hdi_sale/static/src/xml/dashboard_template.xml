@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="hdi_sale.ShippingDashboard" owl="1">
+        <div class="o_dashboard_view o_view_controller" style="background: #f8f9fa; padding: 24px;">
+            
+            <!-- Loading Spinner -->
+            <div t-if="state.loading" class="d-flex justify-content-center align-items-center" style="height: 300px;">
+                <div class="fa fa-spinner fa-spin fa-3x text-primary"></div>
+            </div>
+
+            <div t-else="">
+                <!-- Header with Refresh Button -->
+                <div class="row mb-4">
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 style="color: #ff6600; font-weight: bold; margin-bottom: 5px;">
+                                <i class="fa fa-tachometer-alt"></i>
+                                HDI Express Dashboard
+                            </h2>
+                            <p class="text-muted">Báo cáo thống kê real-time</p>
+                        </div>
+                        <button class="btn btn-primary" t-on-click="onRefreshClick">
+                            <i class="fa fa-refresh"></i> Làm mới
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Top Statistics Cards -->
+                <div class="row mb-4">
+                    <!-- Total Orders Card -->
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm o_kanban_record" 
+                             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; cursor: pointer;"
+                             t-on-click="onViewAllOrders">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fa fa-boxes fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0" t-esc="state.dashboardData.total_orders"></h3>
+                                    <small>Tổng đơn hàng</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delivered Orders Card -->
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm o_kanban_record" 
+                             style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 10px; cursor: pointer;"
+                             t-on-click="onViewDeliveredOrders">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fa fa-check-circle fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0" t-esc="state.dashboardData.delivered_orders"></h3>
+                                    <small>Phát thành công</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Orders Card -->
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm o_kanban_record" 
+                             style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 10px; cursor: pointer;"
+                             t-on-click="onViewPendingOrders">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fa fa-truck fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0" t-esc="state.dashboardData.pending_orders"></h3>
+                                    <small>Đang vận chuyển</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Success Rate Card -->
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm o_kanban_record" 
+                             style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 10px; cursor: pointer;"
+                             t-on-click="onViewCancelledOrders">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fa fa-percentage fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0"><t t-esc="state.dashboardData.success_rate.toFixed(1)"/>%</h3>
+                                    <small>Tỷ lệ thành công</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Details Section -->
+                <div class="row mb-4">
+                    <!-- Chart Area -->
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm" style="padding: 20px; border-radius: 10px;">
+                            <h5 class="card-title mb-3">
+                                <i class="fa fa-chart-pie text-primary"></i>
+                                Thống kê theo trạng thái
+                            </h5>
+                            <div id="realtimePieChart" style="min-height: 200px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Statistics -->
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm" style="padding: 20px; border-radius: 10px;">
+                            <h5 class="card-title mb-3">
+                                <i class="fa fa-list text-success"></i>
+                                Thống kê chi tiết
+                            </h5>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                    <span><i class="fa fa-clock text-warning me-2"></i>Chờ lấy hàng</span>
+                                    <span class="badge bg-warning rounded-pill" t-esc="state.dashboardData.waiting_pickup_orders"></span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                    <span><i class="fa fa-shipping-fast text-info me-2"></i>Đang vận chuyển</span>
+                                    <span class="badge bg-info rounded-pill" t-esc="state.dashboardData.in_transit_orders"></span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                    <span><i class="fa fa-redo text-secondary me-2"></i>Đơn hoàn</span>
+                                    <span class="badge bg-secondary rounded-pill" t-esc="state.dashboardData.return_orders"></span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                    <span><i class="fa fa-arrow-right text-primary me-2"></i>Phát tiếp</span>
+                                    <span class="badge bg-primary rounded-pill" t-esc="state.dashboardData.forwarded_orders"></span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                    <span><i class="fa fa-times-circle text-danger me-2"></i>Đã hủy</span>
+                                    <span class="badge bg-danger rounded-pill" t-esc="state.dashboardData.cancelled_orders"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Real-time Status Indicator -->
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <small class="text-muted">
+                            <i class="fa fa-wifi text-success"></i>
+                            Cập nhật real-time qua bus.bus
+                        </small>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </t>
+</templates>
