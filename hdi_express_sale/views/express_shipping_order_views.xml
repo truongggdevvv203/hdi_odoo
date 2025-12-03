@@ -9,10 +9,8 @@
         <header>
           <button name="action_submit_shipping" string="Gửi Hàng" type="object"
             class="oe_highlight" invisible="state != 'draft'"/>
-          <button name="action_reset_form" string="Làm mới" type="object"
-            class="btn-secondary" invisible="state != 'draft'"/>
-          <button name="action_cancel" string="Hủy" type="object"
-            invisible="state not in ['draft', 'waiting_pickup', 'in_transit']"/>
+           <button name="action_cancel" string="Hủy đơn" type="object"
+            invisible="state not in ['draft', 'waiting_pickup']"/>
           <field name="state" widget="statusbar"/>
         </header>
         <sheet>

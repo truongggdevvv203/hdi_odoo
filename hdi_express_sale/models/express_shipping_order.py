@@ -219,41 +219,6 @@ class ShippingOrder(models.Model):
     self._send_bus_notification('Đơn hàng đã bị hủy', old_state, 'cancelled')
     return {'type': 'ir.actions.client', 'tag': 'reload'}
 
-  def action_reset_form(self):
-    """Reset form - clear all data"""
-    self.write({
-      'partner_id': False,
-      'sender_name': False,
-      'sender_phone': False,
-      'sender_street': False,
-      'receiver_name': False,
-      'receiver_phone': False,
-      'receiver_city': False,
-      'receiver_district': False,
-      'receiver_ward': False,
-      'receiver_house_number': False,
-      'receiver_street': False,
-      'delivery_time_slot': 'anytime',
-      'allow_view_goods': True,
-      'reference_code': False,
-      'goods_value': False,
-      'goods_description': False,
-      'quantity': 1,
-      'weight': False,
-      'length': False,
-      'width': False,
-      'height': False,
-      'convert_weight': False,
-      'shipping_service_id': False,
-      'goods_type': 'parcel',
-      'additional_service_ids': [(5, 0, 0)],  # Clear many2many
-      'receiver_pay_fee': False,
-      'cod_amount': False,
-      'pickup_at_office': False,
-      'shipping_notes': False,
-    })
-    return {'type': 'ir.actions.client', 'tag': 'reload'}
-
   def _send_bus_notification(self, message, old_state=None, new_state=None):
     """Send bus notification to update dashboard in real-time"""
     if self.sender_id:
