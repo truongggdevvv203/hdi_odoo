@@ -13,11 +13,7 @@
                 <div class="row mb-4">
                     <div class="col-12 d-flex justify-content-between align-items-center">
                         <div>
-                            <h2 style="color: #ff6600; font-weight: bold; margin-bottom: 5px;">
-                                <i class="fa fa-tachometer-alt"></i>
-                                HDI Express Dashboard
-                            </h2>
-                            <p class="text-muted">Báo cáo thống kê real-time</p>
+                            <p class="text-muted">Báo cáo thống kê</p>
                         </div>
                         <button class="btn btn-primary" t-on-click="onRefreshClick">
                             <i class="fa fa-refresh"></i> Làm mới
@@ -141,17 +137,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Real-time Status Indicator -->
-                <div class="row">
-                    <div class="col-12 text-center">
-                        <small class="text-muted">
-                            <i class="fa fa-wifi text-success"></i>
-                            Cập nhật real-time qua bus.bus
-                        </small>
-                    </div>
-                </div>
-
             </div>
         </div>
     </t>
