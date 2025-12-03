@@ -60,50 +60,35 @@ class ShippingOrderReconciliation(models.TransientModel):
         readonly=True
     )
 
-    # Order lines for display
-    order_line_ids = fields.One2many(
-        'shipping.order',
-        compute='_compute_order_lines',
-        readonly=True,
-        help='Danh sách đơn hàng theo bộ lọc'
-    )
-
     @api.depends('date_from', 'date_to', 'payment_status', 'user_id')
-    def _compute_order_lines(self):
+    def _get_filtered_orders(self):
         """Get orders based on filters"""
-        for record in self:
-            domain = [
-                ('sender_id', '=', record.user_id.id),
-                ('payment_status', '=', record.payment_status),
-            ]
-            
-            # Add date filters based on payment_date
-            if record.date_from:
-                domain.append(('payment_date', '>=', record.date_from))
-            if record.date_to:
-                domain.append(('payment_date', '<=', record.date_to))
-            
-            # For unpaid orders, check created date instead
-            if record.payment_status == 'unpaid':
-                domain = [
-                    ('sender_id', '=', record.user_id.id),
-                    ('payment_status', '=', record.payment_status),
-                ]
-                if record.date_from:
-                    domain.append(('create_date', '>=', f'{record.date_from} 00:00:00'))
-                if record.date_to:
-                    domain.append(('create_date', '<=', f'{record.date_to} 23:59:59'))
-            
-            orders = self.env['shipping.order'].search(domain, order='code desc')
-            record.order_line_ids = orders
+        domain = [
+            ('sender_id', '=', self.user_id.id),
+            ('payment_status', '=', self.payment_status),
+        ]
+        
+        # Add date filters based on payment_date or create_date
+        if self.payment_status == 'unpaid':
+            # For unpaid, use create_date
+            if self.date_from:
+                domain.append(('create_date', '>=', f'{self.date_from} 00:00:00'))
+            if self.date_to:
+                domain.append(('create_date', '<=', f'{self.date_to} 23:59:59'))
+        else:
+            # For paid/waiting, use payment_date
+            if self.date_from:
+                domain.append(('payment_date', '>=', self.date_from))
+            if self.date_to:
+                domain.append(('payment_date', '<=', self.date_to))
+        
+        return self.env['shipping.order'].search(domain, order='code desc')
 
     @api.depends('date_from', 'date_to', 'payment_status', 'user_id')
     def _compute_stats(self):
         """Calculate statistics based on filters"""
         for record in self:
-            # Get orders based on filters
-            record._compute_order_lines()
-            orders = record.order_line_ids
+            orders = record._get_filtered_orders()
             
             record.total_orders = len(orders)
             record.total_amount = sum(orders.mapped('total_shipping_fee') or [0])
@@ -112,13 +97,13 @@ class ShippingOrderReconciliation(models.TransientModel):
 
     def action_view_details(self):
         """Open detail list view for reconciliation"""
-        self._compute_order_lines()
-        orders = self.order_line_ids
+        self.ensure_one()
+        orders = self._get_filtered_orders()
         
         domain = [('id', 'in', orders.ids)] if orders else []
         
         return {
-            'name': f'Danh sách {self.payment_status}',
+            'name': f'Danh sách {dict(self._fields["payment_status"].selection).get(self.payment_status, self.payment_status)}',
             'type': 'ir.actions.act_window',
             'res_model': 'shipping.order',
             'view_mode': 'list,form',

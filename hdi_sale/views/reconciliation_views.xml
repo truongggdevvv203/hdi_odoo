@@ -7,6 +7,10 @@
         <field name="arch" type="xml">
             <form string="Đối soát Công nợ">
                 <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <p>Chọn khoảng thời gian và xem thống kê chi tiết về các đơn hàng. Nhấn "Xem chi tiết" để mở danh sách đầy đủ.</p>
+                    </div>
+
                     <group>
                         <group string="Bộ lọc thời gian">
                             <field name="date_from"/>
@@ -18,29 +22,12 @@
                         </group>
                     </group>
 
-                    <group string="Thống kê">
-                        <field name="total_orders"/>
-                        <field name="total_amount" widget="monetary"/>
-                        <field name="total_paid" widget="monetary"/>
-                        <field name="total_unpaid" widget="monetary"/>
+                    <group string="Thống kê kết quả">
+                        <field name="total_orders" string="Tổng đơn hàng" readonly="1"/>
+                        <field name="total_amount" string="Tổng tiền (VND)" readonly="1"/>
+                        <field name="total_paid" string="Tiền đã trả (VND)" readonly="1"/>
+                        <field name="total_unpaid" string="Tiền còn lại (VND)" readonly="1"/>
                     </group>
-
-                    <notebook>
-                        <page string="Danh sách đơn hàng">
-                            <field name="order_line_ids" readonly="1">
-                                <tree>
-                                    <field name="code"/>
-                                    <field name="sender_name"/>
-                                    <field name="receiver_name"/>
-                                    <field name="total_shipping_fee" widget="monetary"/>
-                                    <field name="paid_amount" widget="monetary"/>
-                                    <field name="payment_status"/>
-                                    <field name="payment_date"/>
-                                    <field name="state"/>
-                                </tree>
-                            </field>
-                        </page>
-                    </notebook>
                 </sheet>
 
                 <footer>
