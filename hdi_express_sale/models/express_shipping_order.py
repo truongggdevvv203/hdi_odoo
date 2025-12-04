@@ -40,10 +40,10 @@ class ShippingOrder(models.Model):
   sender_config_id = fields.Many2one(
       'sender.config',
       string='Địa điểm gửi',
-      help='Chọn địa điểm gửi hàng từ cấu hình'
-  )
+      help='Chọn địa điểm gửi hàng từ cấu hình',
+      default=lambda self: self.env['sender.config'].get_default_sender().id
+    )
 
-  # Sử dụng full_address từ sender.config
   sender_address = fields.Char(
       string='Địa chỉ gửi',
       related='sender_config_id.full_address',

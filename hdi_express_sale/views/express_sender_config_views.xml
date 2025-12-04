@@ -37,12 +37,12 @@
 
                     <group string="Địa chỉ">
                         <group>
-                            <field name="house_number"/>
-                            <field name="street_name"/>
+                            <field name="district_id" placeholder="VD: Thanh Xuân"/>
+                            <field name="ward_id" placeholder="VD: Khương Trung"/>
                         </group>
                         <group>
-                            <field name="district_id"/>
-                            <field name="ward_id"/>
+                            <field name="house_number" placeholder="VD: Số 5"/>
+                            <field name="street_name" placeholder="VD: Lý Công Uẩn"/>
                         </group>
                     </group>
 
