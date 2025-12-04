@@ -47,12 +47,26 @@
     parent="hdi_express"
     sequence="25"/>
 
-  <!-- Menu con cho Đối soát, công nợ -->
-  <menuitem id="hdi_express_reconcile_paid"
+  <!-- Menu con: Danh sách chưa trả tiền -->
+  <menuitem id="hdi_express_reconcile_unpaid"
     name="Danh sách chưa trả tiền"
     parent="hdi_express_reconcile"
-    action="action_shipping_order_search_by_date"
+    action="hdi_express_sale.action_shipping_order_unpaid"
     sequence="1"/>
+
+  <!-- Menu con: Danh sách chờ trả tiền -->
+  <menuitem id="hdi_express_reconcile_waiting_payment"
+    name="Danh sách chờ trả tiền"
+    parent="hdi_express_reconcile"
+    action="hdi_express_sale.action_shipping_order_waiting_payment"
+    sequence="2"/>
+
+  <!-- Menu con: Danh sách đã trả tiền -->
+  <menuitem id="hdi_express_reconcile_paid"
+    name="Danh sách đã trả tiền"
+    parent="hdi_express_reconcile"
+    action="hdi_express_sale.action_shipping_order_paid"
+    sequence="3"/>
 
   <!-- Menu Tra cứu -->
   <menuitem id="hdi_express_search"
@@ -61,9 +75,9 @@
     sequence="30"/>
 
   <menuitem id="hdi_express_search_order"
-    name="Tìm kiếm phiếu gửi"
+    name="Tìm kiếm phiếu gửi"
     parent="hdi_express_search"
-    action="action_shipping_order_search"
+    action="hdi_express_sale.action_shipping_order_search"
     sequence="10"/>
 
   <!-- Menu Cấu hình -->
