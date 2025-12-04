@@ -34,7 +34,46 @@ class ShippingOrder(models.Model):
       store=True,
       readonly=True
   )
-  sender_street = fields.Char(string='Địa chỉ gửi')
+  
+  sender_config_id = fields.Many2one(
+      'sender.config',
+      string='Địa điểm gửi',
+      help='Chọn địa điểm gửi hàng từ cấu hình'
+  )
+  
+  sender_street = fields.Char(
+      string='Địa chỉ gửi',
+      related='sender_config_id.street',
+      readonly=True
+  )
+  
+  sender_city = fields.Char(
+      string='Tỉnh/Thành phố',
+      related='sender_config_id.city',
+      readonly=True
+  )
+  
+  sender_district = fields.Char(
+      string='Quận/Huyện',
+      help='Quận/Huyện nơi gửi'
+  )
+  
+  sender_ward = fields.Char(
+      string='Phường/Xã',
+      help='Phường/Xã nơi gửi'
+  )
+  
+  sender_phone = fields.Char(
+      string='Số điện thoại',
+      related='sender_config_id.phone',
+      readonly=True
+  )
+  
+  sender_contact_person = fields.Char(
+      string='Người liên hệ',
+      related='sender_config_id.contact_person',
+      readonly=True
+  )
 
   # 3.2. Thông tin người nhận
   receiver_name = fields.Char(string="Họ tên người nhận", required=True)

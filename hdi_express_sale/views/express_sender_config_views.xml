@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- List view for Sender Config -->
+    <record id="view_sender_config_list" model="ir.ui.view">
+        <field name="name">Cấu hình Địa chỉ Gửi Hàng - List</field>
+        <field name="model">sender.config</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="location_id"/>
+                <field name="contact_person"/>
+                <field name="phone"/>
+                <field name="is_default" widget="boolean"/>
+                <field name="active" widget="boolean"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form view for Sender Config -->
+    <record id="view_sender_config_form" model="ir.ui.view">
+        <field name="name">Cấu hình Địa chỉ Gửi Hàng - Form</field>
+        <field name="model">sender.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_toggle_active" 
+                                type="object" 
+                                class="oe_stat_button"
+                                icon="fa-check-circle"
+                                invisible="not active">
+                            <span>Đang hoạt động</span>
+                        </button>
+                        <button name="action_toggle_active" 
+                                type="object" 
+                                class="oe_stat_button"
+                                icon="fa-times-circle"
+                                invisible="active">
+                            <span>Vô hiệu hóa</span>
+                        </button>
+                    </div>
+
+                    <group>
+                        <group string="Thông tin chung">
+                            <field name="name"/>
+                            <field name="location_id" required="1"/>
+                            <field name="sequence"/>
+                            <field name="is_default"/>
+                            <field name="active"/>
+                        </group>
+
+                        <group string="Thông tin liên hệ">
+                            <field name="contact_person"/>
+                            <field name="phone"/>
+                            <field name="email"/>
+                        </group>
+                    </group>
+
+                    <group string="Địa chỉ gửi hàng (Cấu hình riêng)">
+                        <group>
+                            <field name="street"/>
+                            <field name="city"/>
+                        </group>
+                        <group>
+                            <field name="state_id"/>
+                            <field name="zip_code"/>
+                            <field name="country_id"/>
+                        </group>
+                    </group>
+
+                    <group string="Địa chỉ kho hàng (Từ stock.location)">
+                        <group>
+                            <field name="warehouse_street" readonly="1"/>
+                            <field name="warehouse_city" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="warehouse_state_id" readonly="1"/>
+                            <field name="warehouse_zip_code" readonly="1"/>
+                            <field name="warehouse_country_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="company_id" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search view for Sender Config -->
+    <record id="view_sender_config_search" model="ir.ui.view">
+        <field name="name">Cấu hình Địa chỉ Gửi Hàng - Search</field>
+        <field name="model">sender.config</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Tên địa điểm"/>
+                <field name="location_id" string="Vị trí kho"/>
+                <field name="contact_person" string="Người liên hệ"/>
+                <filter name="active" string="Đang hoạt động" domain="[('active', '=', True)]"/>
+                <filter name="inactive" string="Vô hiệu hóa" domain="[('active', '=', False)]"/>
+                <filter name="default" string="Là mặc định" domain="[('is_default', '=', True)]"/>
+                <separator/>
+                <filter name="by_company" string="Công ty" context="{'group_by': 'company_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action for Sender Config -->
+    <record id="action_sender_config" model="ir.actions.act_window">
+        <field name="name">Cấu hình Địa chỉ Gửi Hàng</field>
+        <field name="res_model">sender.config</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(0, 0, {'view_mode': 'list', 'view_id': ref('view_sender_config_list')}),
+                                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_sender_config_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Cấu hình địa chỉ gửi hàng
+            </p>
+            <p>
+                Tạo các địa điểm gửi hàng liên kết với kho hàng từ stock.location
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu item for Sender Config -->
+    <menuitem id="menu_sender_config"
+        name="Cấu hình Địa chỉ Gửi"
+        parent="hdi_express_config"
+        action="action_sender_config"
+        sequence="5"/>
+</odoo>
