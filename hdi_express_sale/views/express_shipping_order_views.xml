@@ -89,7 +89,7 @@
               <field name="shipping_service_id"
                 options="{'no_create': True, 'no_open': True}"
                 required="1"/>
-              <field name="base_shipping_cost" readonly="1"/>
+              <field name="shipping_fee" readonly="1"/>
             </group>
             <group>
               <field name="shipping_service_estimated_time" readonly="1"/>
@@ -99,7 +99,7 @@
           <group string="Dịch vụ cộng thêm" name="additional_service_group">
             <field name="goods_type" required="1"/>
             <field name="additional_service_ids" nolabel="1" widget="many2many_checkboxes" options="{'no_create': True}"/>
-            <field name="additional_cost" readonly="1"/>
+            <field name="extra_fee" readonly="1"/>
           </group>
 
           <group string="Thông tin cước phí" name="fee_group">

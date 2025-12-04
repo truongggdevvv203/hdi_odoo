@@ -8,7 +8,7 @@ class ShippingOrder(models.Model):
 
   code = fields.Char(string='Số phiếu', readonly=True, copy=False,
                      default=lambda self: self.env['ir.sequence'].next_by_code(
-                       'shipping.order'))
+                         'shipping.order'))
 
   state = fields.Selection([
     ('draft', 'Đơn nháp'),
@@ -42,7 +42,7 @@ class ShippingOrder(models.Model):
       string='Địa điểm gửi',
       help='Chọn địa điểm gửi hàng từ cấu hình',
       default=lambda self: self.env['sender.config'].get_default_sender().id
-    )
+  )
 
   sender_address = fields.Char(
       string='Địa chỉ gửi',
@@ -106,9 +106,9 @@ class ShippingOrder(models.Model):
                                         domain=[('service_type', '=', 'main')],
                                         required=True)
 
-  base_shipping_cost = fields.Integer(string='Cước phí (VND)',
-                                      compute='_compute_base_shipping_cost',
-                                      store=True)
+  shipping_fee = fields.Integer(string='Cước phí (VND)',
+                                compute='_compute_shipping_fee',
+                                store=True)
 
   shipping_service_estimated_time = fields.Char(
       string='Thời gian dự kiến',
@@ -129,9 +129,9 @@ class ShippingOrder(models.Model):
                                             domain=[('service_type', '=',
                                                      'additional')])
 
-  additional_cost = fields.Integer(string='Phí dịch vụ cộng thêm (VND)',
-                                   compute='_compute_additional_cost',
-                                   store=True)
+  extra_fee = fields.Integer(string='Phí dịch vụ cộng thêm (VND)',
+                             compute='_compute_extra_fee',
+                             store=True)
 
   # 3.5 Thông tin cước phí
   receiver_pay_fee = fields.Boolean(string='Người nhận trả cước', default=False)
@@ -142,17 +142,30 @@ class ShippingOrder(models.Model):
                                   compute='_compute_sender_pay_fee', store=True)
   shipping_notes = fields.Text(string='Ghi chú nhận hàng')
 
-  # Tính toán tổng cước phí
-  total_shipping_fee = fields.Integer(string='Tổng cước',
-                                      compute='_compute_total_shipping_fee',
-                                      store=True)
+  other_extra_fee = fields.Integer(
+      string='Phụ phí khác',
+      default=0,
+      help='Các chi phí phát sinh khác'
+  )
 
-  suggested_service_ids = fields.Many2many('shipping.service',
-                                           'shipping_order_suggested_service',
-                                           'order_id', 'service_id',
-                                           string='Dịch vụ được gợi ý',
-                                           compute='_compute_suggested_services',
-                                           store=True)
+  vat_amount = fields.Integer(
+      string='VAT (10%)',
+      compute='_compute_vat_amount',
+      store=True
+  )
+
+  # Tổng cước = 4 loại tiền
+  total_shipping_fee = fields.Integer(
+      string='Tổng cước',
+      compute='_compute_total_shipping_fee',
+      store=True
+  )
+
+  receiver_total_amount = fields.Integer(
+      string='Tổng tiền thu người nhận',
+      compute='_compute_receiver_total_amount',
+      store=True
+  )
 
   # 3.6 Thông tin thanh toán / Đối soát công nợ
   payment_status = fields.Selection([
@@ -178,45 +191,46 @@ class ShippingOrder(models.Model):
   invoice_code = fields.Char(string='Mã hóa đơn', readonly=True,
                              help='Mã hóa đơn liên quan (nếu có)')
 
-  @api.depends('cod_amount', 'total_shipping_fee', 'receiver_pay_fee')
+  @api.depends('shipping_fee', 'extra_fee', 'other_extra_fee')
+  def _compute_vat_amount(self):
+    """VAT = 10% của tổng 3 loại phí"""
+    for order in self:
+      shipping = int(order.shipping_fee or 0)
+      extra = int(order.extra_fee or 0)
+      other = int(order.other_extra_fee or 0)
+
+      subtotal = shipping + extra + other
+      order.vat_amount = int(subtotal * 0.10)
+
+  @api.depends('receiver_pay_fee', 'cod_amount', 'total_shipping_fee')
   def _compute_sender_pay_fee(self):
     for rec in self:
-      if rec.receiver_pay_fee:
-        # Nếu người nhận trả cước thì tiền người gửi = COD - tổng cước
-        rec.sender_pay_fee = (rec.cod_amount or 0) - (
-              rec.total_shipping_fee or 0)
-      else:
-        # Nếu không, giữ nguyên hoặc bằng 0
-        rec.sender_pay_fee = 0
+      cod = int(rec.cod_amount or 0)
+      total_fee = int(rec.total_shipping_fee or 0)
 
-  @api.depends('sender_name', 'receiver_city', 'goods_type')
-  def _compute_suggested_services(self):
-    """Suggest main shipping services based on sender/receiver info"""
-    for order in self:
-      if order.sender_name and order.receiver_city:
-        # Get all active main shipping services only
-        suggested = self.env['shipping.service'].search([
-          ('active', '=', True),
-          ('service_type', '=', 'main')
-        ])
-        # Return up to 3 suggested services
-        order.suggested_service_ids = suggested[:3] if suggested else False
+      if rec.receiver_pay_fee:
+        # Người nhận trả cước → người gửi nhận toàn bộ COD
+        rec.sender_pay_fee = cod
       else:
-        order.suggested_service_ids = False
+        # Người gửi trả cước → tiền nhận lại = COD - tổng cước
+        refund = cod - total_fee
+
+        # Nếu COD < tổng cước → không âm, trả về 0
+        rec.sender_pay_fee = refund if refund > 0 else 0
 
   @api.depends('additional_service_ids')
-  def _compute_additional_cost(self):
+  def _compute_extra_fee(self):
     """Calculate additional fees from selected additional services"""
     for order in self:
       # base_price is integer (VND), sum will be integer
-      order.additional_cost = int(
+      order.extra_fee = int(
           sum(order.additional_service_ids.mapped('base_price') or [0]))
 
   @api.depends('shipping_service_id')
-  def _compute_base_shipping_cost(self):
+  def _compute_shipping_fee(self):
     """Compute base shipping cost from the selected main shipping service"""
     for order in self:
-      order.base_shipping_cost = int(
+      order.shipping_fee = int(
           order.shipping_service_id.base_price) if order.shipping_service_id else 0
 
   @api.depends('shipping_service_id')
@@ -225,14 +239,15 @@ class ShippingOrder(models.Model):
     for order in self:
       order.shipping_service_estimated_time = order.shipping_service_id.estimated_time if order.shipping_service_id else ''
 
-  @api.depends('base_shipping_cost', 'cod_amount', 'receiver_pay_fee',
-               'additional_cost')
+  @api.depends('shipping_fee', 'extra_fee', 'other_extra_fee', 'vat_amount')
   def _compute_total_shipping_fee(self):
-    """Calculate total fee = base shipping + additional services"""
     for order in self:
-      fee = (int(order.base_shipping_cost or 0)) + (
-        int(order.additional_cost or 0))
-      order.total_shipping_fee = int(fee)
+      shipping = int(order.shipping_fee or 0)
+      extra = int(order.extra_fee or 0)
+      other = int(order.other_extra_fee or 0)
+      vat = int(order.vat_amount or 0)
+
+      order.total_shipping_fee = shipping + extra + other + vat
 
   def action_submit_shipping(self):
     """Submit as shipping order"""
@@ -302,3 +317,14 @@ class ShippingOrder(models.Model):
             record._send_bus_notification(message, old_state, new_state)
 
     return result
+
+  @api.depends('receiver_pay_fee', 'cod_amount', 'total_shipping_fee')
+  def _compute_receiver_total_amount(self):
+    for order in self:
+      cod = int(order.cod_amount or 0)
+      shipping_total = int(order.total_shipping_fee or 0)
+
+      if order.receiver_pay_fee:
+        order.receiver_total_amount = cod + shipping_total
+      else:
+        order.receiver_total_amount = cod
