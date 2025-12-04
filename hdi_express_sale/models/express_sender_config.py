@@ -34,9 +34,20 @@ class SenderConfig(models.Model):
   ward_id = fields.Many2one(
       'res.country.ward',
       string='Chọn Phường/xã',
-      domain="[('district_id', '=', district_id)]",
+      # Bỏ domain cứng, sẽ xử lý bằng onchange
       help='Chọn phường/xã'
   )
+
+  @api.onchange('district_id')
+  def _onchange_district_id(self):
+    """Reset ward when district changes and set domain"""
+    if self.district_id:
+      self.ward_id = False
+      return {
+        'domain': {'ward_id': [('district_id', '=', self.district_id.id)]}}
+    else:
+      self.ward_id = False
+      return {'domain': {'ward_id': []}}
 
   house_number = fields.Char(
       string='Số nhà',
