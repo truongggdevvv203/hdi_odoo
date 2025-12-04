@@ -84,7 +84,7 @@
   <menuitem id="menu_sender_config"
     name="Địa chỉ Gửi hàng"
     parent="hdi_express_config"
-    action="action_sender_config"
+    action="hdi_express_sale.action_sender_config"
     sequence="5"/>
 
   <!-- Menu con: Dịch vụ vận chuyển -->
