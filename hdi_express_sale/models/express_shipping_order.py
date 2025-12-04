@@ -50,18 +50,6 @@ class ShippingOrder(models.Model):
       readonly=True
   )
 
-  sender_district = fields.Char(
-      string='Quận/Huyện',
-      related='sender_config_id.district_id.name',
-      readonly=True
-  )
-
-  sender_ward = fields.Char(
-      string='Phường/Xã',
-      related='sender_config_id.ward_id.name',
-      readonly=True
-  )
-
   sender_phone = fields.Char(
       string='Số điện thoại',
       related='sender_config_id.phone',
