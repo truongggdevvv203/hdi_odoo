@@ -22,7 +22,8 @@
 
           <group string="Thông tin người gửi" name="sender_group">
             <group>
-              <field name="sender_street" placeholder="Nhập địa chỉ gửi" required="1"/>
+              <field name="sender_config_id" placeholder="Chọn địa chỉ gửi" required="1"/>
+              <field name="sender_address"/>
             </group>
           </group>
 
