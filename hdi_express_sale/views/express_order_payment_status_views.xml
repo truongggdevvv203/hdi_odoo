@@ -3,7 +3,7 @@
   <!-- View: Payment Status Filter Form -->
   <record id="view_shipping_order_payment_status_form" model="ir.ui.view">
     <field name="name">Danh sách Phiếu theo Trạng thái Thanh toán</field>
-    <field name="model">shipping.order.payment.status</field>
+    <field name="model">shipping.order.by.payment.status</field>
     <field name="arch" type="xml">
       <form create="false" delete="false">
         <sheet>
@@ -46,7 +46,7 @@
   <record id="action_shipping_order_unpaid" model="ir.actions.act_window">
     <field name="name">Danh sách chưa trả tiền</field>
     <field name="type">ir.actions.act_window</field>
-    <field name="res_model">shipping.order.payment.status</field>
+    <field name="res_model">shipping.order.by.payment.status</field>
     <field name="view_mode">form</field>
     <field name="views" eval="[(ref('view_shipping_order_payment_status_form'), 'form')]"/>
     <field name="target">current</field>
@@ -58,7 +58,7 @@
   <record id="action_shipping_order_waiting_payment" model="ir.actions.act_window">
     <field name="name">Danh sách chờ trả tiền</field>
     <field name="type">ir.actions.act_window</field>
-    <field name="res_model">shipping.order.payment.status</field>
+    <field name="res_model">shipping.order.by.payment.status</field>
     <field name="view_mode">form</field>
     <field name="views" eval="[(ref('view_shipping_order_payment_status_form'), 'form')]"/>
     <field name="target">current</field>
@@ -70,11 +70,65 @@
   <record id="action_shipping_order_paid" model="ir.actions.act_window">
     <field name="name">Danh sách đã trả tiền</field>
     <field name="type">ir.actions.act_window</field>
-    <field name="res_model">shipping.order.payment.status</field>
+    <field name="res_model">shipping.order.by.payment.status</field>
     <field name="view_mode">form</field>
     <field name="views" eval="[(ref('view_shipping_order_payment_status_form'), 'form')]"/>
     <field name="target">current</field>
     <field name="context">{'default_payment_status': 'paid'}</field>
     <field name="help">Danh sách phiếu gửi hàng đã trả tiền</field>
   </record>
+
+<!--   &lt;!&ndash; View 2: Search by Date (Multiple Records) &ndash;&gt;-->
+<!--  <record id="view_shipping_order_search_by_date_form" model="ir.ui.view">-->
+<!--    <field name="name">Tìm kiếm Phiếu Gửi Hàng theo Ngày Tạo</field>-->
+<!--    <field name="model">shipping.order.search.by.date</field>-->
+<!--    <field name="arch" type="xml">-->
+<!--      <form create="false" delete="false">-->
+<!--        <sheet>-->
+<!--          <group string="Bộ lọc tìm kiếm">-->
+<!--            <group>-->
+<!--              <field name="date_from"/>-->
+<!--              <field name="date_to"/>-->
+<!--            </group>-->
+<!--          </group>-->
+<!--          <group>-->
+<!--            <button name="action_search"-->
+<!--              string="Tìm kiếm"-->
+<!--              type="object"-->
+<!--              class="btn-primary"-->
+<!--              icon="fa-search"/>-->
+<!--          </group>-->
+
+<!--          <separator string="Danh sách kết quả" colspan="4"/>-->
+<!--          <field name="order_ids" nolabel="1" colspan="4">-->
+<!--            <list string="Danh sách kết quả" create="false" delete="false">-->
+<!--              <field name="code" string="Mã phiếu"/>-->
+<!--              <field name="create_date" string="Ngày tạo"/>-->
+<!--              <field name="sender_name" string="Người gửi"/>-->
+<!--              <field name="receiver_name" string="Người nhận"/>-->
+<!--              <field name="state" string="Trạng thái"/>-->
+<!--              <field name="payment_status" string="TT Thanh toán"/>-->
+<!--              <field name="total_shipping_fee" string="Tổng cước"/>-->
+<!--            </list>-->
+<!--          </field>-->
+<!--        </sheet>-->
+
+<!--        <footer>-->
+<!--          <button string="Đóng" class="btn-secondary" special="cancel"/>-->
+<!--        </footer>-->
+<!--      </form>-->
+<!--    </field>-->
+<!--  </record>-->
+
+<!--  &lt;!&ndash; Action: Search by Date &ndash;&gt;-->
+<!--  <record id="action_shipping_order_search_by_date" model="ir.actions.act_window">-->
+<!--    <field name="name">Tìm kiếm theo Ngày Tạo</field>-->
+<!--    <field name="type">ir.actions.act_window</field>-->
+<!--    <field name="res_model">shipping.order.search.by.date</field>-->
+<!--    <field name="view_mode">form</field>-->
+<!--    <field name="views" eval="[(ref('view_shipping_order_search_by_date_form'), 'form')]"/>-->
+<!--    <field name="target">current</field>-->
+<!--    <field name="help">Tìm kiếm danh sách phiếu gửi hàng theo khoảng thời gian và trạng thái thanh toán</field>-->
+<!--  </record>-->
+
 </odoo>

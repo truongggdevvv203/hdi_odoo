@@ -69,6 +69,7 @@ class ShippingOrderByPaymentStatus(models.TransientModel):
             }
         }
 
+    # Build date range domain
     domain = []
     start_dt = self._to_datetime_string(self.date_from)
     if start_dt:
@@ -77,20 +78,28 @@ class ShippingOrderByPaymentStatus(models.TransientModel):
     if end_dt:
         domain.append(('create_date', '<=', end_dt))
 
-    domain.append(('payment_status', '=', 'unpaid'))
+    # ⭐ Quan trọng: luôn lọc theo payment_status nếu màn hình có default
+    if self.payment_status:
+        domain.append(('payment_status', '=', self.payment_status))
 
+    # Query
     orders = self.env['shipping.order'].search(domain,
                                                order='create_date desc')
 
+    # Gán kết quả (xoá cũ)
     self.order_ids = orders
 
+    # Thông báo khi không có dữ liệu
     if not orders:
         if self.payment_status:
             payment_label = dict(self._fields['payment_status'].selection).get(
                 self.payment_status)
-            message = f'Không có đơn nào với trạng thái "{payment_label}" trong khoảng thời gian đã chọn'
+            message = (
+                f'Không có đơn nào với trạng thái "{payment_label}" '
+                f'trong khoảng thời gian đã chọn'
+            )
         else:
-            message = f'Không có đơn nào trong khoảng thời gian đã chọn'
+            message = 'Không có đơn nào trong khoảng thời gian đã chọn'
 
         return {
             'type': 'ir.actions.client',
