@@ -9,6 +9,7 @@ class ShippingOrder(models.Model):
   code = fields.Char(string='Số phiếu', readonly=True, copy=False,
                      default=lambda self: self.env['ir.sequence'].next_by_code(
                        'shipping.order'))
+
   state = fields.Selection([
     ('draft', 'Đơn nháp'),
     ('waiting_pickup', 'Chờ lấy hàng'),
@@ -28,50 +29,48 @@ class ShippingOrder(models.Model):
       string='Người gửi',
       default=lambda self: self.env.user
   )
+
   sender_name = fields.Char(
       string='Tên người gửi',
       related='sender_id.name',
       store=True,
       readonly=True
   )
-  
+
   sender_config_id = fields.Many2one(
       'sender.config',
       string='Địa điểm gửi',
       help='Chọn địa điểm gửi hàng từ cấu hình'
   )
-  
-  sender_street = fields.Char(
+
+  # Sử dụng full_address từ sender.config
+  sender_address = fields.Char(
       string='Địa chỉ gửi',
-      related='sender_config_id.street',
+      related='sender_config_id.full_address',
       readonly=True
   )
-  
-  sender_city = fields.Char(
-      string='Tỉnh/Thành phố',
-      related='sender_config_id.city',
-      readonly=True
-  )
-  
+
   sender_district = fields.Char(
       string='Quận/Huyện',
-      help='Quận/Huyện nơi gửi'
+      related='sender_config_id.district_id.name',
+      readonly=True
   )
-  
+
   sender_ward = fields.Char(
       string='Phường/Xã',
-      help='Phường/Xã nơi gửi'
+      related='sender_config_id.ward_id.name',
+      readonly=True
   )
-  
+
   sender_phone = fields.Char(
       string='Số điện thoại',
       related='sender_config_id.phone',
       readonly=True
   )
-  
-  sender_contact_person = fields.Char(
-      string='Người liên hệ',
-      related='sender_config_id.contact_person',
+
+  sender_email = fields.Char(
+      string='Email',
+      related='sender_config_id.email',
       readonly=True
   )
 
@@ -141,6 +140,7 @@ class ShippingOrder(models.Model):
                                             string='Dịch vụ cộng thêm',
                                             domain=[('service_type', '=',
                                                      'additional')])
+
   additional_cost = fields.Integer(string='Phí dịch vụ cộng thêm (VND)',
                                    compute='_compute_additional_cost',
                                    store=True)
@@ -172,17 +172,23 @@ class ShippingOrder(models.Model):
     ('waiting_payment', 'Chờ trả tiền'),
     ('paid', 'Đã trả tiền'),
     ('cancelled', 'Hủy thanh toán'),
-  ], string='Trạng thái thanh toán', default='unpaid', help='Trạng thái thanh toán của đơn hàng')
+  ], string='Trạng thái thanh toán', default='unpaid',
+      help='Trạng thái thanh toán của đơn hàng')
 
-  payment_date = fields.Date(string='Ngày thanh toán', readonly=True, help='Ngày thực hiện thanh toán')
-  
-  paid_amount = fields.Integer(string='Tiền đã trả (VND)', default=0, readonly=True, help='Số tiền đã thanh toán')
-  
-  payment_deadline = fields.Date(string='Hạn thanh toán', help='Hạn chót thanh toán')
-  
-  payment_note = fields.Text(string='Ghi chú thanh toán', help='Ghi chú liên quan đến thanh toán')
-  
-  invoice_code = fields.Char(string='Mã hóa đơn', readonly=True, help='Mã hóa đơn liên quan (nếu có)')
+  payment_date = fields.Date(string='Ngày thanh toán', readonly=True,
+                             help='Ngày thực hiện thanh toán')
+
+  paid_amount = fields.Integer(string='Tiền đã trả (VND)', default=0,
+                               readonly=True, help='Số tiền đã thanh toán')
+
+  payment_deadline = fields.Date(string='Hạn thanh toán',
+                                 help='Hạn chót thanh toán')
+
+  payment_note = fields.Text(string='Ghi chú thanh toán',
+                             help='Ghi chú liên quan đến thanh toán')
+
+  invoice_code = fields.Char(string='Mã hóa đơn', readonly=True,
+                             help='Mã hóa đơn liên quan (nếu có)')
 
   @api.depends('cod_amount', 'total_shipping_fee', 'receiver_pay_fee')
   def _compute_sender_pay_fee(self):
@@ -246,7 +252,8 @@ class ShippingOrder(models.Model):
     self.write({
       'state': 'waiting_pickup'
     })
-    self._send_bus_notification('Đơn hàng đã được gửi đi', old_state, 'waiting_pickup')
+    self._send_bus_notification('Đơn hàng đã được gửi đi', old_state,
+                                'waiting_pickup')
     return {'type': 'ir.actions.client', 'tag': 'reload'}
 
   def action_cancel(self):
@@ -270,11 +277,11 @@ class ShippingOrder(models.Model):
         'new_state': new_state or self.state,
         'timestamp': fields.Datetime.now().isoformat()
       }
-      
+
       self.env['bus.bus']._sendone(
-        f'shipping_order_update_{self.sender_id.id}',
-        'shipping_order_update',
-        notification_data
+          f'shipping_order_update_{self.sender_id.id}',
+          'shipping_order_update',
+          notification_data
       )
 
   @api.model_create_multi
@@ -292,9 +299,9 @@ class ShippingOrder(models.Model):
     if 'state' in vals:
       for record in self:
         state_changes[record.id] = record.state
-    
+
     result = super().write(vals)
-    
+
     # Send notifications for state changes
     if 'state' in vals:
       new_state = vals['state']
@@ -305,5 +312,5 @@ class ShippingOrder(models.Model):
             state_names = dict(self._fields['state'].selection)
             message = f'Trạng thái đơn hàng thay đổi: {state_names.get(old_state, old_state)} → {state_names.get(new_state, new_state)}'
             record._send_bus_notification(message, old_state, new_state)
-    
+
     return result

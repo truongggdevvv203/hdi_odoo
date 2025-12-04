@@ -7,12 +7,11 @@
         <field name="arch" type="xml">
             <list>
                 <field name="sequence" widget="handle"/>
-                <field name="name"/>
-                <field name="location_id"/>
-                <field name="contact_person"/>
+                <field name="name" decoration-muted="not active"/>
                 <field name="phone"/>
-                <field name="is_default" widget="boolean"/>
-                <field name="active" widget="boolean"/>
+                <field name="full_address"/>
+                <field name="is_default" widget="badge" decoration-success="is_default"/>
+                <field name="active" widget="boolean" optional="hide"/>
             </list>
         </field>
     </record>
@@ -23,68 +22,67 @@
         <field name="model">sender.config</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button name="action_archive" string="Lưu trữ" type="object" class="btn-secondary" invisible="not active" confirm="Bạn có chắc muốn lưu trữ địa chỉ này?"/>
+                    <button name="action_unarchive" string="Khôi phục" type="object" class="btn-primary" invisible="active"/>
+                </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_toggle_active" 
-                                type="object" 
-                                class="oe_stat_button"
-                                icon="fa-check-circle"
-                                invisible="not active">
-                            <span>Đang hoạt động</span>
-                        </button>
-                        <button name="action_toggle_active" 
-                                type="object" 
-                                class="oe_stat_button"
-                                icon="fa-times-circle"
-                                invisible="active">
-                            <span>Vô hiệu hóa</span>
+                        <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options="{'terminology': 'archive'}"/>
                         </button>
                     </div>
 
+                    <widget name="web_ribbon" title="Đã lưu trữ" bg_color="text-bg-danger" invisible="active"/>
+                    <widget name="web_ribbon" title="Mặc định" bg_color="text-bg-success" invisible="not is_default or not active"/>
+
                     <group>
                         <group string="Thông tin chung">
-                            <field name="name"/>
-                            <field name="location_id" required="1"/>
+                            <field name="name" placeholder="VD: KHO MỚI TẠO"/>
                             <field name="sequence"/>
                             <field name="is_default"/>
-                            <field name="active"/>
                         </group>
 
                         <group string="Thông tin liên hệ">
-                            <field name="contact_person"/>
-                            <field name="phone"/>
-                            <field name="email"/>
+                            <field name="phone" placeholder="0988666555"/>
+                            <field name="email" widget="email" placeholder="khothunghiem@gmail.com"/>
                         </group>
                     </group>
 
-                    <group string="Địa chỉ gửi hàng (Cấu hình riêng)">
+                    <group string="Địa chỉ chi tiết">
                         <group>
-                            <field name="street"/>
-                            <field name="city"/>
+                            <field name="district_id" options="{'no_create': True, 'no_open': True}" placeholder="Chọn Quận/huyện"/>
+                            <field name="ward_id" options="{'no_create': True, 'no_open': True}" placeholder="Chọn Phường/xã"/>
                         </group>
                         <group>
-                            <field name="state_id"/>
-                            <field name="zip_code"/>
-                            <field name="country_id"/>
-                        </group>
-                    </group>
-
-                    <group string="Địa chỉ kho hàng (Từ stock.location)">
-                        <group>
-                            <field name="warehouse_street" readonly="1"/>
-                            <field name="warehouse_city" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="warehouse_state_id" readonly="1"/>
-                            <field name="warehouse_zip_code" readonly="1"/>
-                            <field name="warehouse_country_id" readonly="1"/>
+                            <field name="house_number" placeholder="Số 5"/>
+                            <field name="street_name" placeholder="Đường Lý Công Uẩn"/>
                         </group>
                     </group>
 
                     <group>
-                        <field name="company_id" readonly="1"/>
+                        <field name="full_address" readonly="1" class="oe_read_only"/>
                     </group>
+
+                    <notebook>
+                        <page string="Thông tin khác" name="other_info">
+                            <group>
+                                <group string="Người tạo">
+                                    <field name="create_uid" readonly="1"/>
+                                    <field name="create_date" readonly="1"/>
+                                </group>
+                                <group string="Cập nhật lần cuối">
+                                    <field name="write_uid" readonly="1"/>
+                                    <field name="write_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
@@ -95,38 +93,43 @@
         <field name="model">sender.config</field>
         <field name="arch" type="xml">
             <search>
-                <field name="name" string="Tên địa điểm"/>
-                <field name="location_id" string="Vị trí kho"/>
-                <field name="contact_person" string="Người liên hệ"/>
-                <filter name="active" string="Đang hoạt động" domain="[('active', '=', True)]"/>
-                <filter name="inactive" string="Vô hiệu hóa" domain="[('active', '=', False)]"/>
-                <filter name="default" string="Là mặc định" domain="[('is_default', '=', True)]"/>
+                <field name="name" string="Tên kho hàng"/>
+                <field name="phone" string="Số điện thoại"/>
+                <field name="district_id" string="Quận/Huyện"/>
+                <field name="ward_id" string="Phường/Xã"/>
+
                 <separator/>
-                <filter name="by_company" string="Công ty" context="{'group_by': 'company_id'}"/>
+                <filter name="active" string="Đang hoạt động" domain="[('active', '=', True)]"/>
+                <filter name="archived" string="Đã lưu trữ" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="default" string="Là mặc định" domain="[('is_default', '=', True)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="by_district" string="Quận/Huyện" context="{'group_by': 'district_id'}"/>
+                </group>
             </search>
         </field>
     </record>
 
     <!-- Action for Sender Config -->
     <record id="action_sender_config" model="ir.actions.act_window">
-        <field name="name">Cấu hình Địa chỉ Gửi Hàng</field>
+        <field name="name">Địa chỉ Gửi hàng</field>
         <field name="res_model">sender.config</field>
         <field name="view_mode">list,form</field>
-        <field name="view_ids" eval="[(0, 0, {'view_mode': 'list', 'view_id': ref('view_sender_config_list')}),
-                                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_sender_config_form')})]"/>
+        <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Cấu hình địa chỉ gửi hàng
+                Chưa có địa chỉ gửi hàng nào
             </p>
             <p>
-                Tạo các địa điểm gửi hàng liên kết với kho hàng từ stock.location
+                Nhấn <strong>Tạo</strong> để cấu hình địa điểm gửi hàng cho đơn vận chuyển
             </p>
         </field>
     </record>
 
     <!-- Menu item for Sender Config -->
     <menuitem id="menu_sender_config"
-        name="Cấu hình Địa chỉ Gửi"
+        name="Địa chỉ Gửi hàng"
         parent="hdi_express_config"
         action="action_sender_config"
         sequence="5"/>

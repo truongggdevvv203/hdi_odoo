@@ -2,134 +2,122 @@ from odoo import models, fields, api
 
 
 class SenderConfig(models.Model):
-    _name = 'sender.config'
-    _description = 'Cấu hình Địa chỉ Gửi Hàng'
-    _order = 'sequence, name'
+  _name = 'sender.config'
+  _description = 'Cấu hình Địa chỉ Gửi Hàng'
+  _order = 'sequence, name'
 
-    name = fields.Char(
-        string='Tên địa điểm gửi',
-        required=True,
-        help='Tên dễ nhớ của địa điểm gửi hàng'
-    )
+  name = fields.Char(
+      string='Tên kho hàng',
+      required=True,
+      help='Tên địa điểm gửi hàng'
+  )
 
-    location_id = fields.Many2one(
-        'stock.location',
-        string='Vị trí kho hàng',
-        required=True,
-        domain=[('usage', '=', 'internal')],
-        help='Chọn vị trí kho hàng từ stock.location'
-    )
+  # Thông tin liên hệ
+  phone = fields.Char(
+      string='Số điện thoại',
+      required=True,
+      help='Số điện thoại liên hệ'
+  )
 
-    # Địa chỉ riêng (có thể khác với kho)
-    street = fields.Char(
-        string='Đường/Phố',
-        help='Địa chỉ gửi hàng chi tiết'
-    )
+  email = fields.Char(
+      string='Email',
+      help='Email liên hệ'
+  )
 
-    city = fields.Char(
-        string='Tỉnh/Thành phố',
-        help='Tỉnh thành phố'
-    )
+  # Địa chỉ chi tiết
+  district_id = fields.Many2one(
+      'res.country.district',
+      string='Chọn Quận/huyện',
+      help='Chọn quận/huyện'
+  )
 
-    state_id = fields.Many2one(
-        'res.country.state',
-        string='Tỉnh/Bang',
-        help='Chọn tỉnh thành'
-    )
+  ward_id = fields.Many2one(
+      'res.country.ward',
+      string='Chọn Phường/xã',
+      domain="[('district_id', '=', district_id)]",
+      help='Chọn phường/xã'
+  )
 
-    zip_code = fields.Char(
-        string='Mã bưu điện',
-        help='Mã bưu điện'
-    )
+  house_number = fields.Char(
+      string='Số nhà',
+      help='Số nhà'
+  )
 
-    country_id = fields.Many2one(
-        'res.country',
-        string='Quốc gia',
-        default=lambda self: self.env.ref('base.vn'),
-        help='Quốc gia'
-    )
+  street_name = fields.Char(
+      string='Tên đường',
+      required=True,
+      help='Tên đường'
+  )
 
-    # Địa chỉ từ kho (read-only)
-    warehouse_street = fields.Char(
-        string='Đường/Phố (Kho)',
-        related='location_id.street',
-        readonly=True,
-        help='Địa chỉ từ kho hàng'
-    )
+  # Cấu hình
+  sequence = fields.Integer(
+      string='Thứ tự',
+      default=10,
+      help='Thứ tự hiển thị'
+  )
 
-    warehouse_city = fields.Char(
-        string='Tỉnh/Thành phố (Kho)',
-        related='location_id.city',
-        readonly=True
-    )
+  is_default = fields.Boolean(
+      string='Là mặc định',
+      default=False,
+      help='Đặt làm địa điểm gửi mặc định'
+  )
 
-    warehouse_state_id = fields.Many2one(
-        'res.country.state',
-        string='Tỉnh/Bang (Kho)',
-        related='location_id.state_id',
-        readonly=True
-    )
+  active = fields.Boolean(
+      string='Hoạt động',
+      default=True,
+      tracking=True,
+      help='Kích hoạt/Vô hiệu hóa địa điểm này'
+  )
 
-    warehouse_zip_code = fields.Char(
-        string='Mã bưu điện (Kho)',
-        related='location_id.zip',
-        readonly=True
-    )
+  # Computed field: Địa chỉ đầy đủ
+  full_address = fields.Char(
+      string='Địa chỉ đầy đủ',
+      compute='_compute_full_address',
+      store=True
+  )
 
-    warehouse_country_id = fields.Many2one(
-        'res.country',
-        string='Quốc gia (Kho)',
-        related='location_id.country_id',
-        readonly=True
-    )
+  @api.depends('house_number', 'street_name', 'ward_id', 'district_id')
+  def _compute_full_address(self):
+    """Tính toán địa chỉ đầy đủ"""
+    for record in self:
+      address_parts = []
+      if record.house_number:
+        address_parts.append(record.house_number)
+      if record.street_name:
+        address_parts.append(record.street_name)
+      if record.ward_id:
+        address_parts.append(record.ward_id.name)
+      if record.district_id:
+        address_parts.append(record.district_id.name)
 
-    phone = fields.Char(
-        string='Số điện thoại',
-        help='Số điện thoại liên hệ địa điểm gửi hàng'
-    )
+      record.full_address = ', '.join(address_parts) if address_parts else ''
 
-    email = fields.Char(
-        string='Email',
-        help='Email liên hệ'
-    )
+  @api.onchange('district_id')
+  def _onchange_district_id(self):
+    """Reset ward when district changes"""
+    if self.district_id:
+      self.ward_id = False
 
-    contact_person = fields.Char(
-        string='Người liên hệ',
-        help='Tên người đại diện'
-    )
+  @api.model
+  def get_default_sender(self):
+    """Get default sender location"""
+    default = self.search([('is_default', '=', True), ('active', '=', True)],
+                          limit=1)
+    return default if default else self.search([('active', '=', True)], limit=1)
 
-    sequence = fields.Integer(
-        string='Thứ tự',
-        default=10,
-        help='Thứ tự hiển thị'
-    )
+  @api.model
+  def get_sender_choices(self):
+    """Get all active sender locations for selection"""
+    return self.search([('active', '=', True)], order='sequence')
 
-    is_default = fields.Boolean(
-        string='Là mặc định',
-        default=False,
-        help='Đặt làm địa điểm gửi mặc định'
-    )
-
-    active = fields.Boolean(
-        string='Hoạt động',
-        default=True,
-        help='Kích hoạt/Vô hiệu hóa địa điểm này'
-    )
-
-    company_id = fields.Many2one(
-        'res.company',
-        string='Công ty',
-        default=lambda self: self.env.company,
-        required=True
-    )
-
-    @api.model
-    def get_default_sender(self):
-        """Get default sender location"""
-        default = self.search([('is_default', '=', True)], limit=1)
-        return default if default else self.search([], limit=1)
-
-    @api.model
-    def get_sender_choices(self):
-        """Get all active sender locations for selection"""
-        return self.search([('active', '=', True)], order='sequence')
+  @api.constrains('is_default')
+  def _check_single_default(self):
+    """Ensure only one default sender"""
+    for record in self:
+      if record.is_default:
+        other_defaults = self.search([
+          ('id', '!=', record.id),
+          ('is_default', '=', True)
+        ])
+        if other_defaults:
+          other_defaults.write({'is_default': False})

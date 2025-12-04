@@ -212,7 +212,6 @@
     <field name="name">Tạo phiếu gửi hàng</field>
     <field name="res_model">shipping.order</field>
     <field name="view_mode">form</field>
-    <field name="view_ids" eval="[(0, 0, {'view_mode': 'form', 'view_id': ref('view_shipping_order_form')})]"/>
     <field name="context">{'form_view_ref': 'hdi_express_sale.view_shipping_order_form'}</field>
     <field name="target">current</field>
   </record>
