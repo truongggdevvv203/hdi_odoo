@@ -168,28 +168,45 @@ class ShippingOrder(models.Model):
   )
 
   # 3.6 Thông tin thanh toán / Đối soát công nợ
+  is_cod_collected = fields.Boolean(
+      string="Shipper đã nộp COD",
+      default=False
+  )
+
   payment_status = fields.Selection([
     ('unpaid', 'Chưa trả tiền'),
     ('waiting_payment', 'Chờ trả tiền'),
     ('paid', 'Đã trả tiền'),
     ('cancelled', 'Hủy thanh toán'),
-  ], string='Trạng thái thanh toán', default='unpaid',
-      help='Trạng thái thanh toán của đơn hàng')
+  ], compute='_compute_payment_status', store=True)
 
-  payment_date = fields.Date(string='Ngày thanh toán', readonly=True,
-                             help='Ngày thực hiện thanh toán')
+  @api.depends('state', 'cod_amount', 'receiver_pay_fee', 'is_cod_collected')
+  def _compute_payment_status(self):
+    for o in self:
+      cod = int(o.cod_amount or 0)
 
-  paid_amount = fields.Integer(string='Tiền đã trả (VND)', default=0,
-                               readonly=True, help='Số tiền đã thanh toán')
+      # Nếu đơn bị hủy → không cần thanh toán
+      if o.state == 'cancelled':
+        o.payment_status = 'cancelled'
+        continue
 
-  payment_deadline = fields.Date(string='Hạn thanh toán',
-                                 help='Hạn chót thanh toán')
+      # 1. Đơn chưa giao → chắc chắn chưa thanh toán
+      if o.state not in ['delivered', 'return_completed']:
+        o.payment_status = 'unpaid'
+        continue
 
-  payment_note = fields.Text(string='Ghi chú thanh toán',
-                             help='Ghi chú liên quan đến thanh toán')
+      # 2. Đơn đã giao, có COD nhưng chưa thu tiền
+      if cod > 0 and not o.is_cod_collected:
+        o.payment_status = 'waiting_payment'
+        continue
 
-  invoice_code = fields.Char(string='Mã hóa đơn', readonly=True,
-                             help='Mã hóa đơn liên quan (nếu có)')
+      # 3. Người nhận trả phí nhưng chưa thu tiền
+      if o.receiver_pay_fee and not o.is_cod_collected:
+        o.payment_status = 'waiting_payment'
+        continue
+
+      # 4. Nếu không có COD & người gửi trả phí → coi như đã thanh toán
+      o.payment_status = 'paid'
 
   @api.depends('shipping_fee', 'extra_fee', 'other_extra_fee')
   def _compute_vat_amount(self):
