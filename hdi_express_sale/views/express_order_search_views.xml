@@ -20,11 +20,11 @@
           <div invisible="not order_id">
             <group>
               <group string="Thông tin chung">
-                 <field name="order_code" readonly="1"/>
+                <field name="order_code" readonly="1"/>
                 <field name="state" readonly="1"/>
               </group>
               <group string="Nội dung hàng">
-                 <field name="goods_description" readonly="1"/>
+                <field name="goods_description" readonly="1"/>
               </group>
             </group>
             <group>
@@ -62,7 +62,7 @@
 
   <!-- Action: Search by Code -->
   <record id="action_shipping_order_search" model="ir.actions.act_window">
-    <field name="name">Tìm kiếm Phiếu gửi hàng</field>
+    <field name="name">Tìm kiếm Phiếu gửi hàng</field>
     <field name="type">ir.actions.act_window</field>
     <field name="res_model">shipping.order.search</field>
     <field name="view_mode">form</field>
@@ -78,7 +78,7 @@
     <field name="arch" type="xml">
       <form create="false" delete="false">
         <sheet>
-          <group string="Bộ lọc theo ngày tạo">
+          <group>
             <group>
               <field name="date_from"/>
             </group>
@@ -96,14 +96,14 @@
 
           <separator string="Danh sách kết quả" colspan="4"/>
           <field name="order_ids" nolabel="1" colspan="4">
-            <tree string="Danh sách kết quả" editable="false" create="false" delete="false">
+            <list string="Danh sách kết quả" create="false" delete="false">
               <field name="code" string="Mã phiếu"/>
               <field name="create_date" string="Ngày tạo"/>
               <field name="sender_name" string="Người gửi"/>
               <field name="receiver_name" string="Người nhận"/>
               <field name="state" string="Trạng thái"/>
               <field name="total_shipping_fee" string="Tổng cước"/>
-            </tree>
+            </list>
           </field>
         </sheet>
 

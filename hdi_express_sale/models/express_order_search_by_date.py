@@ -47,7 +47,7 @@ class ShippingOrderSearchByDate(models.TransientModel):
     def action_search(self):
         """Search for shipping orders by date range"""
         self.ensure_one()
-        
+
         valid, message = self._validate_date_range()
         if not valid:
             return {
@@ -59,7 +59,7 @@ class ShippingOrderSearchByDate(models.TransientModel):
                     'type': 'danger',
                 }
             }
-        
+
         domain = []
         start_dt = self._to_datetime_string(self.date_from)
         if start_dt:
@@ -67,8 +67,9 @@ class ShippingOrderSearchByDate(models.TransientModel):
         end_dt = self._to_datetime_string(self.date_to, end_of_day=True)
         if end_dt:
             domain.append(('create_date', '<=', end_dt))
-        
-        orders = self.env['shipping.order'].search(domain, order='create_date desc')
+
+        orders = self.env['shipping.order'].search(domain,
+                                                   order='create_date desc')
         if not orders:
             return {
                 'type': 'ir.actions.client',
@@ -79,14 +80,9 @@ class ShippingOrderSearchByDate(models.TransientModel):
                     'type': 'warning',
                 }
             }
-        
+
+        # Lưu kết quả vào Many2many field
         self.order_ids = orders
-        
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'shipping.order.search.by.date',
-            'res_id': self.id,
-            'view_mode': 'form',
-            'views': [(False, 'form')],
-            'target': 'current',
-        }
+
+        # KHÔNG return action - để form tự reload và hiển thị kết quả
+        return True

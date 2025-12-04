@@ -51,7 +51,7 @@
   <menuitem id="hdi_express_reconcile_paid"
     name="Danh sách đã trả tiền"
     parent="hdi_express_reconcile"
-    action=""
+    action="action_shipping_order_search_by_date"
     sequence="1"/>
 
   <!-- Menu Tra cứu -->
@@ -60,19 +60,11 @@
     parent="hdi_express"
     sequence="30"/>
 
-  <!-- Menu con: Tìm kiếm phiếu gửi theo mã -->
   <menuitem id="hdi_express_search_order"
     name="Tìm kiếm phiếu gửi"
     parent="hdi_express_search"
     action="action_shipping_order_search"
     sequence="10"/>
-
-  <!-- Menu con: Tìm kiếm phiếu gửi theo ngày -->
-  <menuitem id="hdi_express_search_order_by_date"
-    name="Tìm kiếm theo Ngày Tạo"
-    parent="hdi_express_search"
-    action="action_shipping_order_search_by_date"
-    sequence="20"/>
 
   <!-- Menu Cấu hình -->
   <menuitem id="hdi_express_config"
