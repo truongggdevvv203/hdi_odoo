@@ -1,14 +1,14 @@
 <odoo>
   <!-- View 1: Search by Code (Single Record) -->
   <record id="view_shipping_order_search_form" model="ir.ui.view">
-    <field name="name">Tìm kiếm Phiếu Gửi Hàng theo Mã</field>
+    <field name="name">Tìm kiếm Phiếu Gửi Hàng</field>
     <field name="model">shipping.order.search</field>
     <field name="arch" type="xml">
       <form create="false" delete="false">
         <sheet>
           <group>
             <group>
-              <field name="search_code" widget="char" placeholder="VD: SO/00123"/>
+              <field name="search_code" widget="char"/>
               <button name="action_search"
                 string="Tìm kiếm"
                 type="object"
@@ -62,7 +62,7 @@
 
   <!-- Action: Search by Code -->
   <record id="action_shipping_order_search" model="ir.actions.act_window">
-    <field name="name">Tìm kiếm theo Mã</field>
+    <field name="name">Tìm kiếm Phiếu gửi hàng</field>
     <field name="type">ir.actions.act_window</field>
     <field name="res_model">shipping.order.search</field>
     <field name="view_mode">form</field>

@@ -62,7 +62,7 @@
 
   <!-- Menu con: Tìm kiếm phiếu gửi theo mã -->
   <menuitem id="hdi_express_search_order"
-    name="Tìm kiếm theo Mã"
+    name="Tìm kiếm phiếu gửi"
     parent="hdi_express_search"
     action="action_shipping_order_search"
     sequence="10"/>
