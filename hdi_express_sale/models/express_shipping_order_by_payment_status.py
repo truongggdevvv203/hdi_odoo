@@ -2,10 +2,9 @@ from odoo import models, fields, api
 from datetime import datetime, time
 
 
-class ShippingOrderSearchByDate(models.TransientModel):
-  """Search shipping orders by creation date range - returns list"""
-  _name = 'shipping.order.search.by.date'
-  _description = 'Tìm kiếm Phiếu Gửi Hàng theo Ngày Tạo'
+class ShippingOrderByPaymentStatus(models.TransientModel):
+  _name = 'shipping.order.by.payment.status'
+  _description = 'Tìm kiếm Phiếu Gửi Hàng theo Trạng thái thanh toán'
 
   date_from = fields.Date(
       string='Từ ngày',
@@ -55,9 +54,7 @@ class ShippingOrderSearchByDate(models.TransientModel):
         return False, 'Ngày bắt đầu không được lớn hơn ngày kết thúc.'
     return True, ''
 
-  # tìm kiếm đơn giao: Chưa trả tiền
   def action_search(self):
-    """Search for shipping orders by date range and payment status"""
     self.ensure_one()
 
     valid, message = self._validate_date_range()
@@ -72,7 +69,6 @@ class ShippingOrderSearchByDate(models.TransientModel):
             }
         }
 
-    # Build domain cho date range
     domain = []
     start_dt = self._to_datetime_string(self.date_from)
     if start_dt:
@@ -81,20 +77,14 @@ class ShippingOrderSearchByDate(models.TransientModel):
     if end_dt:
         domain.append(('create_date', '<=', end_dt))
 
-    # LUÔN LỌC theo unpaid, bỏ user input
     domain.append(('payment_status', '=', 'unpaid'))
 
-    # Search với domain đã build
     orders = self.env['shipping.order'].search(domain,
                                                order='create_date desc')
 
-    # ===== THAY ĐỔI QUAN TRỌNG =====
-    # LUÔN LUÔN gán kết quả (dù là empty) để xóa dữ liệu cũ
     self.order_ids = orders
-    # ================================
 
     if not orders:
-        # Customize message dựa trên filter
         if self.payment_status:
             payment_label = dict(self._fields['payment_status'].selection).get(
                 self.payment_status)
@@ -112,5 +102,4 @@ class ShippingOrderSearchByDate(models.TransientModel):
             }
         }
 
-    # Có kết quả - return True để reload form
     return True

@@ -7,9 +7,8 @@
     <field name="arch" type="xml">
       <form create="false" delete="false">
         <sheet>
-          <group string="Bộ lọc tìm kiếm">
+          <group>
             <group>
-              <field name="payment_status"/>
               <field name="date_from"/>
               <field name="date_to"/>
             </group>
