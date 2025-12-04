@@ -1,14 +1,14 @@
 <odoo>
-  <!-- Form view for searching shipping orders -->
+  <!-- View 1: Search by Code (Single Record) -->
   <record id="view_shipping_order_search_form" model="ir.ui.view">
-    <field name="name">Tìm kiếm Phiếu Gửi Hàng</field>
+    <field name="name">Tìm kiếm Phiếu Gửi Hàng theo Mã</field>
     <field name="model">shipping.order.search</field>
     <field name="arch" type="xml">
       <form create="false" delete="false">
         <sheet>
           <group>
             <group>
-              <field name="search_code" widget="char"/>
+              <field name="search_code" widget="char" placeholder="VD: SO/00123"/>
               <button name="action_search"
                 string="Tìm kiếm"
                 type="object"
@@ -19,7 +19,7 @@
 
           <div invisible="not order_id">
             <group>
-              <group>
+              <group string="Thông tin chung">
                  <field name="order_code" readonly="1"/>
                 <field name="state" readonly="1"/>
               </group>
@@ -28,22 +28,22 @@
               </group>
             </group>
             <group>
-              <group string="Địa chỉ gửi hàng">
+              <group string="Địa chỉ gửi hàng">
                 <field name="sender_name" readonly="1"/>
                 <field name="sender_phone" readonly="1"/>
                 <field name="sender_address" readonly="1"/>
               </group>
-              <group string="Địa chỉ nhận hàng">
+              <group string="Địa chỉ nhận hàng">
                 <field name="receiver_name" readonly="1"/>
                 <field name="receiver_phone" readonly="1"/>
                 <field name="receiver_address" readonly="1"/>
               </group>
             </group>
             <group>
-              <group string="Thông tin đơn hàng">
+              <group string="Thông tin đơn hàng">
                 <field name="goods_description" readonly="1"/>
               </group>
-              <group string="Phí và tiền thu hộ">
+              <group string="Phí và tiền thu hộ">
                 <field name="total_shipping_fee" readonly="1"/>
               </group>
             </group>
@@ -60,14 +60,69 @@
     </field>
   </record>
 
-  <!-- Action to open search form -->
+  <!-- Action: Search by Code -->
   <record id="action_shipping_order_search" model="ir.actions.act_window">
-    <field name="name">Tìm kiếm Phiếu Gửi Hàng</field>
+    <field name="name">Tìm kiếm theo Mã</field>
     <field name="type">ir.actions.act_window</field>
     <field name="res_model">shipping.order.search</field>
     <field name="view_mode">form</field>
     <field name="views" eval="[(ref('view_shipping_order_search_form'), 'form')]"/>
     <field name="target">current</field>
-    <field name="help">Tìm kiếm thông tin chi tiết phiếu gửi hàng theo mã</field>
+    <field name="help">Tìm kiếm một phiếu gửi hàng theo mã</field>
+  </record>
+
+  <!-- View 2: Search by Date (Multiple Records) -->
+  <record id="view_shipping_order_search_by_date_form" model="ir.ui.view">
+    <field name="name">Tìm kiếm Phiếu Gửi Hàng theo Ngày Tạo</field>
+    <field name="model">shipping.order.search.by.date</field>
+    <field name="arch" type="xml">
+      <form create="false" delete="false">
+        <sheet>
+          <group string="Bộ lọc theo ngày tạo">
+            <group>
+              <field name="date_from"/>
+            </group>
+            <group>
+              <field name="date_to"/>
+            </group>
+            <group>
+              <button name="action_search"
+                string="Tìm kiếm"
+                type="object"
+                class="btn-primary"
+                icon="fa-search"/>
+            </group>
+          </group>
+
+          <group colspan="4">
+            <field name="order_ids" nolabel="1" colspan="4">
+              <tree string="Danh sách kết quả" editable="false">
+                <field name="code" string="Mã phiếu"/>
+                <field name="create_date" string="Ngày tạo"/>
+                <field name="sender_name" string="Người gửi"/>
+                <field name="receiver_name" string="Người nhận"/>
+                <field name="state" string="Trạng thái"/>
+                <field name="total_shipping_fee" string="Tổng cước"/>
+              </tree>
+            </field>
+          </group>
+        </sheet>
+
+        <footer>
+          <button string="Đóng" class="btn-secondary" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+
+  <!-- Action: Search by Date -->
+  <record id="action_shipping_order_search_by_date" model="ir.actions.act_window">
+    <field name="name">Tìm kiếm theo Ngày Tạo</field>
+    <field name="type">ir.actions.act_window</field>
+    <field name="res_model">shipping.order.search.by.date</field>
+    <field name="view_mode">form</field>
+    <field name="views" eval="[(ref('view_shipping_order_search_by_date_form'), 'form')]"/>
+    <field name="target">current</field>
+    <field name="help">Tìm kiếm danh sách phiếu gửi hàng theo khoảng thời gian</field>
   </record>
 </odoo>
