@@ -26,6 +26,8 @@
               </group>
               <group string="Người gửi">
                 <field name="sender_name" readonly="1"/>
+                <field name="sender_phone" readonly="1"/>
+                <field name="sender_address" readonly="1"/>
               </group>
             </group>
 

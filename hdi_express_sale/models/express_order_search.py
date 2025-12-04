@@ -41,6 +41,18 @@ class ShippingOrderSearch(models.TransientModel):
         readonly=True
     )
     
+    sender_phone = fields.Char(
+        string='SĐT người gửi',
+        related='order_id.sender_phone',
+        readonly=True
+    )
+
+    sender_address = fields.Char(
+        string='Địa chỉ người gửi',
+        related='order_id.sender_address',
+        readonly=True
+    )
+
     receiver_name = fields.Char(
         string='Người nhận',
         related='order_id.receiver_name',
