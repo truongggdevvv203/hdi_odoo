@@ -49,7 +49,7 @@
 
   <!-- Menu con cho Đối soát, công nợ -->
   <menuitem id="hdi_express_reconcile_paid"
-    name="Danh sách đã trả tiền"
+    name="Danh sách chưa trả tiền"
     parent="hdi_express_reconcile"
     action="action_shipping_order_search_by_date"
     sequence="1"/>
