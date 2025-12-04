@@ -19,31 +19,31 @@
 
           <div invisible="not order_id">
             <group>
-              <group string="Thông tin chung">
-                <field name="order_code" readonly="1"/>
+              <group>
+                 <field name="order_code" readonly="1"/>
                 <field name="state" readonly="1"/>
-                <field name="payment_status" readonly="1"/>
               </group>
-              <group string="Người gửi">
+              <group>
+                 <field name="goods_description" readonly="1"/>
+              </group>
+            </group>
+            <group>
+              <group string="Địa chỉ gửi hàng">
                 <field name="sender_name" readonly="1"/>
                 <field name="sender_phone" readonly="1"/>
                 <field name="sender_address" readonly="1"/>
               </group>
-            </group>
-
-            <group>
-              <group string="Người nhận">
+              <group string="Địa chỉ nhận hàng">
                 <field name="receiver_name" readonly="1"/>
                 <field name="receiver_phone" readonly="1"/>
                 <field name="receiver_address" readonly="1"/>
               </group>
-              <group string="Nội dung">
-                <field name="goods_description" readonly="1" nolabel="1"/>
-              </group>
             </group>
-
             <group>
-              <group string="Thông tin thanh toán">
+              <group string="Thông tin đơn hàng">
+                <field name="goods_description" readonly="1"/>
+              </group>
+              <group string="Phí và tiền thu hộ">
                 <field name="total_shipping_fee" readonly="1"/>
               </group>
             </group>

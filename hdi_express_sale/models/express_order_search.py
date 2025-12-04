@@ -36,13 +36,13 @@ class ShippingOrderSearch(models.TransientModel):
     )
     
     sender_name = fields.Char(
-        string='Người gửi',
+        string='Tên người gửi',
         related='order_id.sender_name',
         readonly=True
     )
     
     sender_phone = fields.Char(
-        string='SĐT người gửi',
+        string='Số điện thoại người gửi',
         related='order_id.sender_phone',
         readonly=True
     )
@@ -54,19 +54,19 @@ class ShippingOrderSearch(models.TransientModel):
     )
 
     receiver_name = fields.Char(
-        string='Người nhận',
+        string='Tên người nhận',
         related='order_id.receiver_name',
         readonly=True
     )
     
     receiver_phone = fields.Char(
-        string='Số điện thoại',
+        string='Số điện thoại người nhận',
         related='order_id.receiver_phone',
         readonly=True
     )
     
     receiver_address = fields.Char(
-        string='Địa chỉ',
+        string='Địa  người nhận',
         compute='_compute_receiver_address',
         readonly=True
     )

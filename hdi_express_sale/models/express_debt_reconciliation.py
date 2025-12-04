@@ -21,9 +21,10 @@ class ShippingOrderReconciliation(models.TransientModel):
 
   # Payment status filter
   payment_status = fields.Selection([
-    ('paid', 'Đã trả tiền'),
-    ('waiting_payment', 'Chờ trả tiền'),
     ('unpaid', 'Chưa trả tiền'),
+    ('waiting_payment', 'Chờ trả tiền'),
+    ('paid', 'Đã trả tiền'),
+    ('cancelled', 'Hủy thanh toán'),
   ], string='Trạng thái thanh toán', default='paid',
       help='Lọc theo trạng thái thanh toán')
 
