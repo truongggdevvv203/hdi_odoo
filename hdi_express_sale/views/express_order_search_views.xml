@@ -43,8 +43,6 @@
             <group>
               <group string="Thông tin thanh toán">
                 <field name="total_shipping_fee" readonly="1"/>
-                <field name="paid_amount" readonly="1"/>
-                <field name="payment_date" readonly="1"/>
               </group>
             </group>
           </div>

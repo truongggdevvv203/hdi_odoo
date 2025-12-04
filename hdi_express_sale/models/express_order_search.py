@@ -98,18 +98,6 @@ class ShippingOrderSearch(models.TransientModel):
         related='order_id.state',
         readonly=True
     )
-    
-    paid_amount = fields.Integer(
-        string='Đã trả (VND)',
-        related='order_id.paid_amount',
-        readonly=True
-    )
-    
-    payment_date = fields.Date(
-        string='Ngày thanh toán',
-        related='order_id.payment_date',
-        readonly=True
-    )
 
     @api.depends('order_id.receiver_house_number', 'order_id.receiver_street',
                  'order_id.receiver_ward', 'order_id.receiver_district',
