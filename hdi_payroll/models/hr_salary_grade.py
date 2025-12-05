@@ -12,7 +12,6 @@ class HRSalaryGrade(models.Model):
 
     name = fields.Char(
         string='Tên hệ số lương',
-        required=True,
         compute='_compute_name',
         store=True
     )
