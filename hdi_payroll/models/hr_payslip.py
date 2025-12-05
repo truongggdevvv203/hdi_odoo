@@ -208,8 +208,8 @@ class HRPayslip(models.Model):
                 'worked_days': payslip.worked_days,
                 'paid_leave': payslip.paid_leave,
                 'unpaid_leave': payslip.unpaid_leave,
-                'base_salary': payslip.base_salary,
-                'coefficient': payslip.coefficient,
+                'base_salary': payslip.base_salary or 0,
+                'coefficient': payslip.coefficient or 1.0,
             }
 
             # Get all rules from structure and compute
@@ -218,7 +218,8 @@ class HRPayslip(models.Model):
 
             for rule in rules:
                 try:
-                    amount = rule.compute(payslip, localdict)
+                    amount = rule.compute(payslip, localdict.copy())
+                    # Store the amount in localdict for next rules to use
                     localdict[rule.code] = amount
 
                     line_vals = {
@@ -231,7 +232,9 @@ class HRPayslip(models.Model):
                     }
                     line_vals_list.append(line_vals)
                 except Exception as e:
-                    pass
+                    import logging
+                    _logger = logging.getLogger(__name__)
+                    _logger.error(f"Error computing rule {rule.code}: {str(e)}")
 
             self.env['hr.payslip.line'].create(line_vals_list)
             payslip.state = 'compute'

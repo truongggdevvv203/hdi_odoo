@@ -90,9 +90,19 @@ class HRSalaryRule(models.Model):
     def _execute_python_code(self, code, localdict):
         """Safely execute Python code for calculation"""
         try:
-            exec(code, {"__builtins__": {}}, localdict)
+            safe_globals = {
+                '__builtins__': {
+                    'abs': abs,
+                    'round': round,
+                    'min': min,
+                    'max': max,
+                    'sum': sum,
+                    'len': len,
+                }
+            }
+            exec(code, safe_globals, localdict)
         except Exception as e:
-            raise ValueError(f"Error in Python code: {str(e)}")
+            return 0
         return localdict.get('result', 0)
 
     def compute(self, payslip, localdict):
@@ -104,9 +114,10 @@ class HRSalaryRule(models.Model):
             return 0
 
         # Check condition
-        if self.python_condition:
+        if self.python_condition and self.python_condition.strip() != 'True':
             try:
-                if not self._execute_python_code(self.python_condition, localdict):
+                condition_result = self._execute_python_code(self.python_condition, localdict.copy())
+                if not condition_result:
                     return 0
             except:
                 return 0
