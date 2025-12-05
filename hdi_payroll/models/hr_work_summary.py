@@ -3,10 +3,6 @@ from datetime import datetime, timedelta
 
 
 class HRWorkSummary(models.Model):
-    """
-    Bảng công - Attendance Summary
-    Tóm tắt số ngày công, giờ làm, ngày nghỉ, đi muộn/về sớm của nhân viên
-    """
     _name = 'hr.work.summary'
     _description = 'Attendance Summary (Bảng công)'
     _order = 'date desc, employee_id'
