@@ -113,7 +113,7 @@ class HRWorkSummary(models.Model):
     def action_generate_from_leaves(self):
         """Generate leave data from holiday records"""
         for record in self:
-            holidays = self.env['hr.holiday'].search([
+            holidays = self.env['hr.leave'].search([
                 ('employee_id', '=', record.employee_id.id),
                 ('state', '=', 'validate'),
                 ('date_from', '<=', f"{record.date} 23:59:59"),
@@ -123,7 +123,7 @@ class HRWorkSummary(models.Model):
             paid_days = 0
             unpaid_days = 0
             for holiday in holidays:
-                if holiday.unpaid:
+                if holiday.holiday_status_id.unpaid:
                     unpaid_days += 1
                 else:
                     paid_days += 1
