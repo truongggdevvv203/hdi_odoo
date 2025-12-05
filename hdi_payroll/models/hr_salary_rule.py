@@ -57,10 +57,37 @@ class HRSalaryRule(models.Model):
         default=lambda self: self.env.company
     )
 
+    python_code = fields.Text(
+        string='Python Code',
+        help="Viết code Python, gán kết quả vào biến result"
+    )
+
     active = fields.Boolean(
         string='Hoạt động',
         default=True
     )
+
+    def compute(self, payslip, localdict):
+        """Compute amount for this rule"""
+        self.ensure_one()
+
+        result = 0
+
+        # Nếu rule có Python code
+        if self.description and 'result' in self.description:
+            result = self._execute_python_code(self.description, localdict)
+
+        # Nếu không có python code → fallback theo category
+        else:
+            if self.category == 'basic':
+                result = localdict.get('base_salary', 0) * localdict.get(
+                    'coefficient', 1)
+            elif self.category == 'allowance':
+                result = 0
+            elif self.category == 'deduction':
+                result = 0
+
+        return result
 
     @api.model
     def _execute_python_code(self, code, localdict):
