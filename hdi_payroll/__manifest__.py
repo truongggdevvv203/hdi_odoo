@@ -1,7 +1,7 @@
 {
     'name': 'HDI Payroll Management',
     'version': '18.0.1.0.0',
-    'category': 'Human Resources/Payroll',
+    'category': 'hdi',
     'description': """
         Complete Payroll Management System for HDI
         
@@ -34,11 +34,6 @@
         
         # Menu
         'views/menu.xml',
-        
-        # Data
-        'data/hr_salary_grade_data.xml',
-        'data/hr_salary_structure_data.xml',
-        'data/hr_salary_rule_data.xml',
     ],
     'assets': {
         'web.assets_backend': [

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <!-- Default Salary Structure -->
-    <record id="salary_structure_default" model="hr.salary.structure">
-        <field name="name">Cấu trúc lương tiêu chuẩn HDI</field>
-        <field name="company_id" ref="base.main_company"/>
-        <field name="notes">Cấu trúc lương mặc định cho tất cả nhân viên HDI</field>
-    </record>
-</odoo>
