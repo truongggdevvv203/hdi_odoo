@@ -51,30 +51,6 @@ class HRSalaryRule(models.Model):
         string='Mô tả'
     )
 
-    # Conditions & computation
-    python_condition = fields.Text(
-        string='Điều kiện Python',
-        default='True',
-        help='Python code để xác định có áp dụng rule hay không'
-    )
-
-    python_compute = fields.Text(
-        string='Công thức Python',
-        required=True,
-        default='result = 0',
-        help="""Python code để tính toán kết quả.
-        Biến có sẵn:
-        - employee: đối tượng employee
-        - payslip: đối tượng payslip
-        - worked_days: số ngày công
-        - paid_leave: ngày nghỉ có lương
-        - unpaid_leave: ngày nghỉ không lương
-        - base_salary: lương cơ bản
-        - coefficient: hệ số lương
-        Luôn kết thúc bằng: result = [giá trị]
-        """
-    )
-
     company_id = fields.Many2one(
         'res.company',
         string='Công ty',
@@ -105,22 +81,4 @@ class HRSalaryRule(models.Model):
             return 0
         return localdict.get('result', 0)
 
-    def compute(self, payslip, localdict):
-        """
-        Compute the amount for this rule
-        localdict: dictionary containing all variables
-        """
-        if not self.active:
-            return 0
 
-        # Check condition
-        if self.python_condition and self.python_condition.strip() != 'True':
-            try:
-                condition_result = self._execute_python_code(self.python_condition, localdict.copy())
-                if not condition_result:
-                    return 0
-            except:
-                return 0
-
-        # Execute computation
-        return self._execute_python_code(self.python_compute, localdict)
