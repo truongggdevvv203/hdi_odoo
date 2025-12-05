@@ -1,4 +1,4 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+id,name,model_id/name,group_id/id,perm_read,perm_write,perm_create,perm_unlink
 access_hr_work_summary_user,access_hr_work_summary_user,hr.work.summary,hr.group_hr_user,1,1,1,0
 access_hr_work_summary_manager,access_hr_work_summary_manager,hr.work.summary,hr.group_hr_manager,1,1,1,1
 access_hr_salary_grade_user,access_hr_salary_grade_user,hr.salary.grade,hr.group_hr_user,1,0,0,0
