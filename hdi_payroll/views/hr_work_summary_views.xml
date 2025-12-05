@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- HR Work Summary Views -->
+    <record id="view_hr_work_summary_tree" model="ir.ui.view">
+        <field name="name">Bảng công - Tree</field>
+        <field name="model">hr.work.summary</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="work_hours"/>
+                <field name="work_day"/>
+                <field name="late_minutes"/>
+                <field name="early_minutes"/>
+                <field name="paid_leave"/>
+                <field name="unpaid_leave"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_hr_work_summary_form" model="ir.ui.view">
+        <field name="name">Bảng công - Form</field>
+        <field name="model">hr.work.summary</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="work_hours"/>
+                            <field name="work_day"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Thời gian">
+                            <field name="late_minutes"/>
+                            <field name="early_minutes"/>
+                        </group>
+                        <group string="Ngày nghỉ">
+                            <field name="paid_leave"/>
+                            <field name="unpaid_leave"/>
+                        </group>
+                    </group>
+                    <field name="notes" placeholder="Ghi chú..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hr_work_summary" model="ir.actions.act_window">
+        <field name="name">Bảng công</field>
+        <field name="res_model">hr.work.summary</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Salary Rules -->
+    
+    <!-- 1. Basic Salary based on worked days -->
+    <record id="salary_rule_basic" model="hr.salary.rule">
+        <field name="name">Lương cơ bản theo ngày công</field>
+        <field name="code">BASIC</field>
+        <field name="structure_id" ref="salary_structure_default"/>
+        <field name="category">basic</field>
+        <field name="sequence">1</field>
+        <field name="python_condition">True</field>
+        <field name="python_compute">
+result = (base_salary * coefficient / 26) * worked_days
+        </field>
+        <field name="description">Tính lương cơ bản dựa trên số ngày công thực tế</field>
+    </record>
+
+    <!-- 2. Allowance (Phụ cấp) -->
+    <record id="salary_rule_allowance" model="hr.salary.rule">
+        <field name="name">Phụ cấp</field>
+        <field name="code">ALLOWANCE</field>
+        <field name="structure_id" ref="salary_structure_default"/>
+        <field name="category">allowance</field>
+        <field name="sequence">2</field>
+        <field name="python_condition">True</field>
+        <field name="python_compute">
+# Phụ cấp từ salary grade
+result = 0
+if employee.job_id:
+    grades = env['hr.salary.grade'].search([('job_id', '=', employee.job_id.id)])
+    if grades:
+        result = grades[0].allowance
+        </field>
+        <field name="description">Phụ cấp cố định theo vị trí công việc</field>
+    </record>
+
+    <!-- 3. Paid Leave (Ngày nghỉ có lương) -->
+    <record id="salary_rule_paid_leave" model="hr.salary.rule">
+        <field name="name">Ngày nghỉ có lương</field>
+        <field name="code">PAID_LEAVE</field>
+        <field name="structure_id" ref="salary_structure_default"/>
+        <field name="category">allowance</field>
+        <field name="sequence">3</field>
+        <field name="python_condition">paid_leave > 0</field>
+        <field name="python_compute">
+result = (base_salary * coefficient / 26) * paid_leave
+        </field>
+        <field name="description">Tính lương cho ngày nghỉ có lương</field>
+    </record>
+
+    <!-- 4. Unpaid Leave Deduction (Trừ ngày nghỉ không lương) -->
+    <record id="salary_rule_unpaid_leave" model="hr.salary.rule">
+        <field name="name">Trừ ngày nghỉ không lương</field>
+        <field name="code">UNPAID_LEAVE</field>
+        <field name="structure_id" ref="salary_structure_default"/>
+        <field name="category">deduction</field>
+        <field name="sequence">4</field>
+        <field name="python_condition">unpaid_leave > 0</field>
+        <field name="python_compute">
+result = (base_salary * coefficient / 26) * unpaid_leave
+        </field>
+        <field name="description">Trừ lương cho ngày nghỉ không lương</field>
+    </record>
+
+    <!-- 5. Late Penalty (Phạt đi muộn) -->
+    <record id="salary_rule_late_penalty" model="hr.salary.rule">
+        <field name="name">Phạt đi muộn</field>
+        <field name="code">LATE_PENALTY</field>
+        <field name="structure_id" ref="salary_structure_default"/>
+        <field name="category">deduction</field>
+        <field name="sequence">5</field>
+        <field name="python_condition">True</field>
+        <field name="python_compute">
+# Phạt đi muộn: 50,000 VND mỗi 15 phút (tùy chỉnh theo quy định công ty)
+# Giả sử: 50,000 VND/lần (>= 15 phút)
+result = 0
+# Lấy dữ liệu từ payslip nếu có
+# Hiện tại set = 0, có thể mở rộng sau
+        </field>
+        <field name="description">Phạt tiền vì đi muộn</field>
+    </record>
+
+    <!-- 6. Insurance - Social Insurance (BHXH) -->
+    <record id="salary_rule_social_insurance" model="hr.salary.rule">
+        <field name="name">BHXH (8%)</field>
+        <field name="code">SOCIAL_INSURANCE</field>
+        <field name="structure_id" ref="salary_structure_default"/>
+        <field name="category">insurance</field>
+        <field name="sequence">10</field>
+        <field name="python_condition">True</field>
+        <field name="python_compute">
+# BHXH: 8% của lương gross (bao gồm basic + allowance)
+# Tính tạm thời từ các rules trước
+gross_so_far = BASIC + ALLOWANCE + PAID_LEAVE - UNPAID_LEAVE
+result = gross_so_far * 0.08
+        </field>
+        <field name="description">Bảo hiểm xã hội - 8% lương gross</field>
+    </record>
+
+    <!-- 7. Insurance - Health Insurance (BHYT) -->
+    <record id="salary_rule_health_insurance" model="hr.salary.rule">
+        <field name="name">BHYT (1.5%)</field>
+        <field name="code">HEALTH_INSURANCE</field>
+        <field name="structure_id" ref="salary_structure_default"/>
+        <field name="category">insurance</field>
+        <field name="sequence">11</field>
+        <field name="python_condition">True</field>
+        <field name="python_compute">
+# BHYT: 1.5% của lương gross
+gross_so_far = BASIC + ALLOWANCE + PAID_LEAVE - UNPAID_LEAVE
+result = gross_so_far * 0.015
+        </field>
+        <field name="description">Bảo hiểm y tế - 1.5% lương gross</field>
+    </record>
+
+    <!-- 8. Insurance - Unemployment Insurance (BHTN) -->
+    <record id="salary_rule_unemployment_insurance" model="hr.salary.rule">
+        <field name="name">BHTN (0.5%)</field>
+        <field name="code">UNEMPLOYMENT_INSURANCE</field>
+        <field name="structure_id" ref="salary_structure_default"/>
+        <field name="category">insurance</field>
+        <field name="sequence">12</field>
+        <field name="python_condition">True</field>
+        <field name="python_compute">
+# BHTN: 0.5% của lương gross
+gross_so_far = BASIC + ALLOWANCE + PAID_LEAVE - UNPAID_LEAVE
+result = gross_so_far * 0.005
+        </field>
+        <field name="description">Bảo hiểm thất nghiệp - 0.5% lương gross</field>
+    </record>
+
+    <!-- 9. Income Tax (Thuế TNCN) -->
+    <record id="salary_rule_income_tax" model="hr.salary.rule">
+        <field name="name">Thuế TNCN</field>
+        <field name="code">INCOME_TAX</field>
+        <field name="structure_id" ref="salary_structure_default"/>
+        <field name="category">tax</field>
+        <field name="sequence">13</field>
+        <field name="python_condition">True</field>
+        <field name="python_compute">
+# Simplified tax calculation
+# Actual tax calculation should follow Vietnam tax rules
+# This is placeholder
+result = 0
+        </field>
+        <field name="description">Thuế thu nhập cá nhân (tạm tính = 0)</field>
+    </record>
+</odoo>

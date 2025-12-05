@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Payroll Menu -->
+    <menuitem id="hdi_payroll_root"
+        name="Tính Lương"
+        parent="hr.menu_hr_root"
+        sequence="25"/>
+
+    <!-- Attendance & Work Summary Menu -->
+    <menuitem id="hdi_payroll_attendance"
+        name="Bảng công"
+        parent="hdi_payroll_root"
+        action="hdi_payroll.action_hr_work_summary"
+        sequence="10"/>
+
+    <!-- Salary Configuration Menu -->
+    <menuitem id="hdi_payroll_config"
+        name="Cấu hình lương"
+        parent="hdi_payroll_root"
+        sequence="20"/>
+
+    <menuitem id="hdi_payroll_grade"
+        name="Hệ số lương"
+        parent="hdi_payroll_config"
+        action="hdi_payroll.action_hr_salary_grade"
+        sequence="10"/>
+
+    <menuitem id="hdi_payroll_structure"
+        name="Cấu trúc lương"
+        parent="hdi_payroll_config"
+        action="hdi_payroll.action_hr_salary_structure"
+        sequence="20"/>
+
+    <menuitem id="hdi_payroll_rule"
+        name="Rule tính lương"
+        parent="hdi_payroll_config"
+        action="hdi_payroll.action_hr_salary_rule"
+        sequence="30"/>
+
+    <!-- Payslip Menu -->
+    <menuitem id="hdi_payroll_payslip"
+        name="Phiếu lương"
+        parent="hdi_payroll_root"
+        action="hdi_payroll.action_hr_payslip"
+        sequence="30"/>
+</odoo>
