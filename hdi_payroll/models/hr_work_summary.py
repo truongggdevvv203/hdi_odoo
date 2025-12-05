@@ -66,9 +66,19 @@ class HRWorkSummary(models.Model):
     )
 
     # Computed fields
-    @property
-    def display_name(self):
-        return f"{self.employee_id.name} - {self.date}"
+    display_name = fields.Char(
+        string='Tên hiển thị',
+        compute='_compute_display_name',
+        store=True
+    )
+
+    @api.depends('employee_id', 'date')
+    def _compute_display_name(self):
+        for record in self:
+            if record.employee_id and record.date:
+                record.display_name = f"{record.employee_id.name} - {record.date}"
+            else:
+                record.display_name = "Bảng công"
 
     @api.model_create_multi
     def create(self, vals_list):
