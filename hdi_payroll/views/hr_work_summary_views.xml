@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- HR Work Summary Views -->
-    <record id="view_hr_work_summary_tree" model="ir.ui.view">
-        <field name="name">Bảng công - Tree</field>
+    <record id="view_hr_work_summary_list" model="ir.ui.view">
+        <field name="name">Bảng công - List</field>
         <field name="model">hr.work.summary</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="date"/>
                 <field name="employee_id"/>
                 <field name="work_hours"/>
@@ -14,7 +14,7 @@
                 <field name="early_minutes"/>
                 <field name="paid_leave"/>
                 <field name="unpaid_leave"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -53,6 +53,6 @@
     <record id="action_hr_work_summary" model="ir.actions.act_window">
         <field name="name">Bảng công</field>
         <field name="res_model">hr.work.summary</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>

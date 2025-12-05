@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- HR Payslip Views -->
-    <record id="view_hr_payslip_tree" model="ir.ui.view">
-        <field name="name">Phiếu lương - Tree</field>
+    <record id="view_hr_payslip_list" model="ir.ui.view">
+        <field name="name">Phiếu lương - List</field>
         <field name="model">hr.payslip</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="employee_id"/>
                 <field name="date_from"/>
@@ -14,7 +14,7 @@
                 <field name="gross_salary"/>
                 <field name="net_salary"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -61,12 +61,12 @@
                     </group>
                     <separator string="Chi tiết lương"/>
                     <field name="line_ids">
-                        <tree>
+                        <list>
                             <field name="code"/>
                             <field name="name"/>
                             <field name="category"/>
                             <field name="amount"/>
-                        </tree>
+                        </list>
                     </field>
                     <separator string="Tổng hợp"/>
                     <group>
@@ -87,6 +87,6 @@
     <record id="action_hr_payslip" model="ir.actions.act_window">
         <field name="name">Phiếu lương</field>
         <field name="res_model">hr.payslip</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>
