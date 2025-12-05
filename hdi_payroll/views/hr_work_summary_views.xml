@@ -23,6 +23,9 @@
         <field name="model">hr.work.summary</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button name="action_update_from_attendance" string="Cập nhật từ Chấm công" type="object" class="btn-primary"/>
+                </header>
                 <sheet>
                     <group>
                         <group>
@@ -54,5 +57,15 @@
         <field name="name">Bảng công</field>
         <field name="res_model">hr.work.summary</field>
         <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_sync_all_attendance" model="ir.actions.server">
+        <field name="name">Đồng bộ toàn bộ Chấm công</field>
+        <field name="model_id" ref="model_hr_work_summary"/>
+        <field name="binding_model_id" ref="model_hr_work_summary"/>
+        <field name="state">code</field>
+        <field name="code">
+env['hr.work.summary'].action_sync_all_attendance()
+        </field>
     </record>
 </odoo>

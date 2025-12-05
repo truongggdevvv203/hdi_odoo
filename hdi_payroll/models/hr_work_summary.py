@@ -130,3 +130,51 @@ class HRWorkSummary(models.Model):
 
             record.paid_leave = paid_days
             record.unpaid_leave = unpaid_days
+
+    def action_update_from_attendance(self):
+        """Update work summary data from hr.attendance records"""
+        for record in self:
+            self.action_generate_from_attendance()
+            self.action_generate_from_leaves()
+
+    @api.model
+    def action_sync_all_attendance(self):
+        """Sync all attendance data for all employees"""
+        from datetime import datetime, timedelta
+        
+        # Get all employees
+        employees = self.env['hr.employee'].search([])
+        
+        # Get all attendance records
+        attendances = self.env['hr.attendance'].search([])
+        
+        if not attendances:
+            return
+        
+        # Get date range from attendance
+        min_date = min([att.check_in.date() for att in attendances if att.check_in])
+        max_date = max([att.check_in.date() for att in attendances if att.check_in])
+        
+        current_date = min_date
+        while current_date <= max_date:
+            for employee in employees:
+                # Check if record exists
+                existing = self.search([
+                    ('employee_id', '=', employee.id),
+                    ('date', '=', current_date)
+                ])
+                
+                if not existing:
+                    # Create new record
+                    new_record = self.create({
+                        'employee_id': employee.id,
+                        'date': current_date,
+                    })
+                    # Generate data from attendance
+                    new_record.action_generate_from_attendance()
+                    new_record.action_generate_from_leaves()
+                else:
+                    # Update existing record
+                    existing.action_update_from_attendance()
+            
+            current_date += timedelta(days=1)
