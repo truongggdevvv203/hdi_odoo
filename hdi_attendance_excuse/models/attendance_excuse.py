@@ -138,8 +138,47 @@ class AttendanceExcuse(models.Model):
       string='Ghi chú'
   )
 
+  can_approve = fields.Boolean(
+      string='Có thể phê duyệt',
+      compute='_compute_can_approve',
+      store=False
+  )
+
+  can_reject = fields.Boolean(
+      string='Có thể từ chối',
+      compute='_compute_can_reject',
+      store=False
+  )
+
+  @api.depends('approver_id', 'state')
+  def _compute_can_approve(self):
+    """Kiểm tra xem user hiện tại có thể phê duyệt không"""
+    for record in self:
+      if record.state != 'submitted':
+        record.can_approve = False
+      elif not record.approver_id:
+        record.can_approve = True  # Nếu không có approver được chỉ định, ai cũng có thể phê duyệt
+      elif record.approver_id.id == self.env.user.id:
+        record.can_approve = True  # Người phê duyệt được chỉ định
+      else:
+        # Chỉ HR Manager có thể phê duyệt nếu không phải người được chỉ định
+        record.can_approve = self.env.user.has_group('hr.group_hr_manager')
+
+  @api.depends('approver_id', 'state')
+  def _compute_can_reject(self):
+    """Kiểm tra xem user hiện tại có thể từ chối không"""
+    for record in self:
+      if record.state != 'submitted':
+        record.can_reject = False
+      elif not record.approver_id:
+        record.can_reject = True  # Nếu không có approver được chỉ định, ai cũng có thể từ chối
+      elif record.approver_id.id == self.env.user.id:
+        record.can_reject = True  # Người phê duyệt được chỉ định
+      else:
+        # Chỉ HR Manager có thể từ chối nếu không phải người được chỉ định
+        record.can_reject = self.env.user.has_group('hr.group_hr_manager')
+
   @api.depends('employee_id', 'date', 'excuse_type', 'state')
-  def _compute_display_name(self):
     for record in self:
       if record.employee_id and record.date and record.excuse_type:
         excuse_label = dict(record._fields['excuse_type'].selection).get(
@@ -374,6 +413,21 @@ class AttendanceExcuse(models.Model):
     for record in self:
       if record.state not in ['draft', 'pending']:
         continue
+
+      # If no approver set, try to assign based on config or employee's manager
+      if not record.approver_id and record.employee_id:
+        # Priority 1: Lookup from attendance.excuse.approver.config
+        approver_config = self.env['attendance.excuse.approver.config'].search([
+          ('department_id', '=', record.employee_id.department_id.id),
+          ('active', '=', True)
+        ], limit=1)
+        
+        if approver_config:
+          record.approver_id = approver_config.approver_id.id
+        # Priority 2: Fallback to employee's manager
+        elif record.employee_id.parent_id and record.employee_id.parent_id.user_id:
+          record.approver_id = record.employee_id.parent_id.user_id.id
+
       record.state = 'submitted'
       record.message_post(body="Yêu cầu giải trình đã được gửi")
 
@@ -382,6 +436,11 @@ class AttendanceExcuse(models.Model):
     for record in self:
       if record.state != 'submitted':
         continue
+
+      # Permission check: only assigned approver or HR managers can approve
+      if record.approver_id and record.approver_id.id != self.env.user.id:
+        if not self.env.user.has_group('hr.group_hr_manager'):
+          raise UserError('Bạn không có quyền phê duyệt đơn này. Chỉ người phê duyệt được chỉ định hoặc HR Manager mới có thể phê duyệt.')
 
       record.write({
         'state': 'approved',
@@ -415,6 +474,11 @@ class AttendanceExcuse(models.Model):
     for record in self:
       if record.state != 'submitted':
         continue
+
+      # Permission check: only assigned approver or HR managers can reject
+      if record.approver_id and record.approver_id.id != self.env.user.id:
+        if not self.env.user.has_group('hr.group_hr_manager'):
+          raise UserError('Bạn không có quyền từ chối đơn này. Chỉ người phê duyệt được chỉ định hoặc HR Manager mới có thể từ chối.')
 
       record.write({
         'state': 'rejected',

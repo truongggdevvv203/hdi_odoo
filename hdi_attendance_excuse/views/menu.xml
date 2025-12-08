@@ -13,4 +13,11 @@
         parent="menu_attendance_excuse_root"
         action="action_attendance_excuse"
         sequence="20"/>
+
+    <menuitem
+        id="menu_attendance_excuse_config"
+        name="Cấu hình Người Phê Duyệt"
+        parent="menu_attendance_excuse_root"
+        action="action_attendance_excuse_approver_config"
+        sequence="30"/>
 </odoo>

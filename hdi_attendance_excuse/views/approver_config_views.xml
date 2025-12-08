@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==================== Cấu hình Người Phê Duyệt Giải Trình Chấm Công ==================== -->
+    
+    <!-- List View -->
+    <record id="view_attendance_excuse_approver_config_list" model="ir.ui.view">
+        <field name="name">Cấu hình Người Phê Duyệt - List</field>
+        <field name="model">attendance.excuse.approver.config</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="department_id"/>
+                <field name="approver_id"/>
+                <field name="active"/>
+                <field name="description" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_attendance_excuse_approver_config_form" model="ir.ui.view">
+        <field name="name">Cấu hình Người Phê Duyệt - Form</field>
+        <field name="model">attendance.excuse.approver.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="department_id"/>
+                            <field name="approver_id"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <separator string="Ghi chú"/>
+                    <field name="description"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_attendance_excuse_approver_config" model="ir.actions.act_window">
+        <field name="name">Cấu hình Người Phê Duyệt</field>
+        <field name="res_model">attendance.excuse.approver.config</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có cấu hình. Hãy tạo một cấu hình mới!
+            </p>
+            <p>
+                Cấu hình này xác định người phê duyệt cho mỗi phòng ban.
+                Khi nhân viên gửi yêu cầu giải trình, hệ thống sẽ tự động gán người phê duyệt dựa trên phòng ban của họ.
+            </p>
+        </field>
+    </record>
+</odoo>

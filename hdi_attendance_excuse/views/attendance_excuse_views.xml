@@ -27,8 +27,8 @@
             <form>
                 <header>
                     <button name="action_submit" string="Gửi yêu cầu" type="object" class="btn-primary" invisible="state != 'pending'"/>
-                    <button name="action_approve" string="Phê duyệt" type="object" class="btn-success" invisible="state != 'submitted'"/>
-                    <button name="action_reject" string="Từ chối" type="object" class="btn-danger" invisible="state != 'submitted'"/>
+                    <button name="action_approve" string="Phê duyệt" type="object" class="btn-success" invisible="not can_approve"/>
+                    <button name="action_reject" string="Từ chối" type="object" class="btn-danger" invisible="not can_reject"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
