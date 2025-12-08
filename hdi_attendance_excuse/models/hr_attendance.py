@@ -29,23 +29,23 @@ class HRAttendance(models.Model):
         store=True
     )
 
-    @api.depends('excuse_ids', 'excuse_ids.status')
+    @api.depends('excuse_ids', 'excuse_ids.state')
     def _compute_is_excused(self):
         for record in self:
-            record.is_excused = any(e.status == 'approved' for e in record.excuse_ids)
+            record.is_excused = any(e.state == 'approved' for e in record.excuse_ids)
 
-    @api.depends('excuse_ids', 'excuse_ids.status')
+    @api.depends('excuse_ids', 'excuse_ids.state')
     def _compute_has_pending_excuse(self):
         for record in self:
-            record.has_pending_excuse = any(e.status == 'pending' for e in record.excuse_ids)
+            record.has_pending_excuse = any(e.state == 'pending' for e in record.excuse_ids)
 
-    @api.depends('excuse_ids', 'excuse_ids.status', 'check_in', 'check_out')
+    @api.depends('excuse_ids', 'excuse_ids.state', 'check_in', 'check_out')
     def _compute_requires_excuse(self):
         for record in self:
             requires = False
 
             # Check if there are any pending or awaiting excuses
-            if any(e.status in ['pending', 'submitted'] for e in record.excuse_ids):
+            if any(e.state in ['pending', 'submitted'] for e in record.excuse_ids):
                 requires = True
 
             if record.check_in:
