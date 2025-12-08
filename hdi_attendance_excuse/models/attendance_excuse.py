@@ -124,6 +124,13 @@ class AttendanceExcuse(models.Model):
             ('check_in', '<', datetime.combine(today, datetime.max.time())),
         ])
 
+        excuse_type = self.env['attendance.excuse.type'].search(
+            [('category', '=', 'late')], limit=1
+        )
+        
+        if not excuse_type:
+            return
+
         for att in attendances:
             if att.check_in:
                 check_in_hour = att.check_in.hour + att.check_in.minute / 60
@@ -137,19 +144,15 @@ class AttendanceExcuse(models.Model):
                     ])
                     
                     if not existing:
-                        excuse_type = self.env['attendance.excuse.type'].search(
-                            [('category', '=', 'late')], limit=1
-                        )
-                        if excuse_type:
-                            self.create({
-                                'employee_id': att.employee_id.id,
-                                'date': att.check_in.date(),
-                                'excuse_type_id': excuse_type.id,
-                                'attendance_id': att.id,
-                                'original_checkin': att.check_in,
-                                'late_minutes': late_minutes,
-                                'status': 'pending',
-                            })
+                        self.create({
+                            'employee_id': att.employee_id.id,
+                            'date': att.check_in.date(),
+                            'excuse_type_id': excuse_type.id,
+                            'attendance_id': att.id,
+                            'original_checkin': att.check_in,
+                            'late_minutes': late_minutes,
+                            'status': 'pending',
+                        })
 
     def _detect_early_departure(self):
         """Phát hiện trường hợp về sớm"""
@@ -161,6 +164,13 @@ class AttendanceExcuse(models.Model):
             ('check_out', '>=', datetime.combine(today, datetime.min.time())),
             ('check_out', '<', datetime.combine(today, datetime.max.time())),
         ])
+
+        excuse_type = self.env['attendance.excuse.type'].search(
+            [('category', '=', 'early')], limit=1
+        )
+        
+        if not excuse_type:
+            return
 
         for att in attendances:
             if att.check_out:
@@ -174,19 +184,15 @@ class AttendanceExcuse(models.Model):
                     ])
                     
                     if not existing:
-                        excuse_type = self.env['attendance.excuse.type'].search(
-                            [('category', '=', 'early')], limit=1
-                        )
-                        if excuse_type:
-                            self.create({
-                                'employee_id': att.employee_id.id,
-                                'date': att.check_out.date(),
-                                'excuse_type_id': excuse_type.id,
-                                'attendance_id': att.id,
-                                'original_checkout': att.check_out,
-                                'early_minutes': early_minutes,
-                                'status': 'pending',
-                            })
+                        self.create({
+                            'employee_id': att.employee_id.id,
+                            'date': att.check_out.date(),
+                            'excuse_type_id': excuse_type.id,
+                            'attendance_id': att.id,
+                            'original_checkout': att.check_out,
+                            'early_minutes': early_minutes,
+                            'status': 'pending',
+                        })
 
     def _detect_missing_checkout(self):
         """Phát hiện trường hợp quên check-out"""
@@ -198,6 +204,13 @@ class AttendanceExcuse(models.Model):
             ('check_out', '=', False),
         ])
 
+        excuse_type = self.env['attendance.excuse.type'].search(
+            [('category', '=', 'missing_checkout')], limit=1
+        )
+        
+        if not excuse_type:
+            return
+
         for att in attendances:
             existing = self.search([
                 ('attendance_id', '=', att.id),
@@ -205,18 +218,14 @@ class AttendanceExcuse(models.Model):
             ])
 
             if not existing:
-                excuse_type = self.env['attendance.excuse.type'].search(
-                    [('category', '=', 'missing_checkout')], limit=1
-                )
-                if excuse_type:
-                    self.create({
-                        'employee_id': att.employee_id.id,
-                        'date': att.check_in.date(),
-                        'excuse_type_id': excuse_type.id,
-                        'attendance_id': att.id,
-                        'original_checkin': att.check_in,
-                        'status': 'pending',
-                    })
+                self.create({
+                    'employee_id': att.employee_id.id,
+                    'date': att.check_in.date(),
+                    'excuse_type_id': excuse_type.id,
+                    'attendance_id': att.id,
+                    'original_checkin': att.check_in,
+                    'status': 'pending',
+                })
 
     def approve(self):
         """Phê duyệt giải trình"""
