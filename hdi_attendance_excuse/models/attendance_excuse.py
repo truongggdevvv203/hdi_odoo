@@ -42,7 +42,7 @@ class AttendanceExcuse(models.Model):
     ('missing_checkin', 'Quên check-in'),
     ('missing_checkout', 'Quên check-out'),
     ('other', 'Khác'),
-  ], string="Loại giải trình", required=True, tracking=True)
+  ], string="Loại giải trình", compute='_compute_excuse_type', store=True, tracking=True)
 
   # Attendance references
   attendance_id = fields.Many2one(
@@ -163,6 +163,45 @@ class AttendanceExcuse(models.Model):
         record.original_checkin = False
         record.original_checkout = False
 
+  @api.depends('original_checkin', 'original_checkout', 'attendance_id')
+  def _compute_excuse_type(self):
+    """Tự động xác định loại giải trình dựa trên thời gian gốc"""
+    for record in self:
+      excuse_type = 'other'
+      
+      if not record.attendance_id:
+        record.excuse_type = excuse_type
+        continue
+      
+      # Nếu không có check-in
+      if not record.original_checkin:
+        record.excuse_type = 'missing_checkin'
+        continue
+      
+      # Nếu không có check-out
+      if not record.original_checkout:
+        record.excuse_type = 'missing_checkout'
+        continue
+      
+      # Kiểm tra đi muộn
+      local_checkin = self._convert_to_local_time(record.original_checkin)
+      check_in_hour = local_checkin.hour + local_checkin.minute / 60.0
+      schedule = self._get_work_schedule(record.employee_id)
+      
+      if check_in_hour > (schedule['start_time'] + schedule['late_tolerance']):
+        record.excuse_type = 'late'
+        continue
+      
+      # Kiểm tra về sớm
+      local_checkout = self._convert_to_local_time(record.original_checkout)
+      check_out_hour = local_checkout.hour + local_checkout.minute / 60.0
+      
+      if check_out_hour < schedule['end_time']:
+        record.excuse_type = 'early'
+        continue
+      
+      record.excuse_type = 'other'
+
   def _get_company_timezone(self):
     """Lấy timezone của công ty"""
     return pytz.timezone(self.env.user.tz or 'Asia/Ho_Chi_Minh')
@@ -251,7 +290,6 @@ class AttendanceExcuse(models.Model):
         self.create({
           'employee_id': att.employee_id.id,
           'date': target_date,
-          'excuse_type': 'late',
           'attendance_id': att.id,
           'late_minutes': late_minutes,
           'state': 'pending',
@@ -294,7 +332,6 @@ class AttendanceExcuse(models.Model):
         self.create({
           'employee_id': att.employee_id.id,
           'date': target_date,
-          'excuse_type': 'early',
           'attendance_id': att.id,
           'early_minutes': early_minutes,
           'state': 'pending',
@@ -326,7 +363,6 @@ class AttendanceExcuse(models.Model):
         self.create({
           'employee_id': att.employee_id.id,
           'date': previous_date,
-          'excuse_type': 'missing_checkout',
           'attendance_id': att.id,
           'state': 'pending',
           'notes': 'Tự động phát hiện: Quên check-out',
