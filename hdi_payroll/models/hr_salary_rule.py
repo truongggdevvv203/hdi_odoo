@@ -2,9 +2,6 @@ from odoo import models, fields, api
 
 
 class HRSalaryRule(models.Model):
-    """
-    Công thức tính lương - mỗi rule tính một phần (lương cơ bản, phụ cấp, trừ, BHXH...)
-    """
     _name = 'hr.salary.rule'
     _description = 'Salary Rule (Công thức tính lương)'
     _order = 'sequence, id'
@@ -57,55 +54,31 @@ class HRSalaryRule(models.Model):
         default=lambda self: self.env.company
     )
 
-    python_code = fields.Text(
-        string='Python Code',
-        help="Viết code Python, gán kết quả vào biến result"
-    )
-
     active = fields.Boolean(
         string='Hoạt động',
         default=True
     )
 
     def compute(self, payslip, localdict):
-        """Compute amount for this rule"""
-        self.ensure_one()
+      self.ensure_one()
+      result = 0
 
+      if self.category == 'basic':
+        base_salary = localdict.get('base_salary', 0)
+        coefficient = localdict.get('coefficient', 1)
+        worked_days = localdict.get('worked_days', 0)
+
+        # Công thức bạn yêu cầu
+        result = base_salary * coefficient * (worked_days / 26.0)
+
+      elif self.category == 'allowance':
+        worked_days = localdict.get('worked_days', 0)
+        allowance = localdict.get('allowance', 0)
+
+        # Công thức phụ cấp
+        result = allowance * (worked_days / 26.0)
+
+      elif self.category in ['deduction', 'insurance', 'tax']:
         result = 0
 
-        # Nếu rule có Python code
-        if self.description and 'result' in self.description:
-            result = self._execute_python_code(self.description, localdict)
-
-        # Nếu không có python code → fallback theo category
-        else:
-            if self.category == 'basic':
-                result = localdict.get('base_salary', 0) * localdict.get(
-                    'coefficient', 1)
-            elif self.category == 'allowance':
-                result = 0
-            elif self.category == 'deduction':
-                result = 0
-
-        return result
-
-    @api.model
-    def _execute_python_code(self, code, localdict):
-        """Safely execute Python code for calculation"""
-        try:
-            safe_globals = {
-                '__builtins__': {
-                    'abs': abs,
-                    'round': round,
-                    'min': min,
-                    'max': max,
-                    'sum': sum,
-                    'len': len,
-                }
-            }
-            exec(code, safe_globals, localdict)
-        except Exception as e:
-            return 0
-        return localdict.get('result', 0)
-
-
+      return result

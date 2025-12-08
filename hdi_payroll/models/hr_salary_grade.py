@@ -2,10 +2,6 @@ from odoo import models, fields, api
 
 
 class HRSalaryGrade(models.Model):
-    """
-    Hệ số lương theo vị trí và level
-    Grade = Position + Level + Base salary + Coefficient
-    """
     _name = 'hr.salary.grade'
     _description = 'Salary Grade (Hệ số lương)'
     _rec_name = 'name'

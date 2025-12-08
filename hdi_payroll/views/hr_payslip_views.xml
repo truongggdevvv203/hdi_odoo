@@ -24,7 +24,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_compute" string="Tính lương" type="object" invisible="state != 'draft'" class="btn-primary"/>
+                    <button name="action_compute" string="Tính lương" type="object" invisible="state not in ['draft', 'compute']" class="btn-primary"/>
                     <button name="action_validate" string="Xác nhận" type="object" invisible="state != 'compute'" class="btn-primary"/>
                     <button name="action_cancel" string="Hủy" type="object" invisible="state not in ['draft', 'compute']"/>
                     <field name="state" widget="statusbar"/>

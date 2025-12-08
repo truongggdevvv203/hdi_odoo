@@ -2,10 +2,6 @@ from odoo import models, fields, api
 
 
 class HRSalaryStructure(models.Model):
-    """
-    Cấu trúc lương - định nghĩa các thành phần lương
-    Gồm: lương cơ bản, phụ cấp, khoản trừ, BHXH, BHYT...
-    """
     _name = 'hr.salary.structure'
     _description = 'Salary Structure (Cấu trúc lương)'
     _order = 'name'
