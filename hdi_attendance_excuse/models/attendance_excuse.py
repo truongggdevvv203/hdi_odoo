@@ -41,7 +41,6 @@ class AttendanceExcuse(models.Model):
     ('early', 'Về sớm'),
     ('missing_checkin', 'Quên check-in'),
     ('missing_checkout', 'Quên check-out'),
-    ('other', 'Khác'),
   ], string="Loại giải trình", compute='_compute_excuse_type', store=True, tracking=True)
 
   # Attendance references
@@ -167,10 +166,10 @@ class AttendanceExcuse(models.Model):
   def _compute_excuse_type(self):
     """Tự động xác định loại giải trình dựa trên thời gian gốc"""
     for record in self:
-      excuse_type = 'other'
+      excuse_type = 'late'  # Default fallback
       
       if not record.attendance_id:
-        record.excuse_type = excuse_type
+        record.excuse_type = 'missing_checkin'  # Default for no attendance
         continue
       
       # Nếu không có check-in
@@ -200,7 +199,9 @@ class AttendanceExcuse(models.Model):
         record.excuse_type = 'early'
         continue
       
-      record.excuse_type = 'other'
+      # Nếu không phù hợp các điều kiện trên, mặc định là late
+      # (có thể là trường hợp đặc biệt cần giải trình)
+      record.excuse_type = 'late'
 
   def _get_company_timezone(self):
     """Lấy timezone của công ty"""
