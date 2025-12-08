@@ -110,7 +110,7 @@
                     </group>
 
                     <!-- Requested Corrections -->
-                    <group string="Đề xuất sửa chữa" invisible="state == 'pending'">
+                    <group>
                         <group>
                             <field name="requested_checkin"/>
                             <field name="requested_checkout"/>
@@ -121,9 +121,6 @@
                     <separator string="Chi tiết yêu cầu"/>
                     <group>
                         <field name="reason" colspan="2"/>
-                    </group>
-                    <group string="Bằng chứng" invisible="not evidence_attachment">
-                        <field name="evidence_attachment" colspan="2"/>
                     </group>
 
                     <!-- Approval Info -->

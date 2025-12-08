@@ -81,19 +81,13 @@ class AttendanceExcuse(models.Model):
         help='Lý do chi tiết cho yêu cầu giải trình'
     )
 
-    evidence_attachment = fields.Many2many(
-        'ir.attachment',
-        string='Bằng chứng',
-        help='Upload hình ảnh, tài liệu minh chứng'
-    )
-
     # Requested corrections (if applicable)
     requested_checkin = fields.Datetime(
-        string='Giờ check-in đề xuất'
+        string='Giờ check-in sửa'
     )
 
     requested_checkout = fields.Datetime(
-        string='Giờ check-out đề xuất'
+        string='Giờ check-out sửa'
     )
 
     # Approval workflow
