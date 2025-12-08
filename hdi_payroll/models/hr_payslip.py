@@ -144,6 +144,15 @@ class HRPayslip(models.Model):
         ('date', '<=', payslip.date_to),
       ])
 
+      # If no summaries exist, create them
+      if not summaries:
+        self._generate_work_summaries(payslip)
+        summaries = self.env['hr.work.summary'].search([
+          ('employee_id', '=', payslip.employee_id.id),
+          ('date', '>=', payslip.date_from),
+          ('date', '<=', payslip.date_to),
+        ])
+
       for summary in summaries:
         total_worked += summary.work_day
         total_paid_leave += summary.paid_leave
@@ -152,6 +161,34 @@ class HRPayslip(models.Model):
       payslip.worked_days = total_worked
       payslip.paid_leave = total_paid_leave
       payslip.unpaid_leave = total_unpaid_leave
+
+  def _generate_work_summaries(self, payslip):
+    """Generate work summaries for the payslip period"""
+    from datetime import timedelta
+    current_date = payslip.date_from
+    summaries_to_create = []
+
+    while current_date <= payslip.date_to:
+      # Check if summary already exists
+      existing = self.env['hr.work.summary'].search([
+        ('employee_id', '=', payslip.employee_id.id),
+        ('date', '=', current_date)
+      ])
+
+      if not existing:
+        summaries_to_create.append({
+          'employee_id': payslip.employee_id.id,
+          'date': current_date,
+        })
+
+      current_date += timedelta(days=1)
+
+    # Create summaries in batch
+    if summaries_to_create:
+      created_summaries = self.env['hr.work.summary'].create(summaries_to_create)
+      # Update data for created summaries
+      for summary in created_summaries:
+        summary.action_update_from_attendance()
 
   @api.depends('employee_id')
   def _compute_salary_data(self):
@@ -189,6 +226,18 @@ class HRPayslip(models.Model):
     for vals in vals_list:
       vals['name'] = self.env['ir.sequence'].next_by_code('hr.payslip') or '/'
     return super().create(vals_list)
+
+  def action_update_work_data(self):
+    """Update work data from attendance records"""
+    for payslip in self:
+      if payslip.state != 'draft':
+        continue
+
+      # Generate/update work summaries for this period
+      self._generate_work_summaries(payslip)
+
+      # Force recompute of attendance data
+      payslip._compute_attendance_data()
 
   def action_compute(self):
     """Compute payslip - calculate all salary rules"""

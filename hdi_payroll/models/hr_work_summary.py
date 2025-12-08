@@ -102,8 +102,8 @@ class HRWorkSummary(models.Model):
                     total_hours += hours
 
             record.work_hours = total_hours
-            # Calculate work_day based on hours
-            if total_hours >= 7:
+            # Calculate work_day based on hours (standard 8-hour workday)
+            if total_hours >= 8:
                 record.work_day = 1.0
             elif total_hours >= 4:
                 record.work_day = 0.5
@@ -136,6 +136,8 @@ class HRWorkSummary(models.Model):
         for record in self:
             self.action_generate_from_attendance()
             self.action_generate_from_leaves()
+            # Recalculate work_day after considering leaves
+            record.work_day = max(0, record.work_day - record.paid_leave - record.unpaid_leave)
 
     @api.model
     def action_sync_all_attendance(self):
