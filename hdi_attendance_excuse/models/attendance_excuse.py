@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 
 class AttendanceExcuse(models.Model):
     """
-    Giải trình chấm công - Hệ thống tự động phát hiện và ghi nhận các trường hợp cần giải trình
+    Giải trình chấm công - Hệ thống quản lý các trường hợp cần giải trình
+    Hỗ trợ cả tự động phát hiện và yêu cầu giải trình từ nhân viên
     """
     _name = 'attendance.excuse'
     _description = 'Attendance Excuse (Giải trình chấm công)'
@@ -74,34 +75,70 @@ class AttendanceExcuse(models.Model):
         default=0
     )
 
-    # Request tracking
-    request_id = fields.Many2one(
-        'attendance.excuse.request',
-        string='Yêu cầu giải trình',
-        ondelete='cascade'
+    # Request details
+    reason = fields.Text(
+        string='Lý do',
+        help='Lý do chi tiết cho yêu cầu giải trình'
     )
 
-    # Status
-    status = fields.Selection(
+    evidence_attachment = fields.Many2many(
+        'ir.attachment',
+        string='Bằng chứng',
+        help='Upload hình ảnh, tài liệu minh chứng'
+    )
+
+    # Requested corrections (if applicable)
+    requested_checkin = fields.Datetime(
+        string='Giờ check-in đề xuất'
+    )
+
+    requested_checkout = fields.Datetime(
+        string='Giờ check-out đề xuất'
+    )
+
+    # Approval workflow
+    state = fields.Selection(
         [
             ('pending', 'Chờ xử lý'),
+            ('submitted', 'Đã gửi'),
             ('approved', 'Đã phê duyệt'),
             ('rejected', 'Bị từ chối'),
-            ('resolved', 'Đã xử lý'),
         ],
         string='Trạng thái',
         default='pending'
+    )
+
+    approver_id = fields.Many2one(
+        'res.users',
+        string='Người phê duyệt',
+        readonly=True
+    )
+
+    approval_date = fields.Datetime(
+        string='Ngày phê duyệt',
+        readonly=True
+    )
+
+    rejection_reason = fields.Text(
+        string='Lý do từ chối'
     )
 
     notes = fields.Text(
         string='Ghi chú'
     )
 
-    @api.depends('employee_id', 'date', 'excuse_type_id')
+    company_id = fields.Many2one(
+        'res.company',
+        string='Công ty',
+        default=lambda self: self.env.company
+    )
+
+    @api.depends('employee_id', 'date', 'excuse_type_id', 'state')
     def _compute_display_name(self):
         for record in self:
             if record.employee_id and record.date and record.excuse_type_id:
-                record.display_name = f"{record.employee_id.name} - {record.date} - {record.excuse_type_id.name}"
+                state_label = dict(record._fields['state'].selection).get(record.state, record.state)
+                record.display_name = f"{record.employee_id.name} - {record.date} - {record.excuse_type_id.name} ({state_label})"
             else:
                 record.display_name = "Giải trình chấm công"
 
@@ -172,7 +209,7 @@ class AttendanceExcuse(models.Model):
                             'excuse_type_id': excuse_type.id,
                             'attendance_id': att.id,
                             'late_minutes': late_minutes,
-                            'status': 'pending',
+                            'state': 'pending',
                         })
 
     def _detect_early_departure(self):
@@ -211,7 +248,7 @@ class AttendanceExcuse(models.Model):
                             'excuse_type_id': excuse_type.id,
                             'attendance_id': att.id,
                             'early_minutes': early_minutes,
-                            'status': 'pending',
+                            'state': 'pending',
                         })
 
     def _detect_missing_checkout(self):
@@ -243,38 +280,59 @@ class AttendanceExcuse(models.Model):
                     'date': att.check_in.date(),
                     'excuse_type_id': excuse_type.id,
                     'attendance_id': att.id,
-                    'status': 'pending',
+                    'state': 'pending',
                 })
+
+    def submit(self):
+        """Gửi yêu cầu giải trình"""
+        for record in self:
+            if record.state != 'pending':
+                continue
+            record.state = 'submitted'
 
     def approve(self):
         """Phê duyệt giải trình"""
         for record in self:
-            record.status = 'approved'
-            # Tự động tạo yêu cầu giải trình nếu chưa có
-            if not record.request_id:
-                request = self.env['attendance.excuse.request'].create({
-                    'excuse_id': record.id,
-                    'employee_id': record.employee_id.id,
-                    'date': record.date,
-                    'excuse_type_id': record.excuse_type_id.id,
-                    'state': 'approved',
-                })
-                record.request_id = request.id
+            if record.state != 'submitted':
+                continue
+            record.state = 'approved'
+            record.approver_id = self.env.user.id
+            record.approval_date = fields.Datetime.now()
+
+            # If there are corrections, apply them to attendance
+            if record.requested_checkin or record.requested_checkout:
+                self._apply_corrections(record)
 
     def reject(self):
         """Từ chối giải trình"""
         for record in self:
-            record.status = 'rejected'
+            if record.state != 'submitted':
+                continue
+            record.state = 'rejected'
+            record.approver_id = self.env.user.id
+            record.approval_date = fields.Datetime.now()
 
-    def create_request(self):
-        """Tạo yêu cầu giải trình"""
-        for record in self:
-            if not record.request_id:
-                request = self.env['attendance.excuse.request'].create({
-                    'excuse_id': record.id,
-                    'employee_id': record.employee_id.id,
-                    'date': record.date,
-                    'excuse_type_id': record.excuse_type_id.id,
-                    'state': 'draft',
-                })
-                record.request_id = request.id
+    def _apply_corrections(self, record):
+        """Áp dụng các sửa chữa vào bản ghi chấm công"""
+        if record.attendance_id:
+            att = record.attendance_id
+            
+            if record.requested_checkin:
+                att.check_in = record.requested_checkin
+                record.corrected_checkin = record.requested_checkin
+            
+            if record.requested_checkout:
+                att.check_out = record.requested_checkout
+                record.corrected_checkout = record.requested_checkout
+
+    def get_my_requests(self):
+        """Lấy danh sách yêu cầu của nhân viên hiện tại"""
+        return self.search([
+            ('employee_id', '=', self.env.user.employee_id.id),
+        ], order='date desc')
+
+    def get_pending_approvals(self):
+        """Lấy danh sách yêu cầu chờ phê duyệt"""
+        return self.search([
+            ('state', '=', 'submitted'),
+        ], order='date desc')

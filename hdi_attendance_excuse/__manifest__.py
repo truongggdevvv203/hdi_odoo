@@ -26,7 +26,6 @@
 
     # Views
     'views/attendance_excuse_views.xml',
-    'views/attendance_excuse_request_views.xml',
     'views/hr_attendance_views.xml',
 
     # Menu
