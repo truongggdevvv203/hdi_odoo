@@ -34,7 +34,7 @@
             <field name="excuse_ids">
               <list>
                 <field name="date"/>
-                <field name="excuse_type_id"/>
+                <field name="excuse_type"/>
                 <field name="state"/>
               </list>
             </field>
