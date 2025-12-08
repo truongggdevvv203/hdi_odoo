@@ -9,7 +9,7 @@
             <list>
                 <field name="employee_id"/>
                 <field name="date"/>
-                <field name="excuse_type_id"/>
+                <field name="excuse_type"/>
                 <field name="state"/>
                 <field name="late_minutes" optional="show"/>
                 <field name="early_minutes" optional="show"/>
@@ -42,7 +42,7 @@
                         <group>
                             <field name="employee_id"/>
                             <field name="date"/>
-                            <field name="excuse_type_id"/>
+                            <field name="excuse_type"/>
                         </group>
                         <group>
                             <field name="attendance_id"/>
