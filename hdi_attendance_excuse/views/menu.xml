@@ -1,26 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Menu Items -->
+    <!-- Main menu dưới HR Attendance -->
     <menuitem
         id="menu_attendance_excuse_root"
         name="Giải trình chấm công"
-        parent="hr.menu_human_resources"
-        sequence="50"
-    />
+        parent="hr_attendance.menu_hr_attendance_root"
+        sequence="50"/>
 
-    <menuitem
-        id="menu_attendance_excuse_request"
-        name="Yêu cầu giải trình"
-        parent="menu_attendance_excuse_root"
-        action="action_attendance_excuse_request"
-        sequence="10"
-    />
-
+    <!-- Submenu: Loại giải trình -->
     <menuitem
         id="menu_attendance_excuse_type"
         name="Loại giải trình"
         parent="menu_attendance_excuse_root"
         action="action_attendance_excuse_type"
-        sequence="20"
-    />
+        sequence="10"/>
+
+    <!-- Submenu: Yêu cầu giải trình -->
+    <menuitem
+        id="menu_attendance_excuse_request"
+        name="Yêu cầu giải trình"
+        parent="menu_attendance_excuse_root"
+        action="action_attendance_excuse_request"
+        sequence="20"/>
 </odoo>

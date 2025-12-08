@@ -1,25 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Extend HR Attendance with Excuse Info -->
-    <record id="view_hr_attendance_form_inherit_excuse" model="ir.ui.view">
-        <field name="name">hr.attendance - Inherit Excuse Info</field>
+    <!-- Extend HR Attendance List View with Excuse Info -->
+    <record id="view_hr_attendance_list_inherit_excuse" model="ir.ui.view">
+        <field name="name">hr.attendance.list.inherit.excuse</field>
         <field name="model">hr.attendance</field>
-        <field name="type">form</field>
-        <field name="inherit_id" ref="hr_attendance.view_hr_attendance_form"/>
-        <field name="priority">99</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
         <field name="arch" type="xml">
-            <xpath expr="//form" position="inside">
-                <group string="Giải trình chấm công">
-                    <field name="is_excused"/>
-                    <field name="has_pending_excuse"/>
-                </group>
-                <field name="excuse_ids" readonly="1">
-                    <list>
-                        <field name="date"/>
-                        <field name="excuse_type_id"/>
-                        <field name="status"/>
-                    </list>
-                </field>
+            <xpath expr="//field[@name='check_out']" position="after">
+                <field name="is_excused" optional="show"/>
+                <field name="has_pending_excuse" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Extend HR Attendance Form View with Excuse Info -->
+    <record id="view_hr_attendance_form_inherit_excuse" model="ir.ui.view">
+        <field name="name">hr.attendance.form.inherit.excuse</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add excuse fields after worked_hours group -->
+            <xpath expr="//field[@name='worked_hours']" position="after">
+                <field name="is_excused"/>
+                <field name="has_pending_excuse"/>
+            </xpath>
+
+            <!-- Add excuse tab in the form -->
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page string="Giải trình chấm công" name="excuse_tab">
+                        <field name="excuse_ids">
+                            <list>
+                                <field name="date"/>
+                                <field name="excuse_type_id"/>
+                                <field name="status"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
             </xpath>
         </field>
     </record>
