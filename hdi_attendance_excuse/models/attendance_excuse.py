@@ -116,9 +116,7 @@ class AttendanceExcuse(models.Model):
         # Kiểm tra các trường hợp đi muộn/về sớm
         self._detect_late_arrival()
         self._detect_early_departure()
-        self._detect_missing_checkin()
         self._detect_missing_checkout()
-        self._detect_work_summary_missing_data()
 
     def _detect_late_arrival(self):
         """Phát hiện trường hợp đi muộn"""
@@ -126,9 +124,10 @@ class AttendanceExcuse(models.Model):
         late_threshold = 8.5  # 8:30 AM
 
         # Tìm tất cả bản ghi chấm công hôm nay
+        today = datetime.now().date()
         attendances = self.env['hr.attendance'].search([
-            ('check_in', '>=', datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)),
-            ('check_in', '<', datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999)),
+            ('check_in', '>=', datetime.combine(today, datetime.min.time())),
+            ('check_in', '<', datetime.combine(today, datetime.max.time())),
         ])
 
         for att in attendances:
@@ -163,9 +162,10 @@ class AttendanceExcuse(models.Model):
         # Lấy cấu hình giờ tan ca (mặc định 5:00 PM = 17:00)
         early_threshold = 17.0  # 5:00 PM
 
+        today = datetime.now().date()
         attendances = self.env['hr.attendance'].search([
-            ('check_out', '>=', datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)),
-            ('check_out', '<', datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999)),
+            ('check_out', '>=', datetime.combine(today, datetime.min.time())),
+            ('check_out', '<', datetime.combine(today, datetime.max.time())),
         ])
 
         for att in attendances:
@@ -194,46 +194,13 @@ class AttendanceExcuse(models.Model):
                                 'status': 'pending',
                             })
 
-    def _detect_missing_checkin(self):
-        """Phát hiện trường hợp quên check-in"""
-        # Lấy tất cả work summary có work_day > 0 nhưng không có attendance record
-        work_summaries = self.env['hr.work.summary'].search([
-            ('work_day', '>', 0),
-        ])
-
-        for summary in work_summaries:
-            attendance = self.env['hr.attendance'].search([
-                ('employee_id', '=', summary.employee_id.id),
-                ('check_in', '>=', f"{summary.date} 00:00:00"),
-                ('check_in', '<', f"{summary.date} 23:59:59"),
-            ])
-
-            if not attendance and summary.work_hours > 0:
-                existing = self.search([
-                    ('employee_id', '=', summary.employee_id.id),
-                    ('date', '=', summary.date),
-                    ('excuse_type_id.category', '=', 'missing_checkin'),
-                ])
-
-                if not existing:
-                    excuse_type = self.env['attendance.excuse.type'].search(
-                        [('category', '=', 'missing_checkin')], limit=1
-                    )
-                    if excuse_type:
-                        self.create({
-                            'employee_id': summary.employee_id.id,
-                            'date': summary.date,
-                            'excuse_type_id': excuse_type.id,
-                            'status': 'pending',
-                        })
-
     def _detect_missing_checkout(self):
         """Phát hiện trường hợp quên check-out"""
         # Lấy tất cả attendance không có check-out từ hôm qua
         yesterday = datetime.now().date() - timedelta(days=1)
         attendances = self.env['hr.attendance'].search([
-            ('check_in', '>=', f"{yesterday} 00:00:00"),
-            ('check_in', '<', f"{yesterday} 23:59:59"),
+            ('check_in', '>=', datetime.combine(yesterday, datetime.min.time())),
+            ('check_in', '<', datetime.combine(yesterday, datetime.max.time())),
             ('check_out', '=', False),
         ])
 
@@ -254,32 +221,6 @@ class AttendanceExcuse(models.Model):
                         'excuse_type_id': excuse_type.id,
                         'attendance_id': att.id,
                         'original_checkin': att.check_in,
-                        'status': 'pending',
-                    })
-
-    def _detect_work_summary_missing_data(self):
-        """Phát hiện bảng công bị mất dữ liệu giờ làm"""
-        work_summaries = self.env['hr.work.summary'].search([
-            ('work_hours', '=', 0.0),
-            ('work_day', '>', 0),
-        ])
-
-        for summary in work_summaries:
-            existing = self.search([
-                ('employee_id', '=', summary.employee_id.id),
-                ('date', '=', summary.date),
-                ('excuse_type_id.category', '=', 'wrong_time'),
-            ])
-
-            if not existing:
-                excuse_type = self.env['attendance.excuse.type'].search(
-                    [('category', '=', 'wrong_time')], limit=1
-                )
-                if excuse_type:
-                    self.create({
-                        'employee_id': summary.employee_id.id,
-                        'date': summary.date,
-                        'excuse_type_id': excuse_type.id,
                         'status': 'pending',
                     })
 
