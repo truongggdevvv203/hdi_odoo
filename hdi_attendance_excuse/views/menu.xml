@@ -18,8 +18,8 @@
     <!-- Submenu: Yêu cầu giải trình -->
     <menuitem
         id="menu_attendance_excuse_request"
-        name="Yêu cầu giải trình"
+        name="Giải trình chấm công"
         parent="menu_attendance_excuse_root"
-        action="action_attendance_excuse_request"
+        action="action_attendance_excuse"
         sequence="20"/>
 </odoo>
