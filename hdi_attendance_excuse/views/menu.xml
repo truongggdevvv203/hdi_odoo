@@ -7,15 +7,6 @@
         parent="hr_attendance.menu_hr_attendance_root"
         sequence="50"/>
 
-    <!-- Submenu: Loại giải trình -->
-    <menuitem
-        id="menu_attendance_excuse_type"
-        name="Loại giải trình"
-        parent="menu_attendance_excuse_root"
-        action="action_attendance_excuse_type"
-        sequence="10"/>
-
-    <!-- Submenu: Yêu cầu giải trình -->
     <menuitem
         id="menu_attendance_excuse_request"
         name="Giải trình chấm công"
