@@ -39,30 +39,24 @@ class HRAttendance(models.Model):
         for record in self:
             record.has_pending_excuse = any(e.status == 'pending' for e in record.excuse_ids)
 
-    @api.depends('excuse_ids', 'check_in', 'check_out')
+    @api.depends('check_in', 'check_out')
     def _compute_requires_excuse(self):
-        """Check if this attendance record requires an excuse"""
         for record in self:
             requires = False
-            
-            # Check if there are any pending or awaiting excuses
-            if any(e.status in ['pending', 'submitted'] for e in record.excuse_ids):
-                requires = True
-            
-            # Check for late arrival (check_in after 8:30 AM)
+
             if record.check_in:
-                check_in_hour = record.check_in.hour + record.check_in.minute / 60
-                if check_in_hour > 8.5:
+                ci = fields.Datetime.context_timestamp(record, record.check_in)
+                check_in_hour = ci.hour + ci.minute / 60
+                if check_in_hour > 8.75:
                     requires = True
-            
-            # Check for early departure (check_out before 5:00 PM)
+
             if record.check_out:
-                check_out_hour = record.check_out.hour + record.check_out.minute / 60
-                if check_out_hour < 17.0:
+                co = fields.Datetime.context_timestamp(record, record.check_out)
+                check_out_hour = co.hour + co.minute / 60
+                if check_out_hour < 17.75:
                     requires = True
-            
-            # Check for missing check_out
+
             if record.check_in and not record.check_out:
                 requires = True
-            
+
             record.requires_excuse = requires

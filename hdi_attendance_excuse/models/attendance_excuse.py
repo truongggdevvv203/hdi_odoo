@@ -93,12 +93,6 @@ class AttendanceExcuse(models.Model):
         string='Ghi chú'
     )
 
-    company_id = fields.Many2one(
-        'res.company',
-        string='Công ty',
-        default=lambda self: self.env.company
-    )
-
     @api.depends('employee_id', 'date', 'excuse_type_id')
     def _compute_display_name(self):
         for record in self:
