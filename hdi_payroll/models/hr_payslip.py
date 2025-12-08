@@ -133,6 +133,13 @@ class HRPayslip(models.Model):
   def _compute_attendance_data(self):
     """Compute worked days and leaves from attendance records"""
     for payslip in self:
+      # Skip if required data is missing
+      if not payslip.employee_id or not payslip.date_from or not payslip.date_to:
+        payslip.worked_days = 0
+        payslip.paid_leave = 0
+        payslip.unpaid_leave = 0
+        continue
+
       total_worked = 0
       total_paid_leave = 0
       total_unpaid_leave = 0
@@ -165,6 +172,11 @@ class HRPayslip(models.Model):
   def _generate_work_summaries(self, payslip):
     """Generate work summaries for the payslip period"""
     from datetime import timedelta
+
+    # Check if dates are set
+    if not payslip.date_from or not payslip.date_to:
+      return
+
     current_date = payslip.date_from
     summaries_to_create = []
 
@@ -230,7 +242,7 @@ class HRPayslip(models.Model):
   def action_update_work_data(self):
     """Update work data from attendance records"""
     for payslip in self:
-      if payslip.state != 'draft':
+      if payslip.state != 'draft' or not payslip.employee_id or not payslip.date_from or not payslip.date_to:
         continue
 
       # Generate/update work summaries for this period
