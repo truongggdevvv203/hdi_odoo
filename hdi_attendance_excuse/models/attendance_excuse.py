@@ -299,9 +299,25 @@ class AttendanceExcuse(models.Model):
             record.approver_id = self.env.user.id
             record.approval_date = fields.Datetime.now()
 
-            # If there are corrections, apply them to attendance
-            if record.requested_checkin or record.requested_checkout:
-                self._apply_corrections(record)
+            # Auto-update original attendance record with corrected times
+            if record.attendance_id:
+                att = record.attendance_id
+                
+                # If corrected times are set, use them; otherwise use original times as-is
+                if record.corrected_checkin:
+                    att.check_in = record.corrected_checkin
+                
+                if record.corrected_checkout:
+                    att.check_out = record.corrected_checkout
+                
+                # For requested times (from employee), also update if provided
+                if record.requested_checkin and not record.corrected_checkin:
+                    att.check_in = record.requested_checkin
+                    record.corrected_checkin = record.requested_checkin
+                
+                if record.requested_checkout and not record.corrected_checkout:
+                    att.check_out = record.requested_checkout
+                    record.corrected_checkout = record.requested_checkout
 
     def reject(self):
         """Từ chối giải trình"""
@@ -317,13 +333,16 @@ class AttendanceExcuse(models.Model):
         if record.attendance_id:
             att = record.attendance_id
             
-            if record.requested_checkin:
+            # Update with corrected times if available
+            if record.corrected_checkin:
+                att.check_in = record.corrected_checkin
+            elif record.requested_checkin:
                 att.check_in = record.requested_checkin
-                record.corrected_checkin = record.requested_checkin
             
-            if record.requested_checkout:
+            if record.corrected_checkout:
+                att.check_out = record.corrected_checkout
+            elif record.requested_checkout:
                 att.check_out = record.requested_checkout
-                record.corrected_checkout = record.requested_checkout
 
     def get_my_requests(self):
         """Lấy danh sách yêu cầu của nhân viên hiện tại"""
