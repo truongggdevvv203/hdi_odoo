@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class HRPayslip(models.Model):
@@ -131,7 +131,7 @@ class HRPayslip(models.Model):
 
   @api.depends('date_from', 'date_to', 'employee_id')
   def _compute_attendance_data(self):
-    """Compute worked days and leaves from attendance records"""
+    """Compute worked days and leaves from hr.attendance records"""
     for payslip in self:
       # Skip if required data is missing
       if not payslip.employee_id or not payslip.date_from or not payslip.date_to:
@@ -140,67 +140,46 @@ class HRPayslip(models.Model):
         payslip.unpaid_leave = 0
         continue
 
-      total_worked = 0
-      total_paid_leave = 0
-      total_unpaid_leave = 0
+      total_worked = 0.0
+      total_paid_leave = 0.0
+      total_unpaid_leave = 0.0
 
-      # Get all work summaries for this period
-      summaries = self.env['hr.work.summary'].search([
+      # Get all attendance records for this period
+      attendances = self.env['hr.attendance'].search([
         ('employee_id', '=', payslip.employee_id.id),
-        ('date', '>=', payslip.date_from),
-        ('date', '<=', payslip.date_to),
+        ('check_in', '>=', datetime.combine(payslip.date_from, datetime.min.time())),
+        ('check_in', '<=', datetime.combine(payslip.date_to, datetime.max.time())),
       ])
 
-      # If no summaries exist, create them
-      if not summaries:
-        self._generate_work_summaries(payslip)
-        summaries = self.env['hr.work.summary'].search([
-          ('employee_id', '=', payslip.employee_id.id),
-          ('date', '>=', payslip.date_from),
-          ('date', '<=', payslip.date_to),
-        ])
+      # Calculate worked days from attendance
+      for att in attendances:
+        if att.check_in and att.check_out:
+          delta = att.check_out - att.check_in
+          hours = delta.total_seconds() / 3600.0
+          # Standard workday is 8 hours
+          if hours >= 8:
+            total_worked += 1.0
+          elif hours >= 4:
+            total_worked += 0.5
 
-      for summary in summaries:
-        total_worked += summary.work_day
-        total_paid_leave += summary.paid_leave
-        total_unpaid_leave += summary.unpaid_leave
+      # Get all leave records for this period
+      leaves = self.env['hr.leave'].search([
+        ('employee_id', '=', payslip.employee_id.id),
+        ('date_from', '<=', datetime.combine(payslip.date_to, datetime.max.time())),
+        ('date_to', '>=', datetime.combine(payslip.date_from, datetime.min.time())),
+        ('state', '=', 'validate'),
+      ])
+
+      for leave in leaves:
+        leave_days = (leave.date_to.date() - leave.date_from.date()).days + 1
+        if leave.holiday_status_id.unpaid:
+          total_unpaid_leave += leave_days
+        else:
+          total_paid_leave += leave_days
 
       payslip.worked_days = total_worked
       payslip.paid_leave = total_paid_leave
       payslip.unpaid_leave = total_unpaid_leave
-
-  def _generate_work_summaries(self, payslip):
-    """Generate work summaries for the payslip period"""
-    from datetime import timedelta
-
-    # Check if dates are set
-    if not payslip.date_from or not payslip.date_to:
-      return
-
-    current_date = payslip.date_from
-    summaries_to_create = []
-
-    while current_date <= payslip.date_to:
-      # Check if summary already exists
-      existing = self.env['hr.work.summary'].search([
-        ('employee_id', '=', payslip.employee_id.id),
-        ('date', '=', current_date)
-      ])
-
-      if not existing:
-        summaries_to_create.append({
-          'employee_id': payslip.employee_id.id,
-          'date': current_date,
-        })
-
-      current_date += timedelta(days=1)
-
-    # Create summaries in batch
-    if summaries_to_create:
-      created_summaries = self.env['hr.work.summary'].create(summaries_to_create)
-      # Update data for created summaries
-      for summary in created_summaries:
-        summary.action_update_from_attendance()
 
   @api.depends('employee_id')
   def _compute_salary_data(self):
@@ -244,9 +223,6 @@ class HRPayslip(models.Model):
     for payslip in self:
       if payslip.state != 'draft' or not payslip.employee_id or not payslip.date_from or not payslip.date_to:
         continue
-
-      # Generate/update work summaries for this period
-      self._generate_work_summaries(payslip)
 
       # Force recompute of attendance data
       payslip._compute_attendance_data()

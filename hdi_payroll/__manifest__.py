@@ -17,7 +17,6 @@
     'security/ir.model.access.csv',
 
     # Views
-    'views/hr_work_summary_views.xml',
     'views/hr_salary_grade_views.xml',
     'views/hr_salary_structure_views.xml',
     'views/hr_salary_rule_views.xml',

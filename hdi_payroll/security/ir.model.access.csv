@@ -1,6 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_hr_work_summary_user,access_hr_work_summary_user,hdi_payroll.model_hr_work_summary,hr.group_hr_user,1,1,1,0
-access_hr_work_summary_manager,access_hr_work_summary_manager,hdi_payroll.model_hr_work_summary,hr.group_hr_manager,1,1,1,1
 access_hr_salary_grade_user,access_hr_salary_grade_user,hdi_payroll.model_hr_salary_grade,hr.group_hr_user,1,0,0,0
 access_hr_salary_grade_manager,access_hr_salary_grade_manager,hdi_payroll.model_hr_salary_grade,hr.group_hr_manager,1,1,1,1
 access_hr_salary_structure_user,access_hr_salary_structure_user,hdi_payroll.model_hr_salary_structure,hr.group_hr_user,1,0,0,0

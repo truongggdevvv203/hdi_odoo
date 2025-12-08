@@ -1,4 +1,3 @@
-from . import hr_work_summary
 from . import hr_salary_grade
 from . import hr_salary_structure
 from . import hr_salary_rule
