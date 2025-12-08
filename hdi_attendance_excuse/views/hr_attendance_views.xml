@@ -5,25 +5,22 @@
         <field name="name">hr.attendance - Inherit Excuse Info</field>
         <field name="model">hr.attendance</field>
         <field name="type">form</field>
-        <field name="inherit_id" ref="base.view_res_partner_form"/>
+        <field name="inherit_id" ref="hr_attendance.view_hr_attendance_form"/>
         <field name="priority">99</field>
         <field name="arch" type="xml">
-            <form>
-                <group>
-                    <group>
-                        <field name="is_excused"/>
-                        <field name="has_pending_excuse"/>
-                    </group>
+            <xpath expr="//form" position="inside">
+                <group string="Giải trình chấm công">
+                    <field name="is_excused"/>
+                    <field name="has_pending_excuse"/>
                 </group>
-                <separator string="Giải trình liên quan"/>
                 <field name="excuse_ids" readonly="1">
-                    <tree>
+                    <list>
                         <field name="date"/>
                         <field name="excuse_type_id"/>
                         <field name="status"/>
-                    </tree>
+                    </list>
                 </field>
-            </form>
+            </xpath>
         </field>
     </record>
 </odoo>
