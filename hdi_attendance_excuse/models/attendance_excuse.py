@@ -43,13 +43,17 @@ class AttendanceExcuse(models.Model):
         ondelete='set null'
     )
 
-    # Details for different excuse types
+    # Details for different excuse types - automatically pulled from hr.attendance
     original_checkin = fields.Datetime(
-        string='Check-in gốc'
+        string='Check-in gốc',
+        compute='_compute_original_checkin',
+        store=True
     )
 
     original_checkout = fields.Datetime(
-        string='Check-out gốc'
+        string='Check-out gốc',
+        compute='_compute_original_checkout',
+        store=True
     )
 
     corrected_checkin = fields.Datetime(
@@ -101,6 +105,24 @@ class AttendanceExcuse(models.Model):
             else:
                 record.display_name = "Giải trình chấm công"
 
+    @api.depends('attendance_id')
+    def _compute_original_checkin(self):
+        """Lấy check-in gốc từ hr.attendance"""
+        for record in self:
+            if record.attendance_id:
+                record.original_checkin = record.attendance_id.check_in
+            else:
+                record.original_checkin = None
+
+    @api.depends('attendance_id')
+    def _compute_original_checkout(self):
+        """Lấy check-out gốc từ hr.attendance"""
+        for record in self:
+            if record.attendance_id:
+                record.original_checkout = record.attendance_id.check_out
+            else:
+                record.original_checkout = None
+
     @api.model
     def detect_and_create_excuses(self):
         """
@@ -149,7 +171,6 @@ class AttendanceExcuse(models.Model):
                             'date': att.check_in.date(),
                             'excuse_type_id': excuse_type.id,
                             'attendance_id': att.id,
-                            'original_checkin': att.check_in,
                             'late_minutes': late_minutes,
                             'status': 'pending',
                         })
@@ -189,7 +210,6 @@ class AttendanceExcuse(models.Model):
                             'date': att.check_out.date(),
                             'excuse_type_id': excuse_type.id,
                             'attendance_id': att.id,
-                            'original_checkout': att.check_out,
                             'early_minutes': early_minutes,
                             'status': 'pending',
                         })
@@ -223,7 +243,6 @@ class AttendanceExcuse(models.Model):
                     'date': att.check_in.date(),
                     'excuse_type_id': excuse_type.id,
                     'attendance_id': att.id,
-                    'original_checkin': att.check_in,
                     'status': 'pending',
                 })
 
