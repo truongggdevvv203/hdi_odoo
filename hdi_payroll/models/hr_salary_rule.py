@@ -6,10 +6,7 @@ class HRSalaryRule(models.Model):
     _description = 'Salary Rule (Công thức tính lương)'
     _order = 'sequence, id'
 
-    name = fields.Char(
-        string='Tên rule',
-        required=True
-    )
+    name = fields.Char(string='Tên rule', required=True)
 
     code = fields.Char(
         string='Mã code',
@@ -41,12 +38,10 @@ class HRSalaryRule(models.Model):
     sequence = fields.Integer(
         string='Thứ tự',
         default=1,
-        help='Thứ tự tính toán (thứ tự từ nhỏ đến lớn)'
+        help='Thứ tự tính toán'
     )
 
-    description = fields.Text(
-        string='Mô tả'
-    )
+    description = fields.Text(string='Mô tả')
 
     company_id = fields.Many2one(
         'res.company',
@@ -54,31 +49,33 @@ class HRSalaryRule(models.Model):
         default=lambda self: self.env.company
     )
 
-    active = fields.Boolean(
-        string='Hoạt động',
-        default=True
+    active = fields.Boolean(string='Hoạt động', default=True)
+
+    # ⭐ Field mới để cấu hình số ngày công chuẩn của rule
+    working_days_base = fields.Float(
+        string="Ngày công chuẩn",
+        default=26.0,
+        help="Số ngày công dùng để chia khi tính lương/phụ cấp"
     )
 
+    # ⭐ Công thức tính tự động lấy working_days_base
     def compute(self, payslip, localdict):
-      self.ensure_one()
-      result = 0
-
-      if self.category == 'basic':
-        base_salary = localdict.get('base_salary', 0)
-        coefficient = localdict.get('coefficient', 1)
-        worked_days = localdict.get('worked_days', 0)
-
-        # Công thức bạn yêu cầu
-        result = base_salary * coefficient * (worked_days / 26.0)
-
-      elif self.category == 'allowance':
-        worked_days = localdict.get('worked_days', 0)
-        allowance = localdict.get('allowance', 0)
-
-        # Công thức phụ cấp
-        result = allowance * (worked_days / 26.0)
-
-      elif self.category in ['deduction', 'insurance', 'tax']:
+        self.ensure_one()
         result = 0
 
-      return result
+        worked_days = localdict.get('worked_days', 0)
+        base = self.working_days_base or 26.0  # fallback
+
+        if self.category == 'basic':
+            base_salary = localdict.get('base_salary', 0)
+            coefficient = localdict.get('coefficient', 1)
+            result = base_salary * coefficient * (worked_days / base)
+
+        elif self.category == 'allowance':
+            allowance = localdict.get('allowance', 0)
+            result = allowance * (worked_days / base)
+
+        elif self.category in ['deduction', 'insurance', 'tax']:
+            result = 0
+
+        return result
