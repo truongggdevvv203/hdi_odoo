@@ -41,7 +41,8 @@ class AttendanceExcuse(models.Model):
     ('early', 'Về sớm'),
     ('missing_checkin', 'Quên check-in'),
     ('missing_checkout', 'Quên check-out'),
-  ], string="Loại giải trình", compute='_compute_excuse_type', store=True, tracking=True)
+  ], string="Loại giải trình", compute='_compute_excuse_type', store=True,
+      tracking=True)
 
   # Attendance references
   attendance_id = fields.Many2one(
@@ -179,6 +180,7 @@ class AttendanceExcuse(models.Model):
         record.can_reject = self.env.user.has_group('hr.group_hr_manager')
 
   @api.depends('employee_id', 'date', 'excuse_type', 'state')
+  def _compute_display_name(self):
     for record in self:
       if record.employee_id and record.date and record.excuse_type:
         excuse_label = dict(record._fields['excuse_type'].selection).get(
@@ -206,38 +208,38 @@ class AttendanceExcuse(models.Model):
     """Tự động xác định loại giải trình dựa trên thời gian gốc"""
     for record in self:
       excuse_type = 'late'  # Default fallback
-      
+
       if not record.attendance_id:
         record.excuse_type = 'missing_checkin'  # Default for no attendance
         continue
-      
+
       # Nếu không có check-in
       if not record.original_checkin:
         record.excuse_type = 'missing_checkin'
         continue
-      
+
       # Nếu không có check-out
       if not record.original_checkout:
         record.excuse_type = 'missing_checkout'
         continue
-      
+
       # Kiểm tra đi muộn
       local_checkin = self._convert_to_local_time(record.original_checkin)
       check_in_hour = local_checkin.hour + local_checkin.minute / 60.0
       schedule = self._get_work_schedule(record.employee_id)
-      
+
       if check_in_hour > (schedule['start_time'] + schedule['late_tolerance']):
         record.excuse_type = 'late'
         continue
-      
+
       # Kiểm tra về sớm
       local_checkout = self._convert_to_local_time(record.original_checkout)
       check_out_hour = local_checkout.hour + local_checkout.minute / 60.0
-      
+
       if check_out_hour < schedule['end_time']:
         record.excuse_type = 'early'
         continue
-      
+
       # Nếu không phù hợp các điều kiện trên, mặc định là late
       # (có thể là trường hợp đặc biệt cần giải trình)
       record.excuse_type = 'late'
@@ -421,7 +423,7 @@ class AttendanceExcuse(models.Model):
           ('department_id', '=', record.employee_id.department_id.id),
           ('active', '=', True)
         ], limit=1)
-        
+
         if approver_config:
           record.approver_id = approver_config.approver_id.id
         # Priority 2: Fallback to employee's manager
@@ -440,7 +442,8 @@ class AttendanceExcuse(models.Model):
       # Permission check: only assigned approver or HR managers can approve
       if record.approver_id and record.approver_id.id != self.env.user.id:
         if not self.env.user.has_group('hr.group_hr_manager'):
-          raise UserError('Bạn không có quyền phê duyệt đơn này. Chỉ người phê duyệt được chỉ định hoặc HR Manager mới có thể phê duyệt.')
+          raise UserError(
+            'Bạn không có quyền phê duyệt đơn này. Chỉ người phê duyệt được chỉ định hoặc HR Manager mới có thể phê duyệt.')
 
       record.write({
         'state': 'approved',
@@ -478,7 +481,8 @@ class AttendanceExcuse(models.Model):
       # Permission check: only assigned approver or HR managers can reject
       if record.approver_id and record.approver_id.id != self.env.user.id:
         if not self.env.user.has_group('hr.group_hr_manager'):
-          raise UserError('Bạn không có quyền từ chối đơn này. Chỉ người phê duyệt được chỉ định hoặc HR Manager mới có thể từ chối.')
+          raise UserError(
+            'Bạn không có quyền từ chối đơn này. Chỉ người phê duyệt được chỉ định hoặc HR Manager mới có thể từ chối.')
 
       record.write({
         'state': 'rejected',

@@ -5,7 +5,7 @@
         id="menu_attendance_excuse_root"
         name="Giải trình chấm công"
         parent="hr_attendance.menu_hr_attendance_root"
-        sequence="50"/>
+        sequence="7"/>
 
     <menuitem
         id="menu_attendance_excuse_request"
