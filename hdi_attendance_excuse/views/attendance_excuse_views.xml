@@ -50,9 +50,6 @@
                             <field name="early_minutes" invisible="early_minutes == 0"/>
                         </group>
                     </group>
-
-                    <!-- Original and Corrected Times -->
-                    <separator string="Thông tin giờ làm việc"/>
                     <group>
                         <group string="Thời gian gốc">
                             <field name="original_checkin" readonly="1"/>
