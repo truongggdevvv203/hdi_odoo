@@ -10,8 +10,6 @@
                 <field name="date"/>
                 <field name="excuse_type"/>
                 <field name="state"/>
-                <field name="late_minutes" optional="show"/>
-                <field name="early_minutes" optional="show"/>
                 <field name="approver_id" optional="show"/>
                 <field name="approval_date" optional="show"/>
             </list>
@@ -23,7 +21,7 @@
         <field name="name">Giải trình chấm công - Form</field>
         <field name="model">attendance.excuse</field>
         <field name="arch" type="xml">
-            <form readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)">
+            <form>
                 <header>
                     <button name="action_submit" string="Gửi yêu cầu" type="object" class="btn-primary"
                             invisible="state != 'draft'"/>
@@ -39,15 +37,15 @@
                     </h2>
                     <group>
                         <group>
-                            <field name="attendance_id" required="1"/>
+                            <field name="attendance_id" required="1" readonly="state in ('approved', 'rejected')"/>
                             <field name="employee_id" readonly="1"/>
                             <field name="date" readonly="1"/>
-                            <field name="excuse_type"/>
+                            <field name="excuse_type" readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)"/>
                             <field name="is_approver" invisible="1"/>
                         </group>
                         <group>
-                            <field name="late_minutes" invisible="late_minutes == 0"/>
-                            <field name="early_minutes" invisible="early_minutes == 0"/>
+                            <field name="late_minutes" invisible="late_minutes == 0" readonly="1"/>
+                            <field name="early_minutes" invisible="early_minutes == 0" readonly="1"/>
                         </group>
                     </group>
                     <group>
@@ -56,8 +54,8 @@
                             <field name="original_checkout" readonly="1"/>
                         </group>
                         <group string="Thời gian đã sửa" invisible="not corrected_checkin and not corrected_checkout">
-                            <field name="corrected_checkin"/>
-                            <field name="corrected_checkout"/>
+                            <field name="corrected_checkin" readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)"/>
+                            <field name="corrected_checkout" readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)"/>
                         </group>
                     </group>
 
@@ -65,7 +63,7 @@
                     <!-- Nếu late: chỉnh sửa check-in, check-out readonly -->
                     <group string="Giờ yêu cầu sửa" invisible="excuse_type != 'late'">
                         <group>
-                            <field name="requested_checkin"/>
+                            <field name="requested_checkin" readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)"/>
                             <field name="requested_checkout" readonly="1"/>
                         </group>
                     </group>
@@ -74,7 +72,7 @@
                     <group string="Giờ yêu cầu sửa" invisible="excuse_type != 'early'">
                         <group>
                             <field name="requested_checkin" readonly="1"/>
-                            <field name="requested_checkout"/>
+                            <field name="requested_checkout" readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)"/>
                         </group>
                     </group>
 
@@ -82,29 +80,29 @@
                     <group string="Giờ yêu cầu sửa" invisible="excuse_type != 'missing_checkout'">
                         <group>
                             <field name="requested_checkin" readonly="1"/>
-                            <field name="requested_checkout"/>
+                            <field name="requested_checkout" readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)"/>
                         </group>
                     </group>
 
                     <!-- Reason and Evidence -->
                     <separator string="Chi tiết yêu cầu"/>
                     <group>
-                        <field name="reason" colspan="2"/>
+                        <field name="reason" colspan="2" readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)"/>
                     </group>
 
                     <!-- Approval Info -->
-                    <group string="Thông tin phê duyệt" invisible="state == 'pending'">
+                    <group string="Thông tin phê duyệt" invisible="state not in ('approved', 'rejected')">
                         <group>
                             <field name="approver_id" readonly="1"/>
                             <field name="approval_date" readonly="1"/>
                         </group>
                         <group>
-                            <field name="rejection_reason" invisible="state != 'rejected'" colspan="2"/>
+                            <field name="rejection_reason" invisible="state != 'rejected'" colspan="2" readonly="1"/>
                         </group>
                     </group>
 
                     <!-- Notes -->
-                    <field name="notes" colspan="2"/>
+                    <field name="notes" colspan="2" readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)"/>
                 </sheet>
             </form>
         </field>
