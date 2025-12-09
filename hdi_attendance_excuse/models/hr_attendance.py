@@ -52,8 +52,8 @@ class HRAttendance(models.Model):
                     record.requires_excuse = False
                     continue
 
-            # Check if there are any pending or awaiting excuses
-            if any(e.state in ['pending', 'submitted'] for e in record.excuse_ids):
+            # Check if there are any submitted or awaiting excuses
+            if any(e.state in ['submitted'] for e in record.excuse_ids):
                 requires = True
 
             if record.check_in:

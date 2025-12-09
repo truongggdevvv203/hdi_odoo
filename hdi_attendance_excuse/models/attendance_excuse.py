@@ -150,7 +150,6 @@ class AttendanceExcuse(models.Model):
     state = fields.Selection(
         [
             ('draft', 'Nháp'),
-            ('pending', 'Chờ xử lý'),
             ('submitted', 'Đã gửi'),
             ('approved', 'Đã phê duyệt'),
             ('rejected', 'Bị từ chối'),
@@ -346,7 +345,7 @@ class AttendanceExcuse(models.Model):
                     'date': target_date,
                     'attendance_id': att.id,
                     'late_minutes': late_minutes,
-                    'state': 'pending',
+                    'state': 'draft',
                     'notes': f'Tự động phát hiện: Đi muộn {late_minutes} phút',
                 })
 
@@ -384,7 +383,7 @@ class AttendanceExcuse(models.Model):
                     'date': target_date,
                     'attendance_id': att.id,
                     'early_minutes': early_minutes,
-                    'state': 'pending',
+                    'state': 'draft',
                     'notes': f'Tự động phát hiện: Về sớm {early_minutes} phút',
                 })
 
@@ -410,14 +409,14 @@ class AttendanceExcuse(models.Model):
                     'employee_id': att.employee_id.id,
                     'date': previous_date,
                     'attendance_id': att.id,
-                    'state': 'pending',
+                    'state': 'draft',
                     'notes': 'Tự động phát hiện: Quên check-out',
                 })
 
     def action_submit(self):
 
         for record in self:
-            if record.state not in ['draft', 'pending']:
+            if record.state != 'draft':
                 continue
 
             if record.employee_id and record.date and record.excuse_type:
@@ -465,7 +464,7 @@ class AttendanceExcuse(models.Model):
         submitted_count = self.search_count([
             ('employee_id', '=', employee.id),
             ('excuse_type', '=', excuse_type),
-            ('state', 'in', ['submitted', 'pending']),
+            ('state', 'in', ['submitted']),
             ('date', '>=', month_start),
             ('date', '<=', month_end)
         ])
