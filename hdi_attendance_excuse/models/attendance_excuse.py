@@ -49,7 +49,6 @@ class AttendanceExcuse(models.Model):
   excuse_type = fields.Selection([
     ('late', 'Đi muộn'),
     ('early', 'Về sớm'),
-    ('missing_checkin', 'Quên check-in'),
     ('missing_checkout', 'Quên check-out'),
   ], string="Loại giải trình", compute='_compute_excuse_type', store=True,
       tracking=True)
@@ -218,15 +217,6 @@ class AttendanceExcuse(models.Model):
     """Tự động xác định loại giải trình dựa trên thời gian gốc"""
     for record in self:
       excuse_type = 'late'  # Default fallback
-
-      if not record.attendance_id:
-        record.excuse_type = 'missing_checkin'  # Default for no attendance
-        continue
-
-      # Nếu không có check-in
-      if not record.original_checkin:
-        record.excuse_type = 'missing_checkin'
-        continue
 
       # Nếu không có check-out
       if not record.original_checkout:
