@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Extend HR Attendance List View with Excuse Info -->
-    <record id="view_hr_attendance_list_inherit_excuse" model="ir.ui.view">
-        <field name="name">hr.attendance.list.inherit.excuse</field>
-        <field name="model">hr.attendance</field>
-        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='check_out']" position="after">
-                <field name="requires_excuse" optional="show"/>
-                <field name="is_excused" optional="show"/>
-                <field name="has_pending_excuse" optional="show"/>
-            </xpath>
-        </field>
-    </record>
+<!--    &lt;!&ndash; Extend HR Attendance List View with Excuse Info &ndash;&gt;-->
+<!--    <record id="view_hr_attendance_list_inherit_excuse" model="ir.ui.view">-->
+<!--        <field name="name">hr.attendance.list.inherit.excuse</field>-->
+<!--        <field name="model">hr.attendance</field>-->
+<!--        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <xpath expr="//field[@name='check_out']" position="after">-->
+<!--                <field name="requires_excuse" optional="show"/>-->
+<!--                <field name="is_excused" optional="show"/>-->
+<!--                <field name="has_pending_excuse" optional="show"/>-->
+<!--            </xpath>-->
+<!--        </field>-->
+<!--    </record>-->
 
     <!-- Extend HR Attendance Form View with Excuse Info -->
     <record id="view_hr_attendance_form_inherit_excuse" model="ir.ui.view">
