@@ -44,6 +44,14 @@ class HRAttendance(models.Model):
         for record in self:
             requires = False
 
+            # Bỏ qua bản ghi của ngày hôm nay
+            if record.check_in:
+                check_in_date = fields.Datetime.context_timestamp(record, record.check_in).date()
+                today = fields.Date.context_today(record)
+                if check_in_date == today:
+                    record.requires_excuse = False
+                    continue
+
             # Check if there are any pending or awaiting excuses
             if any(e.state in ['pending', 'submitted'] for e in record.excuse_ids):
                 requires = True
