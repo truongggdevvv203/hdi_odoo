@@ -163,8 +163,8 @@ class AttendanceExcuse(models.Model):
     approver_id = fields.Many2one(
         'res.users',
         string='Người phê duyệt',
-        readonly=True,
-        tracking=True
+        compute='_compute_approver_id',
+        store=False
     )
 
     approval_date = fields.Datetime(
@@ -206,6 +206,18 @@ class AttendanceExcuse(models.Model):
                 record.is_approver = True
             else:
                 record.is_approver = False
+
+    @api.depends('employee_id')
+    def _compute_approver_id(self):
+        """Lấy attendance_manager_id từ nhân viên"""
+        for record in self:
+            if record.employee_id and record.employee_id.attendance_manager_id:
+                record.approver_id = record.employee_id.attendance_manager_id.user_id
+            elif record.employee_id and record.employee_id.parent_id and record.employee_id.parent_id.user_id:
+                # Fallback: sử dụng manager của nhân viên
+                record.approver_id = record.employee_id.parent_id.user_id
+            else:
+                record.approver_id = False
 
     @api.depends('approver_id', 'state')
     def _compute_can_approve(self):
@@ -436,17 +448,6 @@ class AttendanceExcuse(models.Model):
             if record.employee_id and record.date and record.excuse_type:
                 self._check_monthly_limit(record.employee_id, record.excuse_type,
                                           record.date)
-
-            if not record.approver_id and record.employee_id:
-                approver_config = self.env['attendance.excuse.approver.config'].search([
-                    ('department_id', '=', record.employee_id.department_id.id),
-                    ('active', '=', True)
-                ], limit=1)
-
-                if approver_config:
-                    record.approver_id = approver_config.approver_id.id
-                elif record.employee_id.parent_id and record.employee_id.parent_id.user_id:
-                    record.approver_id = record.employee_id.parent_id.user_id.id
 
             record.state = 'submitted'
             record.message_post(body="Yêu cầu giải trình đã được gửi")
