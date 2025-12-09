@@ -20,7 +20,9 @@ class AttendanceExcuse(models.Model):
     employee_id = fields.Many2one(
         'hr.employee',
         string='Nhân viên',
-        required=True,
+        compute='_compute_employee_id',
+        store=True,
+        readonly=False,
         ondelete='cascade',
         index=True,
         tracking=True
@@ -28,21 +30,31 @@ class AttendanceExcuse(models.Model):
 
     date = fields.Date(
         string='Ngày',
-        required=True,
+        compute='_compute_date',
+        store=True,
+        readonly=False,
         index=True,
         tracking=True
     )
 
-    @api.onchange('attendance_id')
-    def _onchange_attendance_id(self):
-        """Tự động điền employee_id và date từ attendance_id"""
-        if self.attendance_id:
-            self.employee_id = self.attendance_id.employee_id.id
-            # Lấy ngày từ check_in
-            if self.attendance_id.check_in:
-                check_in_date = fields.Datetime.context_timestamp(self,
-                                                                  self.attendance_id.check_in).date()
-                self.date = check_in_date
+    @api.depends('attendance_id')
+    def _compute_employee_id(self):
+        """Tự động lấy employee từ attendance_id"""
+        for record in self:
+            if record.attendance_id:
+                record.employee_id = record.attendance_id.employee_id
+            # Nếu không có attendance_id, giữ nguyên giá trị hiện tại
+
+    @api.depends('attendance_id')
+    def _compute_date(self):
+        """Tự động lấy ngày từ attendance_id"""
+        for record in self:
+            if record.attendance_id and record.attendance_id.check_in:
+                check_in_date = fields.Datetime.context_timestamp(record, record.attendance_id.check_in).date()
+                record.date = check_in_date
+            # Nếu không có attendance_id, giữ nguyên giá trị hiện tại
+
+
 
     @api.onchange('excuse_type')
     def _onchange_excuse_type(self):
