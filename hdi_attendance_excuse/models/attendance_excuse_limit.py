@@ -19,11 +19,6 @@ class AttendanceExcuseLimit(models.Model):
         help='Giới hạn số lần nhân viên được phép giải trình loại này trong một tháng'
     )
 
-    description = fields.Text(
-        string='Ghi chú',
-        help='Mô tả chi tiết về giới hạn này'
-    )
-
     active = fields.Boolean(
         string='Kích hoạt',
         default=True
