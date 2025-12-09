@@ -44,6 +44,30 @@ class AttendanceExcuse(models.Model):
                                                                   self.attendance_id.check_in).date()
                 self.date = check_in_date
 
+    @api.onchange('excuse_type')
+    def _onchange_excuse_type(self):
+        """Tự động điền requested_checkin/checkout dựa trên excuse_type"""
+        if not self.attendance_id:
+            return
+
+        # Reset các trường request
+        self.requested_checkin = False
+        self.requested_checkout = False
+
+        # Nếu late: requested_checkout = original_checkout (nhân viên chỉ cần sửa check-in)
+        if self.excuse_type == 'late':
+            self.requested_checkin = self.original_checkin
+            self.requested_checkout = self.original_checkout
+
+        # Nếu early: requested_checkin = original_checkin (nhân viên chỉ cần sửa check-out)
+        elif self.excuse_type == 'early':
+            self.requested_checkin = self.original_checkin
+            self.requested_checkout = self.original_checkout
+
+        # Nếu missing_checkout: requested_checkin = original_checkin (nhân viên cần điền check-out)
+        elif self.excuse_type == 'missing_checkout':
+            self.requested_checkin = self.original_checkin
+
     excuse_type = fields.Selection([
         ('late', 'Đi muộn'),
         ('early', 'Về sớm'),

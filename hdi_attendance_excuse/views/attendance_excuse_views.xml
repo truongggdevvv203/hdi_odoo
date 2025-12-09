@@ -65,10 +65,27 @@
                         </group>
                     </group>
 
-                    <!-- Requested Corrections -->
-                    <group>
+                    <!-- Requested Corrections - hiển thị dựa trên loại giải trình -->
+                    <!-- Nếu late: chỉnh sửa check-in, check-out readonly -->
+                    <group string="Giờ yêu cầu sửa" invisible="excuse_type != 'late'">
                         <group>
                             <field name="requested_checkin"/>
+                            <field name="requested_checkout" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Nếu early: check-in readonly, chỉnh sửa check-out -->
+                    <group string="Giờ yêu cầu sửa" invisible="excuse_type != 'early'">
+                        <group>
+                            <field name="requested_checkin" readonly="1"/>
+                            <field name="requested_checkout"/>
+                        </group>
+                    </group>
+
+                    <!-- Nếu missing_checkout: check-in readonly, chỉnh sửa check-out -->
+                    <group string="Giờ yêu cầu sửa" invisible="excuse_type != 'missing_checkout'">
+                        <group>
+                            <field name="requested_checkin" readonly="1"/>
                             <field name="requested_checkout"/>
                         </group>
                     </group>
