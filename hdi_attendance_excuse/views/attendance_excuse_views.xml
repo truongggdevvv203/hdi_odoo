@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ==================== Attendance Excuse Views ==================== -->
     <!-- List View -->
     <record id="view_attendance_excuse_list" model="ir.ui.view">
         <field name="name">Giải trình chấm công - List</field>
@@ -24,7 +23,7 @@
         <field name="name">Giải trình chấm công - Form</field>
         <field name="model">attendance.excuse</field>
         <field name="arch" type="xml">
-            <form>
+            <form readonly="state != 'draft'">
                 <header>
                     <button name="action_submit" string="Gửi yêu cầu" type="object" class="btn-primary"
                             invisible="state != 'draft'"/>
