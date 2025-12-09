@@ -20,4 +20,11 @@
         parent="menu_attendance_excuse_root"
         action="action_attendance_excuse_approver_config"
         sequence="30"/>
+
+    <menuitem
+        id="menu_hr_attendance_calendar"
+        name="Lịch Chấm Công"
+        parent="hr_attendance.menu_hr_attendance_root"
+        action="action_hr_attendance_calendar"
+        sequence="10"/>
 </odoo>

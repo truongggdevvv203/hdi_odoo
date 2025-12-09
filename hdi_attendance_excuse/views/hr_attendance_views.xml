@@ -43,4 +43,36 @@
       </xpath>
     </field>
   </record>
+
+  <!-- Calendar View for HR Attendance -->
+  <record id="view_hr_attendance_calendar" model="ir.ui.view">
+    <field name="name">hr.attendance.calendar</field>
+    <field name="model">hr.attendance</field>
+    <field name="arch" type="xml">
+      <calendar string="Chấm công" date_start="check_in" date_stop="check_out" color="requires_excuse">
+        <field name="employee_id"/>
+        <field name="check_in"/>
+        <field name="check_out"/>
+        <field name="worked_hours"/>
+        <field name="requires_excuse"/>
+        <field name="is_excused"/>
+      </calendar>
+    </field>
+  </record>
+
+  <!-- Action for Calendar View -->
+  <record id="action_hr_attendance_calendar" model="ir.actions.act_window">
+    <field name="name">Lịch Chấm Công</field>
+    <field name="res_model">hr.attendance</field>
+    <field name="view_mode">calendar,tree,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Không có bản ghi chấm công. Hãy tạo một bản ghi mới!
+      </p>
+      <p>
+        Xem dữ liệu chấm công dưới dạng lịch. Các nhân viên được hiển thị theo ngày check-in.
+        Màu sắc cho biết liệu bản ghi có cần giải trình hay không.
+      </p>
+    </field>
+  </record>
 </odoo>
