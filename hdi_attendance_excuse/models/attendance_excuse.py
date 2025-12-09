@@ -36,6 +36,16 @@ class AttendanceExcuse(models.Model):
       tracking=True
   )
 
+  @api.onchange('attendance_id')
+  def _onchange_attendance_id(self):
+    """Tự động điền employee_id và date từ attendance_id"""
+    if self.attendance_id:
+      self.employee_id = self.attendance_id.employee_id.id
+      # Lấy ngày từ check_in
+      if self.attendance_id.check_in:
+        check_in_date = fields.Datetime.context_timestamp(self, self.attendance_id.check_in).date()
+        self.date = check_in_date
+
   excuse_type = fields.Selection([
     ('late', 'Đi muộn'),
     ('early', 'Về sớm'),

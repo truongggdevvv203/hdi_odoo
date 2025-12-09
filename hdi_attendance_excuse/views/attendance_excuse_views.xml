@@ -40,12 +40,12 @@
                     </h2>
                     <group>
                         <group>
-                            <field name="employee_id"/>
-                            <field name="date"/>
+                            <field name="attendance_id" required="1"/>
+                            <field name="employee_id" readonly="1"/>
+                            <field name="date" readonly="1"/>
                             <field name="excuse_type"/>
                         </group>
                         <group>
-                            <field name="attendance_id"/>
                             <field name="late_minutes" invisible="late_minutes == 0"/>
                             <field name="early_minutes" invisible="early_minutes == 0"/>
                         </group>
