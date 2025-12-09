@@ -23,7 +23,7 @@
         <field name="name">Giải trình chấm công - Form</field>
         <field name="model">attendance.excuse</field>
         <field name="arch" type="xml">
-            <form readonly="state != 'draft'">
+            <form readonly="state in ('approved', 'rejected') or (state == 'submitted' and not is_approver)">
                 <header>
                     <button name="action_submit" string="Gửi yêu cầu" type="object" class="btn-primary"
                             invisible="state != 'draft'"/>
@@ -43,6 +43,7 @@
                             <field name="employee_id" readonly="1"/>
                             <field name="date" readonly="1"/>
                             <field name="excuse_type"/>
+                            <field name="is_approver" invisible="1"/>
                         </group>
                         <group>
                             <field name="late_minutes" invisible="late_minutes == 0"/>

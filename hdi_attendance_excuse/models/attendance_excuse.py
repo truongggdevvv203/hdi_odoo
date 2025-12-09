@@ -193,6 +193,20 @@ class AttendanceExcuse(models.Model):
         store=False
     )
 
+    is_approver = fields.Boolean(
+        string='Là người phê duyệt',
+        compute='_compute_is_approver',
+        store=False
+    )
+
+    @api.depends('approver_id')
+    def _compute_is_approver(self):
+        for record in self:
+            if record.approver_id and record.approver_id.id == self.env.user.id:
+                record.is_approver = True
+            else:
+                record.is_approver = False
+
     @api.depends('approver_id', 'state')
     def _compute_can_approve(self):
         for record in self:
