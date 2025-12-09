@@ -209,15 +209,18 @@ class AttendanceExcuse(models.Model):
 
     @api.depends('employee_id')
     def _compute_approver_id(self):
-        """Lấy attendance_manager_id từ nhân viên"""
         for record in self:
-            if record.employee_id and record.employee_id.attendance_manager_id:
-                record.approver_id = record.employee_id.attendance_manager_id.user_id
-            elif record.employee_id and record.employee_id.parent_id and record.employee_id.parent_id.user_id:
-                # Fallback: sử dụng manager của nhân viên
-                record.approver_id = record.employee_id.parent_id.user_id
-            else:
-                record.approver_id = False
+            emp = record.employee_id
+            approver = False
+
+            if emp:
+                if emp.attendance_manager_id:
+                    approver = emp.attendance_manager_id
+
+                elif emp.parent_id and emp.parent_id.user_id:
+                    approver = emp.parent_id.user_id
+
+            record.approver_id = approver
 
     @api.depends('approver_id', 'state')
     def _compute_can_approve(self):
