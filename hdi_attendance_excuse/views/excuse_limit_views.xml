@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ==================== Giới hạn giải trình chấm công ==================== -->
+    
+    <!-- List View -->
+    <record id="view_attendance_excuse_limit_list" model="ir.ui.view">
+        <field name="name">Giới hạn Giải Trình - List</field>
+        <field name="model">attendance.excuse.limit</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="excuse_type"/>
+                <field name="monthly_limit"/>
+                <field name="active"/>
+                <field name="description" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_attendance_excuse_limit_form" model="ir.ui.view">
+        <field name="name">Giới hạn Giải Trình - Form</field>
+        <field name="model">attendance.excuse.limit</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="excuse_type"/>
+                            <field name="monthly_limit"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <separator string="Ghi chú"/>
+                    <field name="description"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_attendance_excuse_limit" model="ir.actions.act_window">
+        <field name="name">Giới hạn Giải Trình</field>
+        <field name="res_model">attendance.excuse.limit</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có cấu hình giới hạn. Hãy tạo một cấu hình mới!
+            </p>
+            <p>
+                Cấu hình này xác định số lần tối đa nhân viên được phép giải trình mỗi loại trong một tháng.
+                Khi vượt quá giới hạn, hệ thống sẽ cảnh báo và không cho phép gửi yêu cầu.
+            </p>
+        </field>
+    </record>
+</odoo>

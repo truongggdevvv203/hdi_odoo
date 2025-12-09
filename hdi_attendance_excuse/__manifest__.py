@@ -20,6 +20,7 @@
     'views/attendance_excuse_views.xml',
     'views/hr_attendance_views.xml',
     'views/approver_config_views.xml',
+    'views/excuse_limit_views.xml',
 
     # Menu
     'views/menu.xml',

@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
 import pytz
 
@@ -217,7 +218,6 @@ class AttendanceExcuse(models.Model):
     """Tự động xác định loại giải trình dựa trên thời gian gốc"""
     for record in self:
       excuse_type = 'late'  # Default fallback
-
       # Nếu không có check-out
       if not record.original_checkout:
         record.excuse_type = 'missing_checkout'
@@ -416,6 +416,10 @@ class AttendanceExcuse(models.Model):
       if record.state not in ['draft', 'pending']:
         continue
 
+      # Check monthly limit for this excuse type
+      if record.employee_id and record.date and record.excuse_type:
+        self._check_monthly_limit(record.employee_id, record.excuse_type, record.date)
+
       # If no approver set, try to assign based on config or employee's manager
       if not record.approver_id and record.employee_id:
         # Priority 1: Lookup from attendance.excuse.approver.config
@@ -432,6 +436,53 @@ class AttendanceExcuse(models.Model):
 
       record.state = 'submitted'
       record.message_post(body="Yêu cầu giải trình đã được gửi")
+
+  def _check_monthly_limit(self, employee, excuse_type, date):
+    """Kiểm tra giới hạn giải trình trong tháng"""
+    # Lấy cấu hình giới hạn
+    limit_config = self.env['attendance.excuse.limit'].search([
+      ('excuse_type', '=', excuse_type),
+      ('active', '=', True)
+    ], limit=1)
+
+    if not limit_config:
+      # Nếu không có cấu hình, cho phép mặc định
+      return
+
+    # Lấy tháng/năm từ date
+    month_start = date.replace(day=1)
+    if date.month == 12:
+      month_end = month_start.replace(year=date.year + 1, month=1) - timedelta(days=1)
+    else:
+      month_end = month_start.replace(month=date.month + 1) - timedelta(days=1)
+
+    # Đếm số giải trình đã được phê duyệt trong tháng
+    approved_count = self.search_count([
+      ('employee_id', '=', employee.id),
+      ('excuse_type', '=', excuse_type),
+      ('state', '=', 'approved'),
+      ('date', '>=', month_start),
+      ('date', '<=', month_end)
+    ])
+
+    # Đếm giải trình đã được submit trong tháng (chưa phê duyệt)
+    submitted_count = self.search_count([
+      ('employee_id', '=', employee.id),
+      ('excuse_type', '=', excuse_type),
+      ('state', 'in', ['submitted', 'pending']),
+      ('date', '>=', month_start),
+      ('date', '<=', month_end)
+    ])
+
+    total_count = approved_count + submitted_count
+
+    if total_count >= limit_config.monthly_limit:
+      excuse_label = dict(self._fields['excuse_type'].selection).get(excuse_type, excuse_type)
+      raise ValidationError(
+        f"Nhân viên {employee.name} đã vượt quá giới hạn giải trình \"{excuse_label}\" "
+        f"({limit_config.monthly_limit} lần/tháng) trong tháng {date.month}/{date.year}. "
+        f"Hiện tại: {total_count}/{limit_config.monthly_limit}"
+      )
 
   def action_approve(self):
     """Phê duyệt giải trình"""

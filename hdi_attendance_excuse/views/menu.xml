@@ -26,4 +26,11 @@
     parent="menu_attendance_excuse_root"
     action="action_attendance_excuse_approver_config"
     sequence="30"/>
+
+  <menuitem
+    id="menu_attendance_excuse_limit"
+    name="Giới hạn Giải Trình"
+    parent="menu_attendance_excuse_root"
+    action="action_attendance_excuse_limit"
+    sequence="40"/>
 </odoo>
