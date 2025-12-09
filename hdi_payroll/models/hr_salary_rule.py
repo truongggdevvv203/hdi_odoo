@@ -51,20 +51,18 @@ class HRSalaryRule(models.Model):
 
     active = fields.Boolean(string='Hoạt động', default=True)
 
-    # ⭐ Field mới để cấu hình số ngày công chuẩn của rule
     working_days_base = fields.Float(
         string="Ngày công chuẩn",
-        default=26.0,
+        default=22.0,
         help="Số ngày công dùng để chia khi tính lương/phụ cấp"
     )
 
-    # ⭐ Công thức tính tự động lấy working_days_base
     def compute(self, payslip, localdict):
         self.ensure_one()
         result = 0
 
         worked_days = localdict.get('worked_days', 0)
-        base = self.working_days_base or 26.0  # fallback
+        base = self.working_days_base or 22.0  # fallback
 
         if self.category == 'basic':
             base_salary = localdict.get('base_salary', 0)

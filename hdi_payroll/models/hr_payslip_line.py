@@ -2,10 +2,6 @@ from odoo import models, fields
 
 
 class HRPayslipLine(models.Model):
-    """
-    Dòng chi tiết trong phiếu lương
-    Mỗi line đại diện cho kết quả tính toán của một salary rule
-    """
     _name = 'hr.payslip.line'
     _description = 'Payslip Line (Dòng phiếu lương)'
     _order = 'payslip_id, sequence'
