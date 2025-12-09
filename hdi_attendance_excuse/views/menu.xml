@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <menuitem
-    id="menu_hr_attendance_calendar"
-    name="Lịch Chấm Công"
-    parent="hr_attendance.menu_hr_attendance_root"
-    action="action_hr_attendance_calendar"
-    sequence="7"/>
-  <!-- Main menu dưới HR Attendance -->
-  <menuitem
-    id="menu_attendance_excuse_root"
-    name="Giải trình chấm công"
-    parent="hr_attendance.menu_hr_attendance_root"
-    sequence="8"/>
+    <menuitem
+            id="menu_hr_attendance_calendar"
+            name="Lịch Chấm Công"
+            parent="hr_attendance.menu_hr_attendance_root"
+            action="action_hr_attendance_calendar"
+            sequence="7"/>
+    <!-- Main menu dưới HR Attendance -->
+    <menuitem
+            id="menu_attendance_excuse_root"
+            name="Giải trình chấm công"
+            parent="hr_attendance.menu_hr_attendance_root"
+            sequence="8"/>
 
-  <menuitem
-    id="menu_attendance_excuse_request"
-    name="Giải trình chấm công"
-    parent="menu_attendance_excuse_root"
-    action="action_attendance_excuse"
-    sequence="20"/>
+    <menuitem
+            id="menu_attendance_excuse_request"
+            name="Giải trình chấm công"
+            parent="menu_attendance_excuse_root"
+            action="action_attendance_excuse"
+            sequence="20"/>
 
-  <menuitem
-    id="menu_attendance_excuse_config"
-    name="Cấu hình Người Phê Duyệt"
-    parent="menu_attendance_excuse_root"
-    action="action_attendance_excuse_approver_config"
-    sequence="30"/>
+    <menuitem
+            id="menu_attendance_excuse_config"
+            name="Cấu hình Người Phê Duyệt"
+            parent="menu_attendance_excuse_root"
+            action="action_attendance_excuse_approver_config"
+            sequence="30"/>
 
-  <menuitem
-    id="menu_attendance_excuse_limit"
-    name="Giới hạn Giải Trình"
-    parent="menu_attendance_excuse_root"
-    action="action_attendance_excuse_limit"
-    sequence="40"/>
+    <menuitem
+            id="menu_attendance_excuse_limit"
+            name="Giới hạn Giải Trình"
+            parent="menu_attendance_excuse_root"
+            action="action_attendance_excuse_limit"
+            sequence="40"/>
 </odoo>

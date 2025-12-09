@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ==================== Cấu hình Người Phê Duyệt Giải Trình Chấm Công ==================== -->
-    
     <!-- List View -->
     <record id="view_attendance_excuse_approver_config_list" model="ir.ui.view">
         <field name="name">Cấu hình Người Phê Duyệt - List</field>
@@ -11,7 +9,6 @@
                 <field name="department_id"/>
                 <field name="approver_id"/>
                 <field name="active"/>
-                <field name="description" optional="show"/>
             </list>
         </field>
     </record>
@@ -27,13 +24,9 @@
                         <group>
                             <field name="department_id"/>
                             <field name="approver_id"/>
-                        </group>
-                        <group>
                             <field name="active"/>
                         </group>
                     </group>
-                    <separator string="Ghi chú"/>
-                    <field name="description"/>
                 </sheet>
             </form>
         </field>

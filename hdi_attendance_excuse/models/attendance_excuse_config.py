@@ -22,11 +22,6 @@ class AttendanceExcuseApproverConfig(models.Model):
         help='Người dùng sẽ phê duyệt giải trình từ phòng ban này'
     )
 
-    description = fields.Text(
-        string='Ghi chú',
-        help='Ghi chú thêm về cấu hình này'
-    )
-
     active = fields.Boolean(
         string='Kích hoạt',
         default=True

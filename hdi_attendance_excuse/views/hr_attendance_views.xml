@@ -1,78 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <!-- Extend HR Attendance List View with Excuse Info -->
-  <record id="view_hr_attendance_list_inherit_excuse" model="ir.ui.view">
-    <field name="name">hr.attendance.list.inherit.excuse</field>
-    <field name="model">hr.attendance</field>
-    <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
-    <field name="arch" type="xml">
-      <xpath expr="//field[@name='check_out']" position="after">
-        <field name="requires_excuse" optional="show"/>
-        <field name="is_excused" optional="show"/>
-        <field name="has_pending_excuse" optional="show"/>
-      </xpath>
-    </field>
-  </record>
+    <!-- Extend HR Attendance List View with Excuse Info -->
+    <record id="view_hr_attendance_list_inherit_excuse" model="ir.ui.view">
+        <field name="name">hr.attendance.list.inherit.excuse</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='check_out']" position="after">
+                <field name="requires_excuse" optional="show"/>
+                <field name="is_excused" optional="show"/>
+                <field name="has_pending_excuse" optional="show"/>
+            </xpath>
+        </field>
+    </record>
 
-  <!-- Extend HR Attendance Form View with Excuse Info -->
-  <record id="view_hr_attendance_form_inherit_excuse" model="ir.ui.view">
-    <field name="name">hr.attendance.form.inherit.excuse</field>
-    <field name="model">hr.attendance</field>
-    <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
-    <field name="arch" type="xml">
-      <!-- Add excuse fields after worked_hours group -->
-      <xpath expr="//field[@name='worked_hours']" position="after">
-        <field name="requires_excuse" invisible="1"/>
-        <field name="is_excused" invisible="1"/>
-        <field name="has_pending_excuse" invisible="1"/>
-      </xpath>
+    <!-- Extend HR Attendance Form View with Excuse Info -->
+    <record id="view_hr_attendance_form_inherit_excuse" model="ir.ui.view">
+        <field name="name">hr.attendance.form.inherit.excuse</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add excuse fields after worked_hours group -->
+            <xpath expr="//field[@name='worked_hours']" position="after">
+                <field name="requires_excuse" invisible="1"/>
+                <field name="is_excused" invisible="1"/>
+                <field name="has_pending_excuse" invisible="1"/>
+            </xpath>
 
-      <!-- Add excuse tab in the form only when needed -->
-      <xpath expr="//sheet" position="inside">
-        <notebook>
-          <page string="Giải trình chấm công" name="excuse_tab" invisible="not requires_excuse">
-            <field name="excuse_ids">
-              <list>
-                <field name="date"/>
-                <field name="excuse_type"/>
-                <field name="state"/>
-              </list>
-            </field>
-          </page>
-        </notebook>
-      </xpath>
-    </field>
-  </record>
+            <!-- Add excuse tab in the form only when needed -->
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page string="Giải trình chấm công" name="excuse_tab" invisible="not requires_excuse">
+                        <field name="excuse_ids">
+                            <list>
+                                <field name="date"/>
+                                <field name="excuse_type"/>
+                                <field name="state"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
 
-  <!-- Calendar View for HR Attendance -->
-  <record id="view_hr_attendance_calendar" model="ir.ui.view">
-    <field name="name">hr.attendance.calendar</field>
-    <field name="model">hr.attendance</field>
-    <field name="arch" type="xml">
-      <calendar string="Chấm công" date_start="check_in" date_stop="check_out" color="requires_excuse">
-        <field name="employee_id"/>
-        <field name="check_in"/>
-        <field name="check_out"/>
-        <field name="worked_hours"/>
-        <field name="requires_excuse"/>
-        <field name="is_excused"/>
-      </calendar>
-    </field>
-  </record>
+    <!-- Calendar View for HR Attendance -->
+    <record id="view_hr_attendance_calendar" model="ir.ui.view">
+        <field name="name">hr.attendance.calendar</field>
+        <field name="model">hr.attendance</field>
+        <field name="arch" type="xml">
+            <calendar string="Chấm công" date_start="check_in" date_stop="check_out" color="requires_excuse">
+                <field name="employee_id"/>
+                <field name="check_in"/>
+                <field name="check_out"/>
+                <field name="worked_hours"/>
+                <field name="requires_excuse"/>
+                <field name="is_excused"/>
+            </calendar>
+        </field>
+    </record>
 
-  <!-- Action for Calendar View -->
-  <record id="action_hr_attendance_calendar" model="ir.actions.act_window">
-    <field name="name">Lịch Chấm Công</field>
-    <field name="res_model">hr.attendance</field>
-    <field name="view_mode">calendar,list,form</field>
-    <field name="help" type="html">
-      <p class="o_view_nocontent_smiling_face">
-        Không có bản ghi chấm công. Hãy tạo một bản ghi mới!
-      </p>
-      <p>
-        Xem dữ liệu chấm công dưới dạng lịch. Các nhân viên được hiển thị theo ngày check-in.
-        Màu sắc cho biết liệu bản ghi có cần giải trình hay không.
-      </p>
-    </field>
-  </record>
+    <!-- Action for Calendar View -->
+    <record id="action_hr_attendance_calendar" model="ir.actions.act_window">
+        <field name="name">Lịch Chấm Công</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">calendar,list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Không có bản ghi chấm công. Hãy tạo một bản ghi mới!
+            </p>
+            <p>
+                Xem dữ liệu chấm công dưới dạng lịch. Các nhân viên được hiển thị theo ngày check-in.
+                Màu sắc cho biết liệu bản ghi có cần giải trình hay không.
+            </p>
+        </field>
+    </record>
 </odoo>

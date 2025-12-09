@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    
+
     <!-- List View -->
     <record id="view_attendance_excuse_limit_list" model="ir.ui.view">
         <field name="name">Giới hạn Giải Trình - List</field>
@@ -25,8 +25,6 @@
                         <group>
                             <field name="excuse_type"/>
                             <field name="monthly_limit"/>
-                        </group>
-                        <group>
                             <field name="active"/>
                         </group>
                     </group>
