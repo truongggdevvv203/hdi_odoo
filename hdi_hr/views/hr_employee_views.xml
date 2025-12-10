@@ -4,7 +4,7 @@
     <record id="view_employee_form_hdi_hr" model="ir.ui.view">
         <field name="name">HR Employee - HDI Extensions</field>
         <field name="model">hr.employee</field>
-        <field name="inherit_id">hr.view_employee_form</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
             <!-- Add tabs for additional information -->
             <xpath expr="//notebook" position="inside">

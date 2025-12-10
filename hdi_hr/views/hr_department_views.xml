@@ -4,17 +4,16 @@
     <record id="view_department_form_hdi_hr" model="ir.ui.view">
         <field name="name">HR Department - HDI Extensions</field>
         <field name="model">hr.department</field>
-        <field name="inherit_id">hr.view_department_form</field>
+         <field name="inherit_id" ref="hr.view_department_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <page string="Thông tin Mở rộng">
+            <xpath expr="//sheet" position="inside">
+                <separator string="Thông tin Mở rộng"/>
+                <group>
                     <group>
-                        <group>
-                            <field name="department_code"/>
-                            <field name="head_id"/>
-                        </group>
+                        <field name="department_code"/>
+                        <field name="head_id"/>
                     </group>
-                </page>
+                </group>
             </xpath>
         </field>
     </record>
