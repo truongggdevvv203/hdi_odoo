@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from datetime import date
 
 
 class HrEmployee(models.Model):
@@ -39,4 +40,3 @@ class HrEmployee(models.Model):
                 rec.seniority_text = f"{years} năm {months} tháng"
             else:
                 rec.seniority_text = "0 năm 0 tháng"
-
