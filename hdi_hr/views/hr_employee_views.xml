@@ -8,7 +8,7 @@
         <field name="arch" type="xml">
             <!-- Chèn vào ngay trong tab Work Information -->
             <xpath expr="//page[@name='public']/div/div" position="inside">
-                <group string="Thông tin Công việc">
+                <group>
                     <group>
                         <field name="start_work_date"/>
                         <field name="seniority_text" readonly="1"/>
