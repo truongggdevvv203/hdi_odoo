@@ -3,21 +3,7 @@
     <!-- Main menu for HR Extensions -->
     <menuitem
             id="menu_hdi_hr_root"
-            name="Quản lý Nhân sự HDI"
+            name="Quản lý Nhân sự"
             parent="hr.menu_hr_root"
             sequence="5"/>
-
-    <menuitem
-            id="menu_employee_allowance"
-            name="Trợ cấp Nhân viên"
-            parent="menu_hdi_hr_root"
-            action="action_hr_employee_allowance"
-            sequence="10"/>
-
-    <menuitem
-            id="menu_employee_certification"
-            name="Chứng chỉ/Bằng cấp"
-            parent="menu_hdi_hr_root"
-            action="action_hr_employee_certification"
-            sequence="20"/>
 </odoo>

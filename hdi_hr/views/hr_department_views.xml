@@ -12,13 +12,8 @@
                         <group>
                             <field name="department_code"/>
                             <field name="head_id"/>
-                            <field name="budget"/>
                         </group>
                     </group>
-                    <separator string="Mô tả"/>
-                    <field name="description" colspan="2"/>
-                    <separator string="Ghi chú"/>
-                    <field name="notes" colspan="2"/>
                 </page>
             </xpath>
         </field>

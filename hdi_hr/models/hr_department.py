@@ -11,22 +11,8 @@ class HrDepartment(models.Model):
         help='Mã định danh duy nhất cho phòng ban'
     )
 
-    budget = fields.Monetary(
-        string='Ngân sách',
-        currency_field='company_id.currency_id',
-        help='Ngân sách hàng năm của phòng ban'
-    )
-
     head_id = fields.Many2one(
         'hr.employee',
         string='Trưởng phòng',
         domain="[('company_id', '=', company_id)]"
-    )
-
-    description = fields.Text(
-        string='Mô tả'
-    )
-
-    notes = fields.Text(
-        string='Ghi chú'
     )
