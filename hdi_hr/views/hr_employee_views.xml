@@ -6,18 +6,14 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
-            <!-- Add tabs for additional information -->
-            <xpath expr="//notebook" position="inside">
-                <!-- Employment Information Tab -->
-                <page string="Thông tin Công việc">
+            <!-- Chèn vào ngay trong tab Work Information -->
+            <xpath expr="//page[@name='public']/div/div" position="inside">
+                <group string="Thông tin Công việc">
                     <group>
-                        <group>
-                            <field name="start_work_date"/>
-                            <field name="seniority_text" readonly="1"/>
-                        </group>
+                        <field name="start_work_date"/>
+                        <field name="seniority_text" readonly="1"/>
                     </group>
-                </page>
-
+                </group>
             </xpath>
         </field>
     </record>
