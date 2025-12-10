@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_employee_allowance_user,access_hr_employee_allowance_user,hdi_hr.model_hr_employee_allowance,hr.group_hr_user,1,1,1,0
+access_hr_employee_allowance_manager,access_hr_employee_allowance_manager,hdi_hr.model_hr_employee_allowance,hr.group_hr_manager,1,1,1,1
+access_hr_employee_certification_user,access_hr_employee_certification_user,hdi_hr.model_hr_employee_certification,hr.group_hr_user,1,1,1,0
+access_hr_employee_certification_manager,access_hr_employee_certification_manager,hdi_hr.model_hr_employee_certification,hr.group_hr_manager,1,1,1,1

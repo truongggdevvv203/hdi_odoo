@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Employee Form View Extensions -->
+    <record id="view_employee_form_hdi_hr" model="ir.ui.view">
+        <field name="name">HR Employee - HDI Extensions</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id">hr.view_employee_form</field>
+        <field name="arch" type="xml">
+            <!-- Add tabs for additional information -->
+            <xpath expr="//notebook" position="inside">
+                <!-- Personal Information Tab -->
+                <page string="Thông tin Cá nhân">
+                    <group>
+                        <group string="Giấy tờ tùy thân">
+                            <field name="id_number"/>
+                            <field name="id_issue_date"/>
+                            <field name="id_issue_place"/>
+                        </group>
+                        <group string="Thuế và Ngân hàng">
+                            <field name="tax_id"/>
+                            <field name="bank_account_number"/>
+                            <field name="bank_name"/>
+                        </group>
+                    </group>
+                </page>
+
+                <!-- Employment Information Tab -->
+                <page string="Thông tin Công việc">
+                    <group>
+                        <group>
+                            <field name="employment_date"/>
+                            <field name="contract_expiry_date"/>
+                            <field name="position_title"/>
+                            <field name="work_location"/>
+                        </group>
+                    </group>
+                </page>
+
+                <!-- Compensation Tab -->
+                <page string="Lương và Trợ cấp">
+                    <group>
+                        <group>
+                            <field name="basic_salary"/>
+                            <field name="total_allowance"/>
+                        </group>
+                    </group>
+                    <separator string="Chi tiết Trợ cấp"/>
+                    <field name="allowance_ids">
+                        <tree editable="bottom">
+                            <field name="allowance_type"/>
+                            <field name="description"/>
+                            <field name="amount"/>
+                            <field name="active"/>
+                        </tree>
+                    </field>
+                </page>
+
+                <!-- Certifications Tab -->
+                <page string="Chứng chỉ/Bằng cấp">
+                    <field name="certification_ids">
+                        <tree editable="bottom">
+                            <field name="certification_name"/>
+                            <field name="issuing_organization"/>
+                            <field name="issue_date"/>
+                            <field name="expiry_date"/>
+                            <field name="level"/>
+                        </tree>
+                    </field>
+                </page>
+
+                <!-- Skills Tab -->
+                <page string="Kỹ năng">
+                    <field name="skill_ids"/>
+                </page>
+
+                <!-- Notes Tab -->
+                <page string="Ghi chú">
+                    <field name="notes" colspan="2"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Employee Allowance Form -->
+    <record id="view_hr_employee_allowance_form" model="ir.ui.view">
+        <field name="name">Employee Allowance - Form</field>
+        <field name="model">hr.employee.allowance</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="allowance_type"/>
+                            <field name="description"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <field name="notes" colspan="2"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Employee Allowance List -->
+    <record id="view_hr_employee_allowance_list" model="ir.ui.view">
+        <field name="name">Employee Allowance - List</field>
+        <field name="model">hr.employee.allowance</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="employee_id"/>
+                <field name="allowance_type"/>
+                <field name="description"/>
+                <field name="amount"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Employee Allowance Action -->
+    <record id="action_hr_employee_allowance" model="ir.actions.act_window">
+        <field name="name">Trợ cấp Nhân viên</field>
+        <field name="res_model">hr.employee.allowance</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Employee Certification Form -->
+    <record id="view_hr_employee_certification_form" model="ir.ui.view">
+        <field name="name">Employee Certification - Form</field>
+        <field name="model">hr.employee.certification</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="certification_name"/>
+                            <field name="level"/>
+                        </group>
+                        <group>
+                            <field name="issuing_organization"/>
+                            <field name="certification_number"/>
+                            <field name="issue_date"/>
+                            <field name="expiry_date"/>
+                        </group>
+                    </group>
+                    <separator string="Tài liệu"/>
+                    <field name="document"/>
+                    <field name="notes" colspan="2"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Employee Certification List -->
+    <record id="view_hr_employee_certification_list" model="ir.ui.view">
+        <field name="name">Employee Certification - List</field>
+        <field name="model">hr.employee.certification</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="employee_id"/>
+                <field name="certification_name"/>
+                <field name="level"/>
+                <field name="issuing_organization"/>
+                <field name="issue_date"/>
+                <field name="expiry_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Employee Certification Action -->
+    <record id="action_hr_employee_certification" model="ir.actions.act_window">
+        <field name="name">Chứng chỉ/Bằng cấp</field>
+        <field name="res_model">hr.employee.certification</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
