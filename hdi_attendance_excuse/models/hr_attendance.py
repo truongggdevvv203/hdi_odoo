@@ -1,9 +1,7 @@
 from odoo import models, fields, api
-import pytz
 
 
 class HRAttendance(models.Model):
-    """Extend hr.attendance to track excuse-related changes"""
     _inherit = 'hr.attendance'
 
     excuse_ids = fields.One2many(
@@ -69,7 +67,6 @@ class HRAttendance(models.Model):
                 if check_out_hour < 17.75:
                     requires = True
 
-            # Nếu check_in có nhưng check_out là null/False → auto checkout tại midnight
             if record.check_in and not record.check_out:
                 requires = True
 
@@ -77,30 +74,22 @@ class HRAttendance(models.Model):
 
     @api.model
     def create_missing_checkout_excuses(self):
-        """
-        Tạo giải trình 'quên check out' cho các bản ghi chấm công không có check_out.
-        Có thể chạy via cron hoặc manually.
-        """
         AttendanceExcuse = self.env['attendance.excuse']
 
-        # Tìm các bản ghi có check_in nhưng không có approved excuse
         attendances = self.search([
             ('check_in', '!=', False),
             ('check_out', '!=', False),
         ])
 
         for att in attendances:
-            # Kiểm tra xem đã có excuse cho record này chưa
             existing = AttendanceExcuse.search([
                 ('attendance_id', '=', att.id),
                 ('excuse_type', '=', 'missing_checkout'),
             ], limit=1)
 
             if not existing:
-                # Kiểm tra nếu checkout đúng vào 23:59:59 (auto-checkout marker)
                 co = fields.Datetime.context_timestamp(self, att.check_out)
                 if co.hour == 23 and co.minute == 59 and co.second == 59:
-                    # Tạo excuse cho missing_checkout
                     AttendanceExcuse.create({
                         'attendance_id': att.id,
                         'state': 'draft',
