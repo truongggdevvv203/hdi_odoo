@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from datetime import datetime, timedelta
+import pytz
 
 
 class HRAttendance(models.Model):
@@ -75,39 +75,6 @@ class HRAttendance(models.Model):
 
             record.requires_excuse = requires
 
-    def create(self, vals_list):
-        """Auto-checkout at midnight if check_in exists but check_out is missing"""
-        records = super().create(vals_list)
-        records._auto_checkout_at_midnight()
-        return records
-
-    def write(self, vals):
-        """Auto-checkout at midnight when check_in is set without check_out"""
-        result = super().write(vals)
-        self._auto_checkout_at_midnight()
-        return result
-
-    def _auto_checkout_at_midnight(self):
-        """
-        Auto-checkout at 24:00 (midnight) if employee forgot to check out.
-        This will trigger automatic excuse creation for 'missing_checkout'.
-        """
-        for record in self:
-            # Nếu có check_in nhưng không có check_out
-            if record.check_in and not record.check_out:
-                # Lấy ngày từ check_in và set checkout = 24:00 (23:59:59 của ngày đó)
-                check_in_datetime = fields.Datetime.context_timestamp(record, record.check_in)
-                # Checkout lúc 23:59:59 của ngày check_in
-                checkout_datetime = check_in_datetime.replace(hour=23, minute=59, second=59)
-                
-                # Convert về UTC trước khi lưu
-                if checkout_datetime.tzinfo:
-                    checkout_utc = checkout_datetime.astimezone(datetime.now().astimezone().tzinfo)
-                else:
-                    checkout_utc = checkout_datetime
-                
-                record.check_out = checkout_utc
-
     @api.model
     def create_missing_checkout_excuses(self):
         """
@@ -115,20 +82,20 @@ class HRAttendance(models.Model):
         Có thể chạy via cron hoặc manually.
         """
         AttendanceExcuse = self.env['attendance.excuse']
-        
+
         # Tìm các bản ghi có check_in nhưng không có approved excuse
         attendances = self.search([
             ('check_in', '!=', False),
             ('check_out', '!=', False),
         ])
-        
+
         for att in attendances:
             # Kiểm tra xem đã có excuse cho record này chưa
             existing = AttendanceExcuse.search([
                 ('attendance_id', '=', att.id),
                 ('excuse_type', '=', 'missing_checkout'),
             ], limit=1)
-            
+
             if not existing:
                 # Kiểm tra nếu checkout đúng vào 23:59:59 (auto-checkout marker)
                 co = fields.Datetime.context_timestamp(self, att.check_out)
