@@ -8,8 +8,6 @@
         <field name="code">model.create_missing_checkout_excuses()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
-        <field name="numbercall">-1</field>
-        <field name="doall" eval="False"/>
         <field name="active" eval="True"/>
         <field name="nextcall">2025-12-12 00:00:00</field>
         <field name="user_id" ref="base.user_admin"/>
