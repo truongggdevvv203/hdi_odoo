@@ -15,6 +15,7 @@
     'security/ir.model.access.csv',
 
     # Data
+    'data/ir_cron.xml',
 
     # Views
     'views/attendance_excuse_views.xml',
