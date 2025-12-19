@@ -97,42 +97,46 @@ class MobileAppAuthAPI(http.Controller):
         }
         """
         try:
-            data = request.jsonrequest
+            # Lấy dữ liệu JSON từ request
+            try:
+                data = request.jsonrequest or json.loads(request.httprequest.data.decode('utf-8'))
+            except:
+                data = json.loads(request.httprequest.data.decode('utf-8'))
+
             login = data.get('login')
             password = data.get('password')
 
             if not login or not password:
-                return _make_json_response({
+                return {
                     'status': 'error',
                     'message': 'Email/Username và password là bắt buộc'
-                }, 400)
+                }
 
-            # Tìm user
-            User = request.env['res.users'].sudo()
-            users = User.search([
-                '|',
-                ('login', '=', login),
-                ('email', '=', login)
-            ], limit=1)
+            # Xác thực user bằng phương thức authenticate của Odoo
+            db = request.session.db
+            uid = None
 
-            if not users:
-                return _make_json_response({
-                    'status': 'error',
-                    'message': 'Tài khoản hoặc mật khẩu không chính xác'
-                }, 401)
-
-            user = users[0]
-
-            # Kiểm tra mật khẩu
             try:
-                request.env.user = user
-                request.env['res.users'].check_credentials(password)
-            except Exception as e:
-                _logger.warning(f"Failed login attempt for user {login}: {str(e)}")
-                return _make_json_response({
+                # Sử dụng request.session.authenticate để xác thực
+                uid = request.session.authenticate(db, login, password)
+            except Exception as auth_error:
+                _logger.warning(f"Authentication failed for user {login}: {str(auth_error)}")
+                uid = None
+
+            if not uid:
+                return {
                     'status': 'error',
                     'message': 'Tài khoản hoặc mật khẩu không chính xác'
-                }, 401)
+                }
+
+            # Lấy thông tin user
+            user = request.env['res.users'].sudo().browse(uid)
+
+            if not user.exists():
+                return {
+                    'status': 'error',
+                    'message': 'Tài khoản hoặc mật khẩu không chính xác'
+                }
 
             # Tạo JWT token
             secret_key = _get_jwt_secret_key()
@@ -140,31 +144,31 @@ class MobileAppAuthAPI(http.Controller):
                 'user_id': user.id,
                 'login': user.login,
                 'name': user.name,
-                'email': user.email,
+                'email': user.email or '',
                 'iat': datetime.utcnow(),
                 'exp': datetime.utcnow() + timedelta(days=30)  # Token hợp lệ trong 30 ngày
             }
 
             token = jwt.encode(token_payload, secret_key, algorithm='HS256')
 
-            return _make_json_response({
+            return {
                 'status': 'success',
                 'message': 'Đăng nhập thành công',
                 'token': token,
                 'user': {
                     'id': user.id,
                     'name': user.name,
-                    'email': user.email,
+                    'email': user.email or '',
                     'login': user.login,
                 }
-            }, 200)
+            }
 
         except Exception as e:
-            _logger.error(f"Login error: {str(e)}")
-            return _make_json_response({
+            _logger.error(f"Login error: {str(e)}", exc_info=True)
+            return {
                 'status': 'error',
                 'message': 'Lỗi server khi xử lý yêu cầu'
-            }, 500)
+            }
 
     @http.route('/api/v1/auth/refresh-token', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token
@@ -186,10 +190,10 @@ class MobileAppAuthAPI(http.Controller):
             user = request.env['res.users'].sudo().browse(user_id)
 
             if not user.exists():
-                return _make_json_response({
+                return {
                     'status': 'error',
                     'message': 'Người dùng không tồn tại'
-                }, 404)
+                }
 
             # Tạo token mới
             secret_key = _get_jwt_secret_key()
@@ -197,25 +201,25 @@ class MobileAppAuthAPI(http.Controller):
                 'user_id': user.id,
                 'login': user.login,
                 'name': user.name,
-                'email': user.email,
+                'email': user.email or '',
                 'iat': datetime.utcnow(),
                 'exp': datetime.utcnow() + timedelta(days=30)
             }
 
             token = jwt.encode(token_payload, secret_key, algorithm='HS256')
 
-            return _make_json_response({
+            return {
                 'status': 'success',
                 'message': 'Làm mới token thành công',
                 'token': token
-            }, 200)
+            }
 
         except Exception as e:
-            _logger.error(f"Refresh token error: {str(e)}")
-            return _make_json_response({
+            _logger.error(f"Refresh token error: {str(e)}", exc_info=True)
+            return {
                 'status': 'error',
                 'message': 'Lỗi server khi xử lý yêu cầu'
-            }, 500)
+            }
 
     @http.route('/api/v1/auth/verify-token', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token
@@ -239,7 +243,7 @@ class MobileAppAuthAPI(http.Controller):
         """
         try:
             payload = request.jwt_payload
-            return _make_json_response({
+            return {
                 'status': 'success',
                 'valid': True,
                 'user': {
@@ -248,14 +252,14 @@ class MobileAppAuthAPI(http.Controller):
                     'email': payload.get('email'),
                     'login': payload.get('login')
                 }
-            }, 200)
+            }
 
         except Exception as e:
-            _logger.error(f"Verify token error: {str(e)}")
-            return _make_json_response({
+            _logger.error(f"Verify token error: {str(e)}", exc_info=True)
+            return {
                 'status': 'error',
                 'message': 'Lỗi server khi xử lý yêu cầu'
-            }, 500)
+            }
 
     @http.route('/api/v1/auth/logout', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token
@@ -273,10 +277,10 @@ class MobileAppAuthAPI(http.Controller):
             "message": "Đã đăng xuất"
         }
         """
-        return _make_json_response({
+        return {
             'status': 'success',
             'message': 'Đã đăng xuất thành công'
-        }, 200)
+        }
 
     @http.route('/api/v1/auth/me', type='json', auth='none', methods=['GET'], csrf=False)
     @_verify_token
@@ -303,24 +307,24 @@ class MobileAppAuthAPI(http.Controller):
             user = request.env['res.users'].sudo().browse(user_id)
 
             if not user.exists():
-                return _make_json_response({
+                return {
                     'status': 'error',
                     'message': 'Người dùng không tồn tại'
-                }, 404)
+                }
 
-            return _make_json_response({
+            return {
                 'status': 'success',
                 'user': {
                     'id': user.id,
                     'name': user.name,
-                    'email': user.email,
+                    'email': user.email or '',
                     'login': user.login,
                 }
-            }, 200)
+            }
 
         except Exception as e:
-            _logger.error(f"Get user error: {str(e)}")
-            return _make_json_response({
+            _logger.error(f"Get user error: {str(e)}", exc_info=True)
+            return {
                 'status': 'error',
                 'message': 'Lỗi server khi xử lý yêu cầu'
-            }, 500)
+            }
