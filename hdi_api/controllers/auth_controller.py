@@ -25,6 +25,50 @@ def _get_jwt_secret_key():
         return DEFAULT_JWT_SECRET_KEY
 
 
+def _is_token_blacklisted(token, db_name=None):
+    """Kiểm tra token có trong blacklist không"""
+    try:
+        if not db_name:
+            db_name = request.session.db or request.env.cr.dbname
+        
+        import odoo
+        from odoo.modules.registry import Registry
+        
+        registry = Registry(db_name)
+        with registry.cursor() as cr:
+            env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+            blacklist = env['jwt.token.blacklist'].sudo().search([
+                ('token_hash', '=', _hash_token(token))
+            ], limit=1)
+            return bool(blacklist)
+    except Exception:
+        return False
+
+
+def _add_token_to_blacklist(token, user_id, db_name, exp_time):
+    """Thêm token vào blacklist"""
+    try:
+        import odoo
+        from odoo.modules.registry import Registry
+        
+        registry = Registry(db_name)
+        with registry.cursor() as cr:
+            env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+            env['jwt.token.blacklist'].sudo().create({
+                'token_hash': _hash_token(token),
+                'user_id': user_id,
+                'exp_time': exp_time,
+            })
+    except Exception as e:
+        _logger.warning(f"Failed to add token to blacklist: {str(e)}")
+
+
+def _hash_token(token):
+    """Băm token để lưu trữ an toàn"""
+    import hashlib
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def _make_json_response(data, status_code=200):
     """Helper để tạo JSON response"""
     return Response(
@@ -55,6 +99,14 @@ def _verify_token(f):
         try:
             secret_key = _get_jwt_secret_key()
             payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+            
+            # Kiểm tra token có trong blacklist không
+            if _is_token_blacklisted(token, payload.get('db')):
+                return _make_json_response({
+                    'status': 'error',
+                    'message': 'Token đã bị vô hiệu hóa'
+                }, 401)
+            
             request.jwt_payload = payload
         except jwt.ExpiredSignatureError:
             return _make_json_response({
@@ -195,7 +247,7 @@ class MobileAppAuthAPI(http.Controller):
                 'email': user_info['email'],
                 'db': db_name,
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(days=30)
+                'exp': datetime.utcnow() + timedelta(minutes=30)
             }
 
             token = jwt.encode(token_payload, secret_key, algorithm='HS256')
@@ -256,7 +308,7 @@ class MobileAppAuthAPI(http.Controller):
                 'email': user_info['email'],
                 'db': db_name,
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(days=30)
+                'exp': datetime.utcnow() + timedelta(minutes=30)
             }
 
             token = jwt.encode(token_payload, secret_key, algorithm='HS256')
@@ -300,10 +352,29 @@ class MobileAppAuthAPI(http.Controller):
     @http.route('/api/v1/auth/logout', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def logout(self):
-        return {
-            'status': 'success',
-            'message': 'Đã đăng xuất thành công'
-        }
+        try:
+            # Lấy token từ header
+            auth_header = request.httprequest.headers.get('Authorization', '')
+            if auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+                
+                user_id = request.jwt_payload.get('user_id')
+                db_name = request.jwt_payload.get('db')
+                exp_time = datetime.utcfromtimestamp(request.jwt_payload.get('exp'))
+                
+                # Thêm token vào blacklist
+                _add_token_to_blacklist(token, user_id, db_name, exp_time)
+            
+            return {
+                'status': 'success',
+                'message': 'Đã đăng xuất thành công'
+            }
+        except Exception as e:
+            _logger.error(f"Logout error: {str(e)}", exc_info=True)
+            return {
+                'status': 'error',
+                'message': 'Lỗi server khi xử lý yêu cầu'
+            }
 
     @http.route('/api/v1/auth/me', type='http', auth='none', methods=['GET'], csrf=False)
     @_verify_token

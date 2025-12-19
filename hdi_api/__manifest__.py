@@ -15,6 +15,7 @@
     },
     'data': [
         'security/ir.model.access.csv',
+        'data/jwt_token_blacklist_cron.xml',
     ],
     'installable': True,
     'auto_install': False,
