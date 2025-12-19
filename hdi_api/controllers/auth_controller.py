@@ -76,28 +76,7 @@ class MobileAppAuthAPI(http.Controller):
 
     @http.route('/api/v1/auth/login', type='json', auth='none', methods=['POST'], csrf=False)
     def login(self):
-        """
-        Endpoint đăng nhập - trả về JWT token
-
-        Request body:
-        {
-            "login": "email@example.com",
-            "password": "password"
-        }
-
-        Response:
-        {
-            "status": "success",
-            "token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-            "user": {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john@example.com"
-            }
-        }
-        """
         try:
-            # Lấy dữ liệu JSON từ request
             try:
                 data = request.jsonrequest or json.loads(request.httprequest.data.decode('utf-8'))
             except:
@@ -105,7 +84,7 @@ class MobileAppAuthAPI(http.Controller):
 
             login = data.get('login')
             password = data.get('password')
-            db_name = data.get('db')  # Cho phép client truyền db name (optional)
+            db_name = data.get('db')
 
             if not login or not password:
                 return {
@@ -113,8 +92,6 @@ class MobileAppAuthAPI(http.Controller):
                     'message': 'Email/Username và password là bắt buộc'
                 }
 
-            # Lấy database name
-            # Thứ tự ưu tiên: 1. Từ request body, 2. Từ session, 3. Từ config, 4. Từ httprequest
             if not db_name:
                 db_name = request.session.db
             if not db_name:
@@ -128,12 +105,10 @@ class MobileAppAuthAPI(http.Controller):
                     'message': 'Không xác định được database'
                 }
 
-            # Xác thực user
             uid = None
             user_info = None
 
             try:
-                # Tìm user và xác thực password
                 import odoo
                 from odoo.modules.registry import Registry
                 from passlib.context import CryptContext
@@ -154,14 +129,12 @@ class MobileAppAuthAPI(http.Controller):
                             'message': 'Tài khoản hoặc mật khẩu không chính xác'
                         }
 
-                    # Kiểm tra password bằng CryptContext (giống như Odoo sử dụng)
                     try:
                         default_crypt_context = CryptContext(
                             schemes=['pbkdf2_sha512', 'plaintext'],
                             deprecated=['plaintext']
                         )
 
-                        # Lấy password hash từ database
                         cr.execute(
                             "SELECT password FROM res_users WHERE id=%s",
                             (user.id,)
@@ -176,7 +149,6 @@ class MobileAppAuthAPI(http.Controller):
 
                         stored_password = result[0]
 
-                        # Verify password
                         valid, replacement = default_crypt_context.verify_and_update(
                             password, stored_password
                         )
@@ -187,7 +159,6 @@ class MobileAppAuthAPI(http.Controller):
                                 'message': 'Tài khoản hoặc mật khẩu không chính xác'
                             }
 
-                        # Lấy thông tin user TRONG context manager
                         uid = user.id
                         user_info = {
                             'id': user.id,
@@ -216,16 +187,15 @@ class MobileAppAuthAPI(http.Controller):
                     'message': 'Tài khoản hoặc mật khẩu không chính xác'
                 }
 
-            # Tạo JWT token với thông tin đã lấy
             secret_key = _get_jwt_secret_key()
             token_payload = {
                 'user_id': uid,
                 'login': user_info['login'],
                 'name': user_info['name'],
                 'email': user_info['email'],
-                'db': db_name,  # Thêm db name vào token
+                'db': db_name,
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(days=30)  # Token hợp lệ trong 30 ngày
+                'exp': datetime.utcnow() + timedelta(days=30)
             }
 
             token = jwt.encode(token_payload, secret_key, algorithm='HS256')
@@ -247,18 +217,6 @@ class MobileAppAuthAPI(http.Controller):
     @http.route('/api/v1/auth/refresh-token', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def refresh_token(self):
-        """
-        Endpoint làm mới token
-
-        Headers:
-        Authorization: Bearer <token>
-
-        Response:
-        {
-            "status": "success",
-            "token": "eyJ0eXAiOiJKV1QiLCJhbGc..."
-        }
-        """
         try:
             user_id = request.jwt_payload.get('user_id')
             db_name = request.jwt_payload.get('db')
@@ -269,7 +227,6 @@ class MobileAppAuthAPI(http.Controller):
                     'message': 'Token không chứa thông tin database'
                 }
 
-            # Lấy thông tin user
             import odoo
             from odoo.modules.registry import Registry
 
@@ -284,7 +241,6 @@ class MobileAppAuthAPI(http.Controller):
                         'message': 'Người dùng không tồn tại'
                     }
 
-                # Lấy thông tin user vào dict
                 user_info = {
                     'id': user.id,
                     'login': user.login,
@@ -292,7 +248,6 @@ class MobileAppAuthAPI(http.Controller):
                     'email': user.email or '',
                 }
 
-            # Tạo token mới
             secret_key = _get_jwt_secret_key()
             token_payload = {
                 'user_id': user_info['id'],
@@ -322,23 +277,6 @@ class MobileAppAuthAPI(http.Controller):
     @http.route('/api/v1/auth/verify-token', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def verify_token(self):
-        """
-        Endpoint kiểm tra token có hợp lệ không
-
-        Headers:
-        Authorization: Bearer <token>
-
-        Response:
-        {
-            "status": "success",
-            "valid": true,
-            "user": {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john@example.com"
-            }
-        }
-        """
         try:
             payload = request.jwt_payload
             return {
@@ -362,19 +300,6 @@ class MobileAppAuthAPI(http.Controller):
     @http.route('/api/v1/auth/logout', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def logout(self):
-        """
-        Endpoint đăng xuất (thường là vô nghĩa vì JWT không có trạng thái,
-        nhưng có thể dùng để xoá token ở phía client)
-
-        Headers:
-        Authorization: Bearer <token>
-
-        Response:
-        {
-            "status": "success",
-            "message": "Đã đăng xuất"
-        }
-        """
         return {
             'status': 'success',
             'message': 'Đã đăng xuất thành công'
@@ -383,23 +308,6 @@ class MobileAppAuthAPI(http.Controller):
     @http.route('/api/v1/auth/me', type='http', auth='none', methods=['GET'], csrf=False)
     @_verify_token
     def get_current_user(self):
-        """
-        Endpoint lấy thông tin người dùng hiện tại
-
-        Headers:
-        Authorization: Bearer <token>
-
-        Response:
-        {
-            "status": "success",
-            "user": {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john@example.com",
-                "login": "john@example.com"
-            }
-        }
-        """
         try:
             user_id = request.jwt_payload.get('user_id')
             db_name = request.jwt_payload.get('db')
