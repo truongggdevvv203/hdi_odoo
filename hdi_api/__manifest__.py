@@ -9,6 +9,7 @@
     'depends': [
         'base',
         'web',
+        'hr_attendance',
     ],
     'external_dependencies': {
         'python': ['pyjwt', 'werkzeug'],
