@@ -105,6 +105,7 @@ class MobileAppAuthAPI(http.Controller):
 
             login = data.get('login')
             password = data.get('password')
+            db_name = data.get('db')  # Cho phép client truyền db name (optional)
 
             if not login or not password:
                 return {
@@ -112,39 +113,117 @@ class MobileAppAuthAPI(http.Controller):
                     'message': 'Email/Username và password là bắt buộc'
                 }
 
-            # Xác thực user bằng phương thức authenticate của Odoo
-            db = request.session.db
+            # Lấy database name
+            # Thứ tự ưu tiên: 1. Từ request body, 2. Từ session, 3. Từ config, 4. Từ httprequest
+            if not db_name:
+                db_name = request.session.db
+            if not db_name:
+                db_name = request.env.cr.dbname
+            if not db_name:
+                db_name = request.httprequest.environ.get('HTTP_X_OPENERP_DBNAME')
+
+            if not db_name:
+                return {
+                    'status': 'error',
+                    'message': 'Không xác định được database'
+                }
+
+            # Xác thực user
             uid = None
+            user_info = None
 
             try:
-                # Sử dụng request.session.authenticate để xác thực
-                uid = request.session.authenticate(db, login, password)
+                # Tìm user và xác thực password
+                import odoo
+                from odoo.modules.registry import Registry
+                from passlib.context import CryptContext
+
+                registry = Registry(db_name)
+                with registry.cursor() as cr:
+                    env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+                    User = env['res.users'].sudo()
+                    user = User.search([
+                        '|',
+                        ('login', '=', login),
+                        ('email', '=', login)
+                    ], limit=1)
+
+                    if not user:
+                        return {
+                            'status': 'error',
+                            'message': 'Tài khoản hoặc mật khẩu không chính xác'
+                        }
+
+                    # Kiểm tra password bằng CryptContext (giống như Odoo sử dụng)
+                    try:
+                        default_crypt_context = CryptContext(
+                            schemes=['pbkdf2_sha512', 'plaintext'],
+                            deprecated=['plaintext']
+                        )
+
+                        # Lấy password hash từ database
+                        cr.execute(
+                            "SELECT password FROM res_users WHERE id=%s",
+                            (user.id,)
+                        )
+                        result = cr.fetchone()
+
+                        if not result or not result[0]:
+                            return {
+                                'status': 'error',
+                                'message': 'Tài khoản hoặc mật khẩu không chính xác'
+                            }
+
+                        stored_password = result[0]
+
+                        # Verify password
+                        valid, replacement = default_crypt_context.verify_and_update(
+                            password, stored_password
+                        )
+
+                        if not valid:
+                            return {
+                                'status': 'error',
+                                'message': 'Tài khoản hoặc mật khẩu không chính xác'
+                            }
+
+                        # Lấy thông tin user TRONG context manager
+                        uid = user.id
+                        user_info = {
+                            'id': user.id,
+                            'name': user.name,
+                            'email': user.email or '',
+                            'login': user.login,
+                        }
+
+                    except Exception as pwd_error:
+                        _logger.warning(f"Password check failed for user {login}: {str(pwd_error)}")
+                        return {
+                            'status': 'error',
+                            'message': 'Tài khoản hoặc mật khẩu không chính xác'
+                        }
+
             except Exception as auth_error:
-                _logger.warning(f"Authentication failed for user {login}: {str(auth_error)}")
-                uid = None
-
-            if not uid:
+                _logger.error(f"Authentication error for user {login}: {str(auth_error)}", exc_info=True)
                 return {
                     'status': 'error',
                     'message': 'Tài khoản hoặc mật khẩu không chính xác'
                 }
 
-            # Lấy thông tin user
-            user = request.env['res.users'].sudo().browse(uid)
-
-            if not user.exists():
+            if not uid or not user_info:
                 return {
                     'status': 'error',
                     'message': 'Tài khoản hoặc mật khẩu không chính xác'
                 }
 
-            # Tạo JWT token
+            # Tạo JWT token với thông tin đã lấy
             secret_key = _get_jwt_secret_key()
             token_payload = {
-                'user_id': user.id,
-                'login': user.login,
-                'name': user.name,
-                'email': user.email or '',
+                'user_id': uid,
+                'login': user_info['login'],
+                'name': user_info['name'],
+                'email': user_info['email'],
+                'db': db_name,  # Thêm db name vào token
                 'iat': datetime.utcnow(),
                 'exp': datetime.utcnow() + timedelta(days=30)  # Token hợp lệ trong 30 ngày
             }
@@ -155,12 +234,7 @@ class MobileAppAuthAPI(http.Controller):
                 'status': 'success',
                 'message': 'Đăng nhập thành công',
                 'token': token,
-                'user': {
-                    'id': user.id,
-                    'name': user.name,
-                    'email': user.email or '',
-                    'login': user.login,
-                }
+                'user': user_info
             }
 
         except Exception as e:
@@ -187,21 +261,45 @@ class MobileAppAuthAPI(http.Controller):
         """
         try:
             user_id = request.jwt_payload.get('user_id')
-            user = request.env['res.users'].sudo().browse(user_id)
+            db_name = request.jwt_payload.get('db')
 
-            if not user.exists():
+            if not db_name:
                 return {
                     'status': 'error',
-                    'message': 'Người dùng không tồn tại'
+                    'message': 'Token không chứa thông tin database'
+                }
+
+            # Lấy thông tin user
+            import odoo
+            from odoo.modules.registry import Registry
+
+            registry = Registry(db_name)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+                user = env['res.users'].browse(user_id)
+
+                if not user.exists():
+                    return {
+                        'status': 'error',
+                        'message': 'Người dùng không tồn tại'
+                    }
+
+                # Lấy thông tin user vào dict
+                user_info = {
+                    'id': user.id,
+                    'login': user.login,
+                    'name': user.name,
+                    'email': user.email or '',
                 }
 
             # Tạo token mới
             secret_key = _get_jwt_secret_key()
             token_payload = {
-                'user_id': user.id,
-                'login': user.login,
-                'name': user.name,
-                'email': user.email or '',
+                'user_id': user_info['id'],
+                'login': user_info['login'],
+                'name': user_info['name'],
+                'email': user_info['email'],
+                'db': db_name,
                 'iat': datetime.utcnow(),
                 'exp': datetime.utcnow() + timedelta(days=30)
             }
@@ -282,7 +380,7 @@ class MobileAppAuthAPI(http.Controller):
             'message': 'Đã đăng xuất thành công'
         }
 
-    @http.route('/api/v1/auth/me', type='json', auth='none', methods=['GET'], csrf=False)
+    @http.route('/api/v1/auth/me', type='http', auth='none', methods=['GET'], csrf=False)
     @_verify_token
     def get_current_user(self):
         """
@@ -304,27 +402,44 @@ class MobileAppAuthAPI(http.Controller):
         """
         try:
             user_id = request.jwt_payload.get('user_id')
-            user = request.env['res.users'].sudo().browse(user_id)
+            db_name = request.jwt_payload.get('db')
 
-            if not user.exists():
-                return {
+            if not db_name:
+                return _make_json_response({
                     'status': 'error',
-                    'message': 'Người dùng không tồn tại'
-                }
+                    'message': 'Token không chứa thông tin database'
+                }, 400)
 
-            return {
-                'status': 'success',
-                'user': {
+            # Lấy thông tin user
+            import odoo
+            from odoo.modules.registry import Registry
+
+            registry = Registry(db_name)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+                user = env['res.users'].browse(user_id)
+
+                if not user.exists():
+                    return _make_json_response({
+                        'status': 'error',
+                        'message': 'Người dùng không tồn tại'
+                    }, 404)
+
+                user_info = {
                     'id': user.id,
                     'name': user.name,
                     'email': user.email or '',
                     'login': user.login,
                 }
-            }
+
+            return _make_json_response({
+                'status': 'success',
+                'user': user_info
+            }, 200)
 
         except Exception as e:
             _logger.error(f"Get user error: {str(e)}", exc_info=True)
-            return {
+            return _make_json_response({
                 'status': 'error',
                 'message': 'Lỗi server khi xử lý yêu cầu'
-            }
+            }, 500)
