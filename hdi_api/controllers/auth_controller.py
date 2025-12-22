@@ -79,6 +79,26 @@ def _make_json_response(data, status_code=200):
     )
 
 
+def _format_success_response(message, data=None, code=200):
+    """Tạo response thành công với format chuẩn"""
+    return {
+        'code': code,
+        'status': 'Success',
+        'message': message,
+        'data': data or {}
+    }
+
+
+def _format_error_response(message, code=400, data=None):
+    """Tạo response lỗi với format chuẩn"""
+    return {
+        'code': code,
+        'status': 'Error',
+        'message': message,
+        'data': data or {}
+    }
+
+
 def _get_json_data():
     """Helper để lấy JSON data từ request - tương thích Odoo 18"""
     try:
@@ -109,10 +129,10 @@ def _verify_token(f):
             token = auth_header[7:]
 
         if not token:
-            return _make_json_response({
-                'status': 'error',
-                'message': 'Token không được cung cấp'
-            }, 401)
+            return _make_json_response(
+                _format_error_response('Token không được cung cấp', code=401),
+                status_code=401
+            )
 
         try:
             secret_key = _get_jwt_secret_key()
@@ -120,22 +140,22 @@ def _verify_token(f):
 
             # Kiểm tra token có trong blacklist không
             if _is_token_blacklisted(token, payload.get('db')):
-                return _make_json_response({
-                    'status': 'error',
-                    'message': 'Token đã bị vô hiệu hóa'
-                }, 401)
+                return _make_json_response(
+                    _format_error_response('Token đã bị vô hiệu hóa', code=401),
+                    status_code=401
+                )
 
             request.jwt_payload = payload
         except jwt.ExpiredSignatureError:
-            return _make_json_response({
-                'status': 'error',
-                'message': 'Token đã hết hạn'
-            }, 401)
+            return _make_json_response(
+                _format_error_response('Token đã hết hạn', code=401),
+                status_code=401
+            )
         except jwt.InvalidTokenError:
-            return _make_json_response({
-                'status': 'error',
-                'message': 'Token không hợp lệ'
-            }, 401)
+            return _make_json_response(
+                _format_error_response('Token không hợp lệ', code=401),
+                status_code=401
+            )
 
         return f(*args, **kwargs)
 
@@ -155,10 +175,7 @@ def _verify_token_json(f):
             token = auth_header[7:]
 
         if not token:
-            return {
-                'status': 'error',
-                'message': 'Token không được cung cấp'
-            }
+            return _format_error_response('Token không được cung cấp', code=401)
 
         try:
             secret_key = _get_jwt_secret_key()
@@ -166,22 +183,13 @@ def _verify_token_json(f):
 
             # Kiểm tra token có trong blacklist không
             if _is_token_blacklisted(token, payload.get('db')):
-                return {
-                    'status': 'error',
-                    'message': 'Token đã bị vô hiệu hóa'
-                }
+                return _format_error_response('Token đã bị vô hiệu hóa', code=401)
 
             request.jwt_payload = payload
         except jwt.ExpiredSignatureError:
-            return {
-                'status': 'error',
-                'message': 'Token đã hết hạn'
-            }
+            return _format_error_response('Token đã hết hạn', code=401)
         except jwt.InvalidTokenError:
-            return {
-                'status': 'error',
-                'message': 'Token không hợp lệ'
-            }
+            return _format_error_response('Token không hợp lệ', code=401)
 
         return f(*args, **kwargs)
 
@@ -244,18 +252,12 @@ class MobileAppAuthAPI(http.Controller):
             password = data.get('password')
 
             if not login or not password:
-                return {
-                    'status': 'error',
-                    'message': 'Login và password là bắt buộc'
-                }
+                return _format_error_response('Login và password là bắt buộc', code=400)
 
             db_name = request.env.cr.dbname
 
             if not db_name:
-                return {
-                    'status': 'error',
-                    'message': 'Không xác định được database'
-                }
+                return _format_error_response('Không xác định được database', code=400)
 
             # Xác thực user - Odoo 18 format
             try:
@@ -280,18 +282,12 @@ class MobileAppAuthAPI(http.Controller):
                 uid = None
 
             if not uid:
-                return {
-                    'status': 'error',
-                    'message': 'Tài khoản hoặc mật khẩu không chính xác'
-                }
+                return _format_error_response('Tài khoản hoặc mật khẩu không chính xác', code=401)
 
             user = request.env['res.users'].sudo().browse(uid)
 
             if not user.exists() or not user.active:
-                return {
-                    'status': 'error',
-                    'message': 'Tài khoản không khả dụng'
-                }
+                return _format_error_response('Tài khoản không khả dụng', code=403)
 
             # JWT
             secret_key = _get_jwt_secret_key()
@@ -307,25 +303,20 @@ class MobileAppAuthAPI(http.Controller):
 
             token = jwt.encode(token_payload, secret_key, algorithm='HS256')
 
-            return {
-                'status': 'success',
-                'message': 'Đăng nhập thành công',
+            user_data = {
+                'id': user.id,
+                'name': user.name,
+                'login': user.login,
+                'email': user.email or '',
                 'token': token,
-                'user': {
-                    'id': user.id,
-                    'name': user.name,
-                    'login': user.login,
-                    'email': user.email or ''
-                },
                 'expires_in': 1800
             }
 
+            return _format_success_response('Đăng nhập thành công', data=user_data, code=200)
+
         except Exception as e:
             _logger.exception("Login error")
-            return {
-                'status': 'error',
-                'message': 'Lỗi server'
-            }
+            return _format_error_response('Lỗi server', code=500)
 
     @http.route('/api/v1/auth/refresh-token', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token_json
@@ -335,10 +326,7 @@ class MobileAppAuthAPI(http.Controller):
             db_name = request.jwt_payload.get('db')
 
             if not db_name:
-                return {
-                    'status': 'error',
-                    'message': 'Token không chứa thông tin database'
-                }
+                return _format_error_response('Token không chứa thông tin database', code=400)
 
             import odoo
             from odoo.modules.registry import Registry
@@ -349,16 +337,10 @@ class MobileAppAuthAPI(http.Controller):
                 user = env['res.users'].browse(user_id)
 
                 if not user.exists():
-                    return {
-                        'status': 'error',
-                        'message': 'Người dùng không tồn tại'
-                    }
+                    return _format_error_response('Người dùng không tồn tại', code=404)
 
                 if not user.active:
-                    return {
-                        'status': 'error',
-                        'message': 'Tài khoản đã bị vô hiệu hóa'
-                    }
+                    return _format_error_response('Tài khoản đã bị vô hiệu hóa', code=403)
 
                 user_info = {
                     'id': user.id,
@@ -380,43 +362,35 @@ class MobileAppAuthAPI(http.Controller):
 
             token = jwt.encode(token_payload, secret_key, algorithm='HS256')
 
-            return {
-                'status': 'success',
-                'message': 'Làm mới token thành công',
+            token_data = {
                 'token': token,
                 'expires_in': 1800
             }
 
+            return _format_success_response('Làm mới token thành công', data=token_data, code=200)
+
         except Exception as e:
             _logger.error(f"Refresh token error: {str(e)}", exc_info=True)
-            return {
-                'status': 'error',
-                'message': 'Lỗi server khi xử lý yêu cầu'
-            }
+            return _format_error_response('Lỗi server khi xử lý yêu cầu', code=500)
 
     @http.route('/api/v1/auth/verify-token', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token_json
     def verify_token(self):
         try:
             payload = request.jwt_payload
-            return {
-                'status': 'success',
-                'valid': True,
-                'user': {
-                    'id': payload.get('user_id'),
-                    'name': payload.get('name'),
-                    'email': payload.get('email'),
-                    'login': payload.get('login')
-                },
-                'exp': payload.get('exp')
+            user_data = {
+                'id': payload.get('user_id'),
+                'name': payload.get('name'),
+                'email': payload.get('email'),
+                'login': payload.get('login'),
+                'exp': payload.get('exp'),
+                'valid': True
             }
+            return _format_success_response('Token hợp lệ', data=user_data, code=200)
 
         except Exception as e:
             _logger.error(f"Verify token error: {str(e)}", exc_info=True)
-            return {
-                'status': 'error',
-                'message': 'Lỗi server khi xử lý yêu cầu'
-            }
+            return _format_error_response('Lỗi server khi xử lý yêu cầu', code=500)
 
     @http.route('/api/v1/auth/logout', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
@@ -434,16 +408,16 @@ class MobileAppAuthAPI(http.Controller):
                 # Thêm token vào blacklist
                 _add_token_to_blacklist(token, user_id, db_name, exp_time)
 
-            return _make_json_response({
-                'status': 'success',
-                'message': 'Đã đăng xuất thành công'
-            }, 200)
+            return _make_json_response(
+                _format_success_response('Đã đăng xuất thành công', code=200),
+                status_code=200
+            )
         except Exception as e:
             _logger.error(f"Logout error: {str(e)}", exc_info=True)
-            return _make_json_response({
-                'status': 'error',
-                'message': 'Lỗi server khi xử lý yêu cầu'
-            }, 500)
+            return _make_json_response(
+                _format_error_response('Lỗi server khi xử lý yêu cầu', code=500),
+                status_code=500
+            )
 
     @http.route('/api/v1/auth/me', type='http', auth='none', methods=['GET'], csrf=False)
     @_verify_token
@@ -453,10 +427,10 @@ class MobileAppAuthAPI(http.Controller):
             db_name = request.jwt_payload.get('db')
 
             if not db_name:
-                return _make_json_response({
-                    'status': 'error',
-                    'message': 'Token không chứa thông tin database'
-                }, 400)
+                return _make_json_response(
+                    _format_error_response('Token không chứa thông tin database', code=400),
+                    status_code=400
+                )
 
             # Lấy thông tin user
             import odoo
@@ -468,16 +442,16 @@ class MobileAppAuthAPI(http.Controller):
                 user = env['res.users'].browse(user_id)
 
                 if not user.exists():
-                    return _make_json_response({
-                        'status': 'error',
-                        'message': 'Người dùng không tồn tại'
-                    }, 404)
+                    return _make_json_response(
+                        _format_error_response('Người dùng không tồn tại', code=404),
+                        status_code=404
+                    )
 
                 if not user.active:
-                    return _make_json_response({
-                        'status': 'error',
-                        'message': 'Tài khoản đã bị vô hiệu hóa'
-                    }, 403)
+                    return _make_json_response(
+                        _format_error_response('Tài khoản đã bị vô hiệu hóa', code=403),
+                        status_code=403
+                    )
 
                 user_info = {
                     'id': user.id,
@@ -487,17 +461,17 @@ class MobileAppAuthAPI(http.Controller):
                     'active': user.active
                 }
 
-            return _make_json_response({
-                'status': 'success',
-                'user': user_info
-            }, 200)
+            return _make_json_response(
+                _format_success_response('Lấy thông tin người dùng thành công', data=user_info, code=200),
+                status_code=200
+            )
 
         except Exception as e:
             _logger.error(f"Get user error: {str(e)}", exc_info=True)
-            return _make_json_response({
-                'status': 'error',
-                'message': 'Lỗi server khi xử lý yêu cầu'
-            }, 500)
+            return _make_json_response(
+                _format_error_response('Lỗi server khi xử lý yêu cầu', code=500),
+                status_code=500
+            )
 
     @http.route('/api/v1/auth/change-password', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token_json
@@ -512,40 +486,25 @@ class MobileAppAuthAPI(http.Controller):
 
             # Kiểm tra dữ liệu đầu vào
             if not old_password or not new_password or not confirm_password:
-                return {
-                    'status': 'error',
-                    'message': 'Mật khẩu cũ, mật khẩu mới và xác nhận mật khẩu là bắt buộc'
-                }
+                return _format_error_response('Mật khẩu cũ, mật khẩu mới và xác nhận mật khẩu là bắt buộc', code=400)
 
             # Kiểm tra xác nhận mật khẩu
             if new_password != confirm_password:
-                return {
-                    'status': 'error',
-                    'message': 'Mật khẩu mới và xác nhận mật khẩu không khớp'
-                }
+                return _format_error_response('Mật khẩu mới và xác nhận mật khẩu không khớp', code=400)
 
             # Kiểm tra độ dài mật khẩu
             if len(new_password) < 8:
-                return {
-                    'status': 'error',
-                    'message': 'Mật khẩu mới phải ít nhất 8 ký tự'
-                }
+                return _format_error_response('Mật khẩu mới phải ít nhất 8 ký tự', code=400)
 
             # Kiểm tra mật khẩu cũ và mới không được giống nhau
             if old_password == new_password:
-                return {
-                    'status': 'error',
-                    'message': 'Mật khẩu mới không được giống mật khẩu cũ'
-                }
+                return _format_error_response('Mật khẩu mới không được giống mật khẩu cũ', code=400)
 
             user_id = request.jwt_payload.get('user_id')
             db_name = request.jwt_payload.get('db')
 
             if not db_name:
-                return {
-                    'status': 'error',
-                    'message': 'Token không chứa thông tin database'
-                }
+                return _format_error_response('Token không chứa thông tin database', code=400)
 
             import odoo
             from odoo.modules.registry import Registry
@@ -556,26 +515,17 @@ class MobileAppAuthAPI(http.Controller):
                 user = env['res.users'].browse(user_id)
 
                 if not user.exists():
-                    return {
-                        'status': 'error',
-                        'message': 'Người dùng không tồn tại'
-                    }
+                    return _format_error_response('Người dùng không tồn tại', code=404)
 
                 if not user.active:
-                    return {
-                        'status': 'error',
-                        'message': 'Tài khoản đã bị vô hiệu hóa'
-                    }
+                    return _format_error_response('Tài khoản đã bị vô hiệu hóa', code=403)
 
                 try:
                     # Xác thực mật khẩu cũ bằng cách gọi _authenticate_user
                     auth_uid = _authenticate_user(db_name, user.login, old_password)
 
                     if not auth_uid or auth_uid != user.id:
-                        return {
-                            'status': 'error',
-                            'message': 'Mật khẩu cũ không chính xác'
-                        }
+                        return _format_error_response('Mật khẩu cũ không chính xác', code=401)
 
                     # Cập nhật mật khẩu mới (Odoo sẽ tự động hash)
                     user.write({'password': new_password})
@@ -583,22 +533,13 @@ class MobileAppAuthAPI(http.Controller):
 
                     _logger.info(f"User {user.login} changed password successfully")
 
-                    return {
-                        'status': 'success',
-                        'message': 'Đổi mật khẩu thành công'
-                    }
+                    return _format_success_response('Đổi mật khẩu thành công', code=200)
 
                 except Exception as pwd_error:
                     cr.rollback()
                     _logger.error(f"Password change failed for user {user.login}: {str(pwd_error)}", exc_info=True)
-                    return {
-                        'status': 'error',
-                        'message': 'Lỗi khi đổi mật khẩu'
-                    }
+                    return _format_error_response('Lỗi khi đổi mật khẩu', code=500)
 
         except Exception as e:
             _logger.error(f"Change password error: {str(e)}", exc_info=True)
-            return {
-                'status': 'error',
-                'message': 'Lỗi server khi xử lý yêu cầu'
-            }
+            return _format_error_response('Lỗi server khi xử lý yêu cầu', code=500)
