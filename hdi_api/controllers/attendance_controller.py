@@ -1,11 +1,11 @@
-import json
 import logging
 from datetime import datetime, timedelta
 
 from odoo import http
 from odoo.http import request
 
-from .auth_controller import _verify_token, _make_json_response
+from .auth_controller import _verify_token
+from ..utils.response_formatter import ResponseFormatter
 
 _logger = logging.getLogger(__name__)
 
@@ -39,10 +39,10 @@ class AttendanceAPI(http.Controller):
             db_name = request.jwt_payload.get('db')
 
             if not db_name:
-                return _make_json_response({
-                    'status': 'error',
-                    'message': 'Token không chứa thông tin database'
-                }, 400)
+                return ResponseFormatter.error_response(
+                    'Token không chứa thông tin database',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
 
             import odoo
             from odoo.modules.registry import Registry
@@ -57,10 +57,10 @@ class AttendanceAPI(http.Controller):
                 ], limit=1)
 
                 if not employee:
-                    return _make_json_response({
-                        'status': 'error',
-                        'message': 'Không tìm thấy nhân viên liên kết với tài khoản này'
-                    }, 404)
+                    return ResponseFormatter.error_response(
+                        'Không tìm thấy nhân viên liên kết với tài khoản này',
+                        ResponseFormatter.HTTP_NOT_FOUND
+                    )
 
                 # Kiểm tra xem đã check-in chưa
                 last_attendance = env['hr.attendance'].sudo().search([
@@ -69,13 +69,13 @@ class AttendanceAPI(http.Controller):
                 ], limit=1)
 
                 if last_attendance:
-                    return _make_json_response({
-                        'status': 'error',
-                        'message': 'Bạn đã chấm công vào rồi. Vui lòng chấm công ra trước khi chấm công vào lại.',
-                        'data': {
+                    return ResponseFormatter.error_response(
+                        'Bạn đã chấm công vào rồi. Vui lòng chấm công ra trước khi chấm công vào lại.',
+                        ResponseFormatter.HTTP_BAD_REQUEST,
+                        {
                             'check_in': last_attendance.check_in.isoformat() if last_attendance.check_in else None
                         }
-                    }, 400)
+                    )
 
                 # Tạo bản ghi chấm công
                 attendance = env['hr.attendance'].sudo().create({
@@ -85,23 +85,23 @@ class AttendanceAPI(http.Controller):
 
                 cr.commit()
 
-                return _make_json_response({
-                    'status': 'success',
-                    'message': 'Chấm công vào thành công',
-                    'data': {
+                return ResponseFormatter.success_response(
+                    'Chấm công vào thành công',
+                    {
                         'id': attendance.id,
                         'employee_id': employee.id,
                         'employee_name': employee.name,
                         'check_in': attendance.check_in.isoformat() if attendance.check_in else None,
-                    }
-                }, 200)
+                    },
+                    ResponseFormatter.HTTP_OK
+                )
 
         except Exception as e:
             _logger.error(f"Check-in error: {str(e)}", exc_info=True)
-            return _make_json_response({
-                'status': 'error',
-                'message': f'Lỗi khi chấm công vào: {str(e)}'
-            }, 500)
+            return ResponseFormatter.error_response(
+                f'Lỗi khi chấm công vào: {str(e)}',
+                ResponseFormatter.HTTP_INTERNAL_ERROR
+            )
 
     @http.route('/api/v1/attendance/check-out', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
@@ -112,10 +112,10 @@ class AttendanceAPI(http.Controller):
             db_name = request.jwt_payload.get('db')
 
             if not db_name:
-                return _make_json_response({
-                    'status': 'error',
-                    'message': 'Token không chứa thông tin database'
-                }, 400)
+                return ResponseFormatter.error_response(
+                    'Token không chứa thông tin database',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
 
             import odoo
             from odoo.modules.registry import Registry
@@ -130,10 +130,10 @@ class AttendanceAPI(http.Controller):
                 ], limit=1)
 
                 if not employee:
-                    return _make_json_response({
-                        'status': 'error',
-                        'message': 'Không tìm thấy nhân viên liên kết với tài khoản này'
-                    }, 404)
+                    return ResponseFormatter.error_response(
+                        'Không tìm thấy nhân viên liên kết với tài khoản này',
+                        ResponseFormatter.HTTP_NOT_FOUND
+                    )
 
                 # Tìm bản ghi chấm công chưa check-out
                 attendance = env['hr.attendance'].sudo().search([
@@ -142,10 +142,10 @@ class AttendanceAPI(http.Controller):
                 ], limit=1, order='check_in desc')
 
                 if not attendance:
-                    return _make_json_response({
-                        'status': 'error',
-                        'message': 'Không tìm thấy bản ghi chấm công vào. Vui lòng chấm công vào trước.'
-                    }, 400)
+                    return ResponseFormatter.error_response(
+                        'Không tìm thấy bản ghi chấm công vào. Vui lòng chấm công vào trước.',
+                        ResponseFormatter.HTTP_BAD_REQUEST
+                    )
 
                 try:
                     # Kiểm tra và xóa overtime record cũ nếu tồn tại
@@ -182,25 +182,25 @@ class AttendanceAPI(http.Controller):
                 # Tính thời gian làm việc
                 worked_hours = attendance.worked_hours if hasattr(attendance, 'worked_hours') else 0
 
-                return _make_json_response({
-                    'status': 'success',
-                    'message': 'Chấm công ra thành công',
-                    'data': {
+                return ResponseFormatter.success_response(
+                    'Chấm công ra thành công',
+                    {
                         'id': attendance.id,
                         'employee_id': employee.id,
                         'employee_name': employee.name,
                         'check_in': attendance.check_in.isoformat() if attendance.check_in else None,
                         'check_out': attendance.check_out.isoformat() if attendance.check_out else None,
                         'worked_hours': worked_hours,
-                    }
-                }, 200)
+                    },
+                    ResponseFormatter.HTTP_OK
+                )
 
         except Exception as e:
             _logger.error(f"Check-out error: {str(e)}", exc_info=True)
-            return _make_json_response({
-                'status': 'error',
-                'message': f'Lỗi khi chấm công ra: {str(e)}'
-            }, 500)
+            return ResponseFormatter.error_response(
+                f'Lỗi khi chấm công ra: {str(e)}',
+                ResponseFormatter.HTTP_INTERNAL_ERROR
+            )
 
     @http.route('/api/v1/attendance/status', type='http', auth='none', methods=['GET'], csrf=False)
     @_verify_token
@@ -211,10 +211,10 @@ class AttendanceAPI(http.Controller):
             db_name = request.jwt_payload.get('db')
 
             if not db_name:
-                return _make_json_response({
-                    'status': 'error',
-                    'message': 'Token không chứa thông tin database'
-                }, 400)
+                return ResponseFormatter.error_response(
+                    'Token không chứa thông tin database',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
 
             import odoo
             from odoo.modules.registry import Registry
@@ -229,10 +229,10 @@ class AttendanceAPI(http.Controller):
                 ], limit=1)
 
                 if not employee:
-                    return _make_json_response({
-                        'status': 'error',
-                        'message': 'Không tìm thấy nhân viên liên kết với tài khoản này'
-                    }, 404)
+                    return ResponseFormatter.error_response(
+                        'Không tìm thấy nhân viên liên kết với tài khoản này',
+                        ResponseFormatter.HTTP_NOT_FOUND
+                    )
 
                 # Kiểm tra có đang check-in không
                 current_attendance = env['hr.attendance'].sudo().search([
@@ -241,30 +241,32 @@ class AttendanceAPI(http.Controller):
                 ], limit=1)
 
                 if current_attendance:
-                    return _make_json_response({
-                        'status': 'success',
-                        'data': {
+                    return ResponseFormatter.success_response(
+                        'Trạng thái chấm công',
+                        {
                             'is_checked_in': True,
                             'attendance_id': current_attendance.id,
                             'check_in': current_attendance.check_in.isoformat() if current_attendance.check_in else None,
                             'employee_name': employee.name,
-                        }
-                    }, 200)
+                        },
+                        ResponseFormatter.HTTP_OK
+                    )
                 else:
-                    return _make_json_response({
-                        'status': 'success',
-                        'data': {
+                    return ResponseFormatter.success_response(
+                        'Trạng thái chấm công',
+                        {
                             'is_checked_in': False,
                             'employee_name': employee.name,
-                        }
-                    }, 200)
+                        },
+                        ResponseFormatter.HTTP_OK
+                    )
 
         except Exception as e:
             _logger.error(f"Get status error: {str(e)}", exc_info=True)
-            return _make_json_response({
-                'status': 'error',
-                'message': f'Lỗi khi lấy trạng thái: {str(e)}'
-            }, 500)
+            return ResponseFormatter.error_response(
+                f'Lỗi khi lấy trạng thái: {str(e)}',
+                ResponseFormatter.HTTP_INTERNAL_ERROR
+            )
 
     @http.route('/api/v1/attendance/history', type='http', auth='none', methods=['GET'], csrf=False)
     @_verify_token
@@ -281,10 +283,10 @@ class AttendanceAPI(http.Controller):
             to_date = request.httprequest.args.get('to_date')  # Format: YYYY-MM-DD
 
             if not db_name:
-                return _make_json_response({
-                    'status': 'error',
-                    'message': 'Token không chứa thông tin database'
-                }, 400)
+                return ResponseFormatter.error_response(
+                    'Token không chứa thông tin database',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
 
             import odoo
             from odoo.modules.registry import Registry
@@ -299,10 +301,10 @@ class AttendanceAPI(http.Controller):
                 ], limit=1)
 
                 if not employee:
-                    return _make_json_response({
-                        'status': 'error',
-                        'message': 'Không tìm thấy nhân viên liên kết với tài khoản này'
-                    }, 404)
+                    return ResponseFormatter.error_response(
+                        'Không tìm thấy nhân viên liên kết với tài khoản này',
+                        ResponseFormatter.HTTP_NOT_FOUND
+                    )
 
                 # Build domain
                 domain = [('employee_id', '=', employee.id)]
@@ -312,20 +314,20 @@ class AttendanceAPI(http.Controller):
                         from_datetime = datetime.strptime(from_date, '%Y-%m-%d')
                         domain.append(('check_in', '>=', from_datetime))
                     except ValueError:
-                        return _make_json_response({
-                            'status': 'error',
-                            'message': 'Định dạng from_date không hợp lệ. Sử dụng YYYY-MM-DD'
-                        }, 400)
+                        return ResponseFormatter.error_response(
+                            'Định dạng from_date không hợp lệ. Sử dụng YYYY-MM-DD',
+                            ResponseFormatter.HTTP_BAD_REQUEST
+                        )
 
                 if to_date:
                     try:
                         to_datetime = datetime.strptime(to_date, '%Y-%m-%d') + timedelta(days=1)
                         domain.append(('check_in', '<', to_datetime))
                     except ValueError:
-                        return _make_json_response({
-                            'status': 'error',
-                            'message': 'Định dạng to_date không hợp lệ. Sử dụng YYYY-MM-DD'
-                        }, 400)
+                        return ResponseFormatter.error_response(
+                            'Định dạng to_date không hợp lệ. Sử dụng YYYY-MM-DD',
+                            ResponseFormatter.HTTP_BAD_REQUEST
+                        )
 
                 # Lấy danh sách chấm công
                 attendances = env['hr.attendance'].sudo().search(
@@ -349,23 +351,24 @@ class AttendanceAPI(http.Controller):
                         'worked_hours': worked_hours,
                     })
 
-                return _make_json_response({
-                    'status': 'success',
-                    'data': {
+                return ResponseFormatter.success_response(
+                    'Lịch sử chấm công',
+                    {
                         'employee_name': employee.name,
                         'attendances': attendance_list,
                         'total_count': total_count,
                         'limit': limit,
                         'offset': offset,
-                    }
-                }, 200)
+                    },
+                    ResponseFormatter.HTTP_OK
+                )
 
         except Exception as e:
             _logger.error(f"Get history error: {str(e)}", exc_info=True)
-            return _make_json_response({
-                'status': 'error',
-                'message': f'Lỗi khi lấy lịch sử: {str(e)}'
-            }, 500)
+            return ResponseFormatter.error_response(
+                f'Lỗi khi lấy lịch sử: {str(e)}',
+                ResponseFormatter.HTTP_INTERNAL_ERROR
+            )
 
     @http.route('/api/v1/attendance/summary', type='http', auth='none', methods=['GET'], csrf=False)
     @_verify_token
@@ -383,10 +386,10 @@ class AttendanceAPI(http.Controller):
                 month = datetime.now().strftime('%Y-%m')
 
             if not db_name:
-                return _make_json_response({
-                    'status': 'error',
-                    'message': 'Token không chứa thông tin database'
-                }, 400)
+                return ResponseFormatter.error_response(
+                    'Token không chứa thông tin database',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
 
             try:
                 year, month_num = map(int, month.split('-'))
@@ -398,10 +401,10 @@ class AttendanceAPI(http.Controller):
                 else:
                     to_date = datetime(year, month_num + 1, 1)
             except (ValueError, AttributeError):
-                return _make_json_response({
-                    'status': 'error',
-                    'message': 'Định dạng month không hợp lệ. Sử dụng YYYY-MM'
-                }, 400)
+                return ResponseFormatter.error_response(
+                    'Định dạng month không hợp lệ. Sử dụng YYYY-MM',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
 
             import odoo
             from odoo.modules.registry import Registry
@@ -416,10 +419,10 @@ class AttendanceAPI(http.Controller):
                 ], limit=1)
 
                 if not employee:
-                    return _make_json_response({
-                        'status': 'error',
-                        'message': 'Không tìm thấy nhân viên liên kết với tài khoản này'
-                    }, 404)
+                    return ResponseFormatter.error_response(
+                        'Không tìm thấy nhân viên liên kết với tài khoản này',
+                        ResponseFormatter.HTTP_NOT_FOUND
+                    )
 
                 # Lấy tất cả attendance trong tháng
                 attendances = env['hr.attendance'].sudo().search([
@@ -442,21 +445,22 @@ class AttendanceAPI(http.Controller):
                         else:
                             incomplete_days += 1
 
-                return _make_json_response({
-                    'status': 'success',
-                    'data': {
+                return ResponseFormatter.success_response(
+                    'Tổng hợp chấm công',
+                    {
                         'employee_name': employee.name,
                         'month': month,
                         'total_days': total_days,
                         'total_hours': round(total_hours, 2),
                         'incomplete_days': incomplete_days,
                         'average_hours_per_day': round(total_hours / total_days, 2) if total_days > 0 else 0,
-                    }
-                }, 200)
+                    },
+                    ResponseFormatter.HTTP_OK
+                )
 
         except Exception as e:
             _logger.error(f"Get summary error: {str(e)}", exc_info=True)
-            return _make_json_response({
-                'status': 'error',
-                'message': f'Lỗi khi lấy tổng hợp: {str(e)}'
-            }, 500)
+            return ResponseFormatter.error_response(
+                f'Lỗi khi lấy tổng hợp: {str(e)}',
+                ResponseFormatter.HTTP_INTERNAL_ERROR
+            )
