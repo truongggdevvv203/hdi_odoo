@@ -126,7 +126,8 @@ def _verify_token(f):
 
 
 def _verify_token_json(f):
-    """Decorator để kiểm tra JWT token - dùng cho JSON routes"""
+    """Decorator để kiểm tra JWT token - dùng cho JSON routes (type='json')
+    Return dict để Odoo tự động wrap với JSON-RPC format"""
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -153,6 +154,41 @@ def _verify_token_json(f):
             return ResponseFormatter.error('Token đã hết hạn', ResponseFormatter.HTTP_UNAUTHORIZED)
         except jwt.InvalidTokenError:
             return ResponseFormatter.error('Token không hợp lệ', ResponseFormatter.HTTP_UNAUTHORIZED)
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def _verify_token_http(f):
+    """Decorator để kiểm tra JWT token - dùng cho HTTP routes (type='http')
+    Return Response object"""
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = None
+
+        # Lấy token từ Authorization header
+        auth_header = request.httprequest.headers.get('Authorization', '')
+        if auth_header.startswith('Bearer '):
+            token = auth_header[7:]
+
+        if not token:
+            return ResponseFormatter.error_response('Token không được cung cấp', ResponseFormatter.HTTP_UNAUTHORIZED)
+
+        try:
+            secret_key = _get_jwt_secret_key()
+            payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+
+            # Kiểm tra token có trong blacklist không
+            if _is_token_blacklisted(token, payload.get('db')):
+                return ResponseFormatter.error_response('Token đã bị vô hiệu hóa', ResponseFormatter.HTTP_UNAUTHORIZED)
+
+            request.jwt_payload = payload
+        except jwt.ExpiredSignatureError:
+            return ResponseFormatter.error_response('Token đã hết hạn', ResponseFormatter.HTTP_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            return ResponseFormatter.error_response('Token không hợp lệ', ResponseFormatter.HTTP_UNAUTHORIZED)
 
         return f(*args, **kwargs)
 

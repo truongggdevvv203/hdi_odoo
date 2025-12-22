@@ -2,7 +2,7 @@ import json
 import logging
 from odoo import http
 from odoo.http import request, Response
-from .auth_controller import _verify_token_json, _get_json_data
+from .auth_controller import _verify_token_http, _get_json_data
 from ..utils.response_formatter import ResponseFormatter
 
 _logger = logging.getLogger(__name__)
@@ -11,7 +11,7 @@ _logger = logging.getLogger(__name__)
 class EmployeeController(http.Controller):
 
     @http.route('/api/employee/detail', type='http', auth='none', methods=['POST'], csrf=False)
-    @_verify_token_json
+    @_verify_token_http
     def get_employee_detail(self, **kwargs):
         try:
             # Lấy dữ liệu từ request
