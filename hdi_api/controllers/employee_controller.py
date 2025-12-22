@@ -12,10 +12,6 @@ class EmployeeController(http.Controller):
     @http.route('/api/employee/detail', type='json', auth='none', methods=['POST'], csrf=False)
     @_verify_token_json
     def get_employee_detail(self, **kwargs):
-        """
-        API lấy thông tin chi tiết nhân viên theo phân quyền phòng ban
-        Body Request: {"employee_id": int}
-        """
         try:
             # Lấy dữ liệu từ request
             data = request.jsonrequest
@@ -94,14 +90,6 @@ class EmployeeController(http.Controller):
             }
 
     def _check_department_access(self, current_user, current_employee, target_employee):
-        """
-        Kiểm tra quyền truy cập thông tin nhân viên theo phòng ban
-        Rules:
-        1. Admin có thể xem tất cả
-        2. Trưởng phòng có thể xem nhân viên trong phòng ban của mình
-        3. Nhân viên chỉ có thể xem thông tin của chính mình
-        4. HR có thể xem tất cả nhân viên
-        """        
         # Rule 1: Admin có thể xem tất cả
         if current_user.has_group('base.group_system'):
             return True
