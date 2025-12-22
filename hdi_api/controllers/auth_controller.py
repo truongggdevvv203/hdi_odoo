@@ -69,11 +69,6 @@ def _hash_token(token):
     import hashlib
     return hashlib.sha256(token.encode()).hexdigest()
 
-
-# Functions cũ đã được thay thế bằng ResponseFormatter class
-# Giữ lại cho backward compatibility nếu cần
-
-
 def _get_json_data():
     """Helper để lấy JSON data từ request - tương thích Odoo 18"""
     try:
@@ -242,7 +237,7 @@ def _authenticate_user(db_name, login, password):
 
 class MobileAppAuthAPI(http.Controller):
 
-    @http.route('/api/v1/auth/login', type='json', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/v1/auth/login', type='http', auth='none', methods=['POST'], csrf=False)
     def login(self):
         try:
             # Sử dụng helper function để lấy JSON data
@@ -251,12 +246,12 @@ class MobileAppAuthAPI(http.Controller):
             password = data.get('password')
 
             if not login or not password:
-                return ResponseFormatter.error('Login và password là bắt buộc', code=400)
+                return ResponseFormatter.error_response('Login và password là bắt buộc', ResponseFormatter.HTTP_BAD_REQUEST)
 
             db_name = request.env.cr.dbname
 
             if not db_name:
-                return ResponseFormatter.error('Không xác định được database', code=400)
+                return ResponseFormatter.error_response('Không xác định được database', ResponseFormatter.HTTP_BAD_REQUEST)
 
             # Xác thực user - Odoo 18 format
             try:
@@ -281,12 +276,12 @@ class MobileAppAuthAPI(http.Controller):
                 uid = None
 
             if not uid:
-                return ResponseFormatter.error('Tài khoản hoặc mật khẩu không chính xác', code=401)
+                return ResponseFormatter.error_response('Tài khoản hoặc mật khẩu không chính xác', ResponseFormatter.HTTP_UNAUTHORIZED)
 
             user = request.env['res.users'].sudo().browse(uid)
 
             if not user.exists() or not user.active:
-                return ResponseFormatter.error('Tài khoản không khả dụng', code=403)
+                return ResponseFormatter.error_response('Tài khoản không khả dụng', ResponseFormatter.HTTP_FORBIDDEN)
 
             # JWT
             secret_key = _get_jwt_secret_key()
@@ -311,21 +306,21 @@ class MobileAppAuthAPI(http.Controller):
                 'expires_in': 1800
             }
 
-            return ResponseFormatter.success('Đăng nhập thành công', data=user_data, code=200)
+            return ResponseFormatter.success_response('Đăng nhập thành công', user_data)
 
         except Exception as e:
             _logger.exception("Login error")
-            return ResponseFormatter.error('Lỗi server', code=500)
+            return ResponseFormatter.error_response('Lỗi server', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
-    @http.route('/api/v1/auth/refresh-token', type='json', auth='none', methods=['POST'], csrf=False)
-    @_verify_token_json
+    @http.route('/api/v1/auth/refresh-token', type='http', auth='none', methods=['POST'], csrf=False)
+    @_verify_token
     def refresh_token(self):
         try:
             user_id = request.jwt_payload.get('user_id')
             db_name = request.jwt_payload.get('db')
 
             if not db_name:
-                return ResponseFormatter.error('Token không chứa thông tin database', code=400)
+                return ResponseFormatter.error_response('Token không chứa thông tin database', ResponseFormatter.HTTP_BAD_REQUEST)
 
             import odoo
             from odoo.modules.registry import Registry
@@ -336,10 +331,10 @@ class MobileAppAuthAPI(http.Controller):
                 user = env['res.users'].browse(user_id)
 
                 if not user.exists():
-                    return _format_error_response('Người dùng không tồn tại', code=404)
+                    return ResponseFormatter.error_response('Người dùng không tồn tại', ResponseFormatter.HTTP_NOT_FOUND)
 
                 if not user.active:
-                    return _format_error_response('Tài khoản đã bị vô hiệu hóa', code=403)
+                    return ResponseFormatter.error_response('Tài khoản đã bị vô hiệu hóa', ResponseFormatter.HTTP_FORBIDDEN)
 
                 user_info = {
                     'id': user.id,
@@ -366,14 +361,14 @@ class MobileAppAuthAPI(http.Controller):
                 'expires_in': 1800
             }
 
-            return ResponseFormatter.success('Làm mới token thành công', data=token_data, code=200)
+            return ResponseFormatter.success_response('Làm mới token thành công', token_data)
 
         except Exception as e:
             _logger.error(f"Refresh token error: {str(e)}", exc_info=True)
-            return ResponseFormatter.error('Lỗi server khi xử lý yêu cầu', code=500)
+            return ResponseFormatter.error_response('Lỗi server khi xử lý yêu cầu', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
-    @http.route('/api/v1/auth/verify-token', type='json', auth='none', methods=['POST'], csrf=False)
-    @_verify_token_json
+    @http.route('/api/v1/auth/verify-token', type='http', auth='none', methods=['POST'], csrf=False)
+    @_verify_token
     def verify_token(self):
         try:
             payload = request.jwt_payload
@@ -385,11 +380,11 @@ class MobileAppAuthAPI(http.Controller):
                 'exp': payload.get('exp'),
                 'valid': True
             }
-            return ResponseFormatter.success('Token hợp lệ', data=user_data, code=200)
+            return ResponseFormatter.success_response('Token hợp lệ', user_data)
 
         except Exception as e:
             _logger.error(f"Verify token error: {str(e)}", exc_info=True)
-            return ResponseFormatter.error('Lỗi server khi xử lý yêu cầu', code=500)
+            return ResponseFormatter.error_response('Lỗi server khi xử lý yêu cầu', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
     @http.route('/api/v1/auth/logout', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
@@ -450,8 +445,8 @@ class MobileAppAuthAPI(http.Controller):
             _logger.error(f"Get user error: {str(e)}", exc_info=True)
             return ResponseFormatter.error_response('Lỗi server khi xử lý yêu cầu', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
-    @http.route('/api/v1/auth/change-password', type='json', auth='none', methods=['POST'], csrf=False)
-    @_verify_token_json
+    @http.route('/api/v1/auth/change-password', type='http', auth='none', methods=['POST'], csrf=False)
+    @_verify_token
     def change_password(self):
         try:
             # Sử dụng helper function để lấy JSON data
@@ -463,25 +458,25 @@ class MobileAppAuthAPI(http.Controller):
 
             # Kiểm tra dữ liệu đầu vào
             if not old_password or not new_password or not confirm_password:
-                return _format_error_response('Mật khẩu cũ, mật khẩu mới và xác nhận mật khẩu là bắt buộc', code=400)
+                return ResponseFormatter.error_response('Mật khẩu cũ, mật khẩu mới và xác nhận mật khẩu là bắt buộc', ResponseFormatter.HTTP_BAD_REQUEST)
 
             # Kiểm tra xác nhận mật khẩu
             if new_password != confirm_password:
-                return _format_error_response('Mật khẩu mới và xác nhận mật khẩu không khớp', code=400)
+                return ResponseFormatter.error_response('Mật khẩu mới và xác nhận mật khẩu không khớp', ResponseFormatter.HTTP_BAD_REQUEST)
 
             # Kiểm tra độ dài mật khẩu
             if len(new_password) < 8:
-                return _format_error_response('Mật khẩu mới phải ít nhất 8 ký tự', code=400)
+                return ResponseFormatter.error_response('Mật khẩu mới phải ít nhất 8 ký tự', ResponseFormatter.HTTP_BAD_REQUEST)
 
             # Kiểm tra mật khẩu cũ và mới không được giống nhau
             if old_password == new_password:
-                return _format_error_response('Mật khẩu mới không được giống mật khẩu cũ', code=400)
+                return ResponseFormatter.error_response('Mật khẩu mới không được giống mật khẩu cũ', ResponseFormatter.HTTP_BAD_REQUEST)
 
             user_id = request.jwt_payload.get('user_id')
             db_name = request.jwt_payload.get('db')
 
             if not db_name:
-                return _format_error_response('Token không chứa thông tin database', code=400)
+                return ResponseFormatter.error_response('Token không chứa thông tin database', ResponseFormatter.HTTP_BAD_REQUEST)
 
             import odoo
             from odoo.modules.registry import Registry
@@ -492,17 +487,17 @@ class MobileAppAuthAPI(http.Controller):
                 user = env['res.users'].browse(user_id)
 
                 if not user.exists():
-                    return _format_error_response('Người dùng không tồn tại', code=404)
+                    return ResponseFormatter.error_response('Người dùng không tồn tại', ResponseFormatter.HTTP_NOT_FOUND)
 
                 if not user.active:
-                    return _format_error_response('Tài khoản đã bị vô hiệu hóa', code=403)
+                    return ResponseFormatter.error_response('Tài khoản đã bị vô hiệu hóa', ResponseFormatter.HTTP_FORBIDDEN)
 
                 try:
                     # Xác thực mật khẩu cũ bằng cách gọi _authenticate_user
                     auth_uid = _authenticate_user(db_name, user.login, old_password)
 
                     if not auth_uid or auth_uid != user.id:
-                        return _format_error_response('Mật khẩu cũ không chính xác', code=401)
+                        return ResponseFormatter.error_response('Mật khẩu cũ không chính xác', ResponseFormatter.HTTP_UNAUTHORIZED)
 
                     # Cập nhật mật khẩu mới (Odoo sẽ tự động hash)
                     user.write({'password': new_password})
@@ -510,13 +505,13 @@ class MobileAppAuthAPI(http.Controller):
 
                     _logger.info(f"User {user.login} changed password successfully")
 
-                    return _format_success_response('Đổi mật khẩu thành công', code=200)
+                    return ResponseFormatter.success_response('Đổi mật khẩu thành công')
 
                 except Exception as pwd_error:
                     cr.rollback()
                     _logger.error(f"Password change failed for user {user.login}: {str(pwd_error)}", exc_info=True)
-                    return _format_error_response('Lỗi khi đổi mật khẩu', code=500)
+                    return ResponseFormatter.error_response('Lỗi khi đổi mật khẩu', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
         except Exception as e:
             _logger.error(f"Change password error: {str(e)}", exc_info=True)
-            return _format_error_response('Lỗi server khi xử lý yêu cầu', code=500)
+            return ResponseFormatter.error_response('Lỗi server khi xử lý yêu cầu', ResponseFormatter.HTTP_INTERNAL_ERROR)
