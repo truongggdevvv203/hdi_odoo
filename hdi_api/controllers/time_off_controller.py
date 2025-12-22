@@ -40,10 +40,6 @@ class TimeOffController(http.Controller):
                     types_data.append({
                         'id': leave_type.id,
                         'name': leave_type.name,
-                        'code': leave_type.code or '',
-                        'color_name': leave_type.color_name or '',
-                        'max_allowed_leaves': leave_type.max_allowed_leaves or 0,
-                        'allow_negative': leave_type.allow_negative,
                     })
 
                 return ResponseFormatter.success_response('Lấy danh sách loại nghỉ thành công', types_data)
