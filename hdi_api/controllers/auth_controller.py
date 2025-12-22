@@ -312,7 +312,7 @@ class MobileAppAuthAPI(http.Controller):
             _logger.exception("Login error")
             return ResponseFormatter.error_response('Lỗi server', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
-    @http.route('/api/v1/auth/refresh-token', type='http', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/v1/auth/refresh_token', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def refresh_token(self):
         try:
@@ -367,7 +367,7 @@ class MobileAppAuthAPI(http.Controller):
             _logger.error(f"Refresh token error: {str(e)}", exc_info=True)
             return ResponseFormatter.error_response('Lỗi server khi xử lý yêu cầu', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
-    @http.route('/api/v1/auth/verify-token', type='http', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/v1/auth/verify_token', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def verify_token(self):
         try:
@@ -445,7 +445,7 @@ class MobileAppAuthAPI(http.Controller):
             _logger.error(f"Get user error: {str(e)}", exc_info=True)
             return ResponseFormatter.error_response('Lỗi server khi xử lý yêu cầu', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
-    @http.route('/api/v1/auth/change-password', type='http', auth='none', methods=['POST'], csrf=False)
+    @http.route('/api/v1/auth/change_password', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
     def change_password(self):
         try:
