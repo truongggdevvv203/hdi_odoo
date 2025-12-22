@@ -48,10 +48,10 @@ class TimeOffController(http.Controller):
             _logger.error(f"Error in get_leave_types: {str(e)}", exc_info=True)
             return ResponseFormatter.error_response('Có lỗi xảy ra khi lấy danh sách loại nghỉ', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
-    @http.route('/api/time-off/remaining-days/<int:employee_id>', type='http', auth='none', methods=['GET'], csrf=False)
+    @http.route('/api/time-off/remaining-days', type='http', auth='none', methods=['GET'], csrf=False)
     @_verify_token_http
-    def get_remaining_days(self, employee_id):
-        """Lấy số ngày phép còn lại của nhân viên"""
+    def get_remaining_days(self):
+        """Lấy số ngày phép còn lại của user đang đăng nhập"""
         try:
             jwt_payload = getattr(request, 'jwt_payload', {})
             user_id = jwt_payload.get('user_id')
@@ -67,43 +67,31 @@ class TimeOffController(http.Controller):
             with registry.cursor() as cr:
                 env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
 
-                # Kiểm tra quyền - chỉ xem được của chính mình hoặc nếu là HR/Admin
                 current_user = env['res.users'].sudo().search([('id', '=', user_id)], limit=1)
                 if not current_user:
                     return ResponseFormatter.error_response('User không tồn tại', ResponseFormatter.HTTP_UNAUTHORIZED)
 
-                can_view = (current_user.has_group('base.group_system') or
-                           current_user.has_group('hr.group_hr_manager') or
-                           (current_user.employee_id and current_user.employee_id.id == employee_id))
-
-                if not can_view:
-                    return ResponseFormatter.error_response('Không có quyền xem thông tin này', ResponseFormatter.HTTP_FORBIDDEN)
-
-                # Lấy thông tin nhân viên
-                employee = env['hr.employee'].sudo().search([('id', '=', employee_id)], limit=1)
+                employee = current_user.employee_id
                 if not employee:
-                    return ResponseFormatter.error_response('Không tìm thấy nhân viên', ResponseFormatter.HTTP_NOT_FOUND)
+                    return ResponseFormatter.error_response('User không phải là nhân viên', ResponseFormatter.HTTP_FORBIDDEN)
 
-                # Lấy số ngày phép còn lại cho từng loại nghỉ
                 leave_types = env['hr.leave.type'].sudo().search([('active', '=', True)])
                 remaining_days = []
 
                 for leave_type in leave_types:
                     allocation = env['hr.leave.allocation'].sudo().search([
-                        ('employee_id', '=', employee_id),
-                        ('leave_type_id', '=', leave_type.id),
+                        ('employee_id', '=', employee.id),
+                        ('holiday_status_id', '=', leave_type.id),
                         ('state', '=', 'validate'),
                     ], order='date_from desc', limit=1)
 
                     if allocation:
-                        # Tính số ngày đã dùng
                         used_leaves = env['hr.leave'].sudo().search_count([
-                            ('employee_id', '=', employee_id),
-                            ('leave_type_id', '=', leave_type.id),
+                            ('employee_id', '=', employee.id),
+                            ('holiday_status_id', '=', leave_type.id),
                             ('state', '=', 'validate'),
                             ('date_from', '>=', allocation.date_from),
                         ])
-
                         remaining = allocation.number_of_days - used_leaves
                     else:
                         remaining = 0
@@ -115,7 +103,7 @@ class TimeOffController(http.Controller):
                     })
 
                 return ResponseFormatter.success_response('Lấy số ngày phép còn lại thành công', {
-                    'employee_id': employee_id,
+                    'employee_id': employee.id,
                     'employee_name': employee.name,
                     'remaining_days': remaining_days
                 })
@@ -178,12 +166,11 @@ class TimeOffController(http.Controller):
                         'id': leave.id,
                         'employee_id': leave.employee_id.id,
                         'employee_name': leave.employee_id.name,
-                        'leave_type': leave.leave_type_id.name,
+                        'leave_type': leave.holiday_status_id.name,
                         'date_from': leave.date_from.isoformat() if leave.date_from else None,
                         'date_to': leave.date_to.isoformat() if leave.date_to else None,
                         'number_of_days': leave.number_of_days,
                         'state': leave.state,
-                        'request_date': leave.request_date.isoformat() if leave.request_date else None,
                     })
 
                 return ResponseFormatter.success_response('Lấy danh sách đơn xin nghỉ thành công', {
@@ -197,11 +184,16 @@ class TimeOffController(http.Controller):
             _logger.error(f"Error in get_leave_list: {str(e)}", exc_info=True)
             return ResponseFormatter.error_response('Có lỗi xảy ra khi lấy danh sách đơn xin nghỉ', ResponseFormatter.HTTP_INTERNAL_ERROR)
 
-    @http.route('/api/time-off/detail/<int:leave_id>', type='http', auth='none', methods=['GET'], csrf=False)
+    @http.route('/api/time-off/detail', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http
-    def get_leave_detail(self, leave_id):
-        """Lấy thông tin chi tiết của một đơn xin nghỉ"""
+    def get_leave_detail(self):
+        """Lấy thông tin chi tiết của một đơn xin nghỉ (leave_id trong body)"""
         try:
+            data = _get_json_data()
+            leave_id = data.get('leave_id')
+            if not leave_id:
+                return ResponseFormatter.error_response('leave_id là bắt buộc', ResponseFormatter.HTTP_BAD_REQUEST)
+
             jwt_payload = getattr(request, 'jwt_payload', {})
             user_id = jwt_payload.get('user_id')
             db_name = jwt_payload.get('db')
@@ -240,12 +232,11 @@ class TimeOffController(http.Controller):
                     'id': leave.id,
                     'employee_id': leave.employee_id.id,
                     'employee_name': leave.employee_id.name,
-                    'leave_type': leave.leave_type_id.name,
+                    'leave_type': leave.holiday_status_id.name,
                     'date_from': leave.date_from.isoformat() if leave.date_from else None,
                     'date_to': leave.date_to.isoformat() if leave.date_to else None,
                     'number_of_days': leave.number_of_days,
                     'state': leave.state,
-                    'request_date': leave.request_date.isoformat() if leave.request_date else None,
                     'name': leave.name or '',
                 }
 
@@ -270,7 +261,7 @@ class TimeOffController(http.Controller):
                 return ResponseFormatter.error_response('Token không chứa thông tin database', ResponseFormatter.HTTP_BAD_REQUEST)
 
             # Kiểm tra dữ liệu bắt buộc
-            required_fields = ['leave_type_id', 'date_from', 'date_to']
+            required_fields = ['holiday_status_id', 'date_from', 'date_to']
             for field in required_fields:
                 if field not in data or not data[field]:
                     return ResponseFormatter.error_response(f'{field} là bắt buộc', ResponseFormatter.HTTP_BAD_REQUEST)
@@ -303,7 +294,7 @@ class TimeOffController(http.Controller):
                     return ResponseFormatter.error_response('Không tìm thấy nhân viên', ResponseFormatter.HTTP_NOT_FOUND)
 
                 # Validate leave type
-                leave_type = env['hr.leave.type'].sudo().search([('id', '=', data['leave_type_id'])], limit=1)
+                leave_type = env['hr.leave.type'].sudo().search([('id', '=', data['holiday_status_id'])], limit=1)
                 if not leave_type:
                     return ResponseFormatter.error_response('Không tìm thấy loại nghỉ', ResponseFormatter.HTTP_NOT_FOUND)
 
@@ -311,7 +302,7 @@ class TimeOffController(http.Controller):
                 try:
                     leave = env['hr.leave'].sudo().create({
                         'employee_id': employee_id,
-                        'leave_type_id': data['leave_type_id'],
+                        'holiday_status_id': data['holiday_status_id'],
                         'date_from': data['date_from'],
                         'date_to': data['date_to'],
                         'name': data.get('name', ''),
@@ -321,7 +312,7 @@ class TimeOffController(http.Controller):
                     return ResponseFormatter.success_response('Tạo đơn xin nghỉ thành công', {
                         'id': leave.id,
                         'employee_id': leave.employee_id.id,
-                        'leave_type': leave.leave_type_id.name,
+                        'leave_type': leave.holiday_status_id.name,
                         'date_from': leave.date_from.isoformat() if leave.date_from else None,
                         'date_to': leave.date_to.isoformat() if leave.date_to else None,
                         'state': leave.state,
@@ -387,8 +378,8 @@ class TimeOffController(http.Controller):
                     update_data['date_from'] = data['date_from']
                 if 'date_to' in data:
                     update_data['date_to'] = data['date_to']
-                if 'leave_type_id' in data:
-                    update_data['leave_type_id'] = data['leave_type_id']
+                if 'holiday_status_id' in data:
+                    update_data['holiday_status_id'] = data['holiday_status_id']
                 if 'name' in data:
                     update_data['name'] = data['name']
 
@@ -403,7 +394,7 @@ class TimeOffController(http.Controller):
                     return ResponseFormatter.success_response('Cập nhật đơn xin nghỉ thành công', {
                         'id': leave.id,
                         'employee_id': leave.employee_id.id,
-                        'leave_type': leave.leave_type_id.name,
+                        'leave_type': leave.holiday_status_id.name,
                         'date_from': leave.date_from.isoformat() if leave.date_from else None,
                         'date_to': leave.date_to.isoformat() if leave.date_to else None,
                         'state': leave.state,
