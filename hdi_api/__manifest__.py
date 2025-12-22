@@ -10,6 +10,8 @@
         'base',
         'web',
         'hr_attendance',
+        'hr',
+        'hdi_hr',
     ],
     'external_dependencies': {
         'python': ['pyjwt', 'werkzeug'],
