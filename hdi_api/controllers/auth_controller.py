@@ -318,6 +318,7 @@ class MobileAppAuthAPI(http.Controller):
         try:
             user_id = request.jwt_payload.get('user_id')
             db_name = request.jwt_payload.get('db')
+            old_token_exp = request.jwt_payload.get('exp')
 
             if not db_name:
                 return ResponseFormatter.error_response('Token không chứa thông tin database', ResponseFormatter.HTTP_BAD_REQUEST)
@@ -343,6 +344,12 @@ class MobileAppAuthAPI(http.Controller):
                     'email': user.email or '',
                 }
 
+            # Blacklist token cũ
+            old_token = request.httprequest.headers.get('Authorization', '').replace('Bearer ', '')
+            if old_token and old_token_exp:
+                old_exp_time = datetime.utcfromtimestamp(old_token_exp)
+                _add_token_to_blacklist(old_token, user_id, db_name, old_exp_time)
+
             secret_key = _get_jwt_secret_key()
             token_payload = {
                 'user_id': user_info['id'],
@@ -351,7 +358,7 @@ class MobileAppAuthAPI(http.Controller):
                 'email': user_info['email'],
                 'db': db_name,
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(hours=24)
+                'exp': datetime.utcnow() + timedelta(minutes=30)
             }
 
             token = jwt.encode(token_payload, secret_key, algorithm='HS256')
