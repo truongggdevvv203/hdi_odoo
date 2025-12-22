@@ -79,6 +79,23 @@ def _make_json_response(data, status_code=200):
     )
 
 
+def _get_json_data():
+    """Helper để lấy JSON data từ request - tương thích Odoo 18"""
+    try:
+        # Odoo 18: Sử dụng get_json_data()
+        if hasattr(request, 'get_json_data'):
+            return request.get_json_data()
+        # Fallback cho các phiên bản cũ hơn
+        elif hasattr(request, 'jsonrequest'):
+            return request.jsonrequest
+        else:
+            # Parse thủ công từ request body
+            return json.loads(request.httprequest.data.decode('utf-8'))
+    except Exception as e:
+        _logger.error(f"Error parsing JSON data: {str(e)}")
+        return {}
+
+
 def _verify_token(f):
     """Decorator để kiểm tra JWT token - dùng cho HTTP routes"""
 
@@ -221,30 +238,18 @@ class MobileAppAuthAPI(http.Controller):
     @http.route('/api/v1/auth/login', type='json', auth='none', methods=['POST'], csrf=False)
     def login(self):
         try:
-            try:
-                data = request.jsonrequest or json.loads(request.httprequest.data.decode('utf-8'))
-            except:
-                data = json.loads(request.httprequest.data.decode('utf-8'))
-
+            # Sử dụng helper function để lấy JSON data
+            data = _get_json_data()
             login = data.get('login')
             password = data.get('password')
-            db_name = data.get('db')
 
             if not login or not password:
                 return {
                     'status': 'error',
-                    'message': 'Email/Username và password là bắt buộc'
+                    'message': 'Login và password là bắt buộc'
                 }
 
-            if not db_name:
-                db_name = request.session.db
-            if not db_name:
-                try:
-                    db_name = request.env.cr.dbname
-                except:
-                    pass
-            if not db_name:
-                db_name = request.httprequest.environ.get('HTTP_X_OPENERP_DBNAME')
+            db_name = request.env.cr.dbname
 
             if not db_name:
                 return {
@@ -252,8 +257,27 @@ class MobileAppAuthAPI(http.Controller):
                     'message': 'Không xác định được database'
                 }
 
-            # Xác thực user
-            uid = _authenticate_user(db_name, login, password)
+            # Xác thực user - Odoo 18 format
+            try:
+                credential = {
+                    'login': login,
+                    'password': password,
+                    'type': 'password'
+                }
+
+                auth_info = request.env.registry['res.users'].authenticate(
+                    db_name, credential, user_agent_env={}
+                )
+
+                # auth_info là dict chứa 'uid' và các thông tin khác
+                if auth_info and isinstance(auth_info, dict):
+                    uid = auth_info.get('uid')
+                else:
+                    uid = None
+
+            except Exception as auth_error:
+                _logger.debug(f"Authentication failed: {str(auth_error)}")
+                uid = None
 
             if not uid:
                 return {
@@ -261,46 +285,24 @@ class MobileAppAuthAPI(http.Controller):
                     'message': 'Tài khoản hoặc mật khẩu không chính xác'
                 }
 
-            # Lấy thông tin user sau khi xác thực thành công
-            try:
-                import odoo
-                from odoo.modules.registry import Registry
+            user = request.env['res.users'].sudo().browse(uid)
 
-                registry = Registry(db_name)
-                with registry.cursor() as cr:
-                    env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
-                    user = env['res.users'].browse(uid)
-
-                    if not user.exists() or not user.active:
-                        return {
-                            'status': 'error',
-                            'message': 'Tài khoản không khả dụng'
-                        }
-
-                    user_info = {
-                        'id': user.id,
-                        'name': user.name,
-                        'email': user.email or '',
-                        'login': user.login,
-                    }
-
-            except Exception as e:
-                _logger.error(f"Error getting user info: {str(e)}", exc_info=True)
+            if not user.exists() or not user.active:
                 return {
                     'status': 'error',
-                    'message': 'Lỗi khi lấy thông tin người dùng'
+                    'message': 'Tài khoản không khả dụng'
                 }
 
-            # Tạo JWT token
+            # JWT
             secret_key = _get_jwt_secret_key()
             token_payload = {
                 'user_id': uid,
-                'login': user_info['login'],
-                'name': user_info['name'],
-                'email': user_info['email'],
+                'login': user.login,
+                'name': user.name,
+                'email': user.email or '',
                 'db': db_name,
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(hours=24)
+                'exp': datetime.utcnow() + timedelta(minutes=30)
             }
 
             token = jwt.encode(token_payload, secret_key, algorithm='HS256')
@@ -309,15 +311,20 @@ class MobileAppAuthAPI(http.Controller):
                 'status': 'success',
                 'message': 'Đăng nhập thành công',
                 'token': token,
-                'user': user_info,
-                'expires_in': 86400
+                'user': {
+                    'id': user.id,
+                    'name': user.name,
+                    'login': user.login,
+                    'email': user.email or ''
+                },
+                'expires_in': 1800
             }
 
         except Exception as e:
-            _logger.error(f"Login error: {str(e)}", exc_info=True)
+            _logger.exception("Login error")
             return {
                 'status': 'error',
-                'message': 'Lỗi server khi xử lý yêu cầu'
+                'message': 'Lỗi server'
             }
 
     @http.route('/api/v1/auth/refresh-token', type='json', auth='none', methods=['POST'], csrf=False)
@@ -377,7 +384,7 @@ class MobileAppAuthAPI(http.Controller):
                 'status': 'success',
                 'message': 'Làm mới token thành công',
                 'token': token,
-                'expires_in': 86400
+                'expires_in': 1800
             }
 
         except Exception as e:
@@ -496,10 +503,8 @@ class MobileAppAuthAPI(http.Controller):
     @_verify_token_json
     def change_password(self):
         try:
-            try:
-                data = request.jsonrequest or json.loads(request.httprequest.data.decode('utf-8'))
-            except:
-                data = json.loads(request.httprequest.data.decode('utf-8'))
+            # Sử dụng helper function để lấy JSON data
+            data = _get_json_data()
 
             old_password = data.get('old_password')
             new_password = data.get('new_password')
