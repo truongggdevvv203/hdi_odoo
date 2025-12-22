@@ -79,7 +79,7 @@ def _make_json_response(data, status_code=200):
 
 
 def _verify_token(f):
-    """Decorator để kiểm tra JWT token"""
+    """Decorator để kiểm tra JWT token - dùng cho HTTP routes"""
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -118,6 +118,52 @@ def _verify_token(f):
                 'status': 'error',
                 'message': 'Token không hợp lệ'
             }, 401)
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def _verify_token_json(f):
+    """Decorator để kiểm tra JWT token - dùng cho JSON routes"""
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = None
+
+        # Lấy token từ Authorization header
+        auth_header = request.httprequest.headers.get('Authorization', '')
+        if auth_header.startswith('Bearer '):
+            token = auth_header[7:]  # Loại bỏ "Bearer " prefix
+
+        if not token:
+            return {
+                'status': 'error',
+                'message': 'Token không được cung cấp'
+            }
+
+        try:
+            secret_key = _get_jwt_secret_key()
+            payload = jwt.decode(token, secret_key, algorithms=['HS256'])
+
+            # Kiểm tra token có trong blacklist không
+            if _is_token_blacklisted(token, payload.get('db')):
+                return {
+                    'status': 'error',
+                    'message': 'Token đã bị vô hiệu hóa'
+                }
+
+            request.jwt_payload = payload
+        except jwt.ExpiredSignatureError:
+            return {
+                'status': 'error',
+                'message': 'Token đã hết hạn'
+            }
+        except jwt.InvalidTokenError:
+            return {
+                'status': 'error',
+                'message': 'Token không hợp lệ'
+            }
 
         return f(*args, **kwargs)
 
@@ -422,3 +468,124 @@ class MobileAppAuthAPI(http.Controller):
                 'status': 'error',
                 'message': 'Lỗi server khi xử lý yêu cầu'
             }, 500)
+
+    @http.route('/api/v1/auth/change-password', type='json', auth='none', methods=['POST'], csrf=False)
+    @_verify_token_json
+    def change_password(self):
+        try:
+            try:
+                data = request.jsonrequest or json.loads(request.httprequest.data.decode('utf-8'))
+            except:
+                data = json.loads(request.httprequest.data.decode('utf-8'))
+
+            old_password = data.get('old_password')
+            new_password = data.get('new_password')
+            confirm_password = data.get('confirm_password')
+
+            # Kiểm tra dữ liệu đầu vào
+            if not old_password or not new_password or not confirm_password:
+                return {
+                    'status': 'error',
+                    'message': 'Mật khẩu cũ, mật khẩu mới và xác nhận mật khẩu là bắt buộc'
+                }
+
+            # Kiểm tra xác nhận mật khẩu
+            if new_password != confirm_password:
+                return {
+                    'status': 'error',
+                    'message': 'Mật khẩu mới và xác nhận mật khẩu không khớp'
+                }
+
+            # Kiểm tra độ dài mật khẩu
+            if len(new_password) < 6:
+                return {
+                    'status': 'error',
+                    'message': 'Mật khẩu mới phải ít nhất 6 ký tự'
+                }
+
+            # Kiểm tra mật khẩu cũ và mới không được giống nhau
+            if old_password == new_password:
+                return {
+                    'status': 'error',
+                    'message': 'Mật khẩu mới không được giống mật khẩu cũ'
+                }
+
+            user_id = request.jwt_payload.get('user_id')
+            db_name = request.jwt_payload.get('db')
+
+            if not db_name:
+                return {
+                    'status': 'error',
+                    'message': 'Token không chứa thông tin database'
+                }
+
+            import odoo
+            from odoo.modules.registry import Registry
+            from passlib.context import CryptContext
+
+            registry = Registry(db_name)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+                user = env['res.users'].browse(user_id)
+
+                if not user.exists():
+                    return {
+                        'status': 'error',
+                        'message': 'Người dùng không tồn tại'
+                    }
+
+                try:
+                    # Kiểm tra mật khẩu cũ
+                    default_crypt_context = CryptContext(
+                        schemes=['pbkdf2_sha512', 'plaintext'],
+                        deprecated=['plaintext']
+                    )
+
+                    cr.execute(
+                        "SELECT password FROM res_users WHERE id=%s",
+                        (user.id,)
+                    )
+                    result = cr.fetchone()
+
+                    if not result or not result[0]:
+                        return {
+                            'status': 'error',
+                            'message': 'Người dùng không có mật khẩu'
+                        }
+
+                    stored_password = result[0]
+
+                    # Xác thực mật khẩu cũ
+                    valid, replacement = default_crypt_context.verify_and_update(
+                        old_password, stored_password
+                    )
+
+                    if not valid:
+                        return {
+                            'status': 'error',
+                            'message': 'Mật khẩu cũ không chính xác'
+                        }
+
+                    # Cập nhật mật khẩu mới (Odoo sẽ tự động hash)
+                    user.write({'password': new_password})
+
+                    _logger.info(f"User {user.login} changed password successfully")
+
+                    return {
+                        'status': 'success',
+                        'message': 'Đổi mật khẩu thành công'
+                    }
+
+                except Exception as pwd_error:
+                    _logger.error(f"Password change failed for user {user.login}: {str(pwd_error)}", exc_info=True)
+                    return {
+                        'status': 'error',
+                        'message': 'Lỗi khi đổi mật khẩu'
+                    }
+
+        except Exception as e:
+            _logger.error(f"Change password error: {str(e)}", exc_info=True)
+            return {
+                'status': 'error',
+                'message': 'Lỗi server khi xử lý yêu cầu'
+            }
