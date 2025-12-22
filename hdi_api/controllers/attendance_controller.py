@@ -50,7 +50,7 @@ class AttendanceAPI(http.Controller):
             registry = Registry(db_name)
             with registry.cursor() as cr:
                 env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
-                
+
                 # Lấy employee
                 employee = env['hr.employee'].sudo().search([
                     ('user_id', '=', user_id)
@@ -123,7 +123,7 @@ class AttendanceAPI(http.Controller):
             registry = Registry(db_name)
             with registry.cursor() as cr:
                 env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
-                
+
                 # Lấy employee
                 employee = env['hr.employee'].sudo().search([
                     ('user_id', '=', user_id)
@@ -147,12 +147,37 @@ class AttendanceAPI(http.Controller):
                         'message': 'Không tìm thấy bản ghi chấm công vào. Vui lòng chấm công vào trước.'
                     }, 400)
 
-                # Cập nhật check-out
-                attendance.sudo().write({
-                    'check_out': datetime.now(),
-                })
+                try:
+                    # Kiểm tra và xóa overtime record cũ nếu tồn tại
+                    attendance_date = attendance.check_in.date() if attendance.check_in else datetime.now().date()
+                    old_overtime = env['hr.attendance.overtime'].sudo().search([
+                        ('employee_id', '=', employee.id),
+                        ('date', '=', str(attendance_date))
+                    ])
+                    if old_overtime:
+                        old_overtime.sudo().unlink()
 
-                cr.commit()
+                    # Cập nhật check-out
+                    attendance.sudo().write({
+                        'check_out': datetime.now(),
+                    })
+                    cr.commit()
+                except Exception as write_error:
+                    _logger.warning(f"Check-out update warning: {str(write_error)}")
+                    cr.rollback()
+
+                    # Fallback: cập nhật trực tiếp database
+                    try:
+                        cr.execute(
+                            "UPDATE hr_attendance SET check_out = %s WHERE id = %s",
+                            (datetime.now(), attendance.id)
+                        )
+                        cr.commit()
+                        _logger.info(f"Check-out successful via direct SQL for employee {employee.name}")
+                    except Exception as e:
+                        _logger.error(f"Check-out failed: {str(e)}", exc_info=True)
+                        cr.rollback()
+                        raise e
 
                 # Tính thời gian làm việc
                 worked_hours = attendance.worked_hours if hasattr(attendance, 'worked_hours') else 0
@@ -197,7 +222,7 @@ class AttendanceAPI(http.Controller):
             registry = Registry(db_name)
             with registry.cursor() as cr:
                 env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
-                
+
                 # Lấy employee
                 employee = env['hr.employee'].sudo().search([
                     ('user_id', '=', user_id)
@@ -267,7 +292,7 @@ class AttendanceAPI(http.Controller):
             registry = Registry(db_name)
             with registry.cursor() as cr:
                 env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
-                
+
                 # Lấy employee
                 employee = env['hr.employee'].sudo().search([
                     ('user_id', '=', user_id)
@@ -281,7 +306,7 @@ class AttendanceAPI(http.Controller):
 
                 # Build domain
                 domain = [('employee_id', '=', employee.id)]
-                
+
                 if from_date:
                     try:
                         from_datetime = datetime.strptime(from_date, '%Y-%m-%d')
@@ -352,7 +377,7 @@ class AttendanceAPI(http.Controller):
 
             # Lấy params từ query string (YYYY-MM)
             month = request.httprequest.args.get('month')
-            
+
             if not month:
                 # Mặc định là tháng hiện tại
                 month = datetime.now().strftime('%Y-%m')
@@ -366,7 +391,7 @@ class AttendanceAPI(http.Controller):
             try:
                 year, month_num = map(int, month.split('-'))
                 from_date = datetime(year, month_num, 1)
-                
+
                 # Tính ngày cuối tháng
                 if month_num == 12:
                     to_date = datetime(year + 1, 1, 1)
@@ -384,7 +409,7 @@ class AttendanceAPI(http.Controller):
             registry = Registry(db_name)
             with registry.cursor() as cr:
                 env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
-                
+
                 # Lấy employee
                 employee = env['hr.employee'].sudo().search([
                     ('user_id', '=', user_id)
