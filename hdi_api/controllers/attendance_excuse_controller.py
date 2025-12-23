@@ -188,13 +188,6 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
     @http.route('/api/v1/attendance-excuse/get', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http
     def get_excuse(self):
-        """
-        Lấy chi tiết giải trình chấm công
-        Request body:
-        {
-            "excuse_id": int
-        }
-        """
         try:
             # Lấy dữ liệu từ request body
             try:
@@ -298,16 +291,6 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
     @http.route('/api/v1/attendance-excuse/list', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http
     def list_excuses(self):
-        """
-        Lấy danh sách giải trình chấm công của user
-        
-        Request body:
-        {
-            "state": "draft",      # draft, submitted, approved, rejected (không bắt buộc)
-            "limit": 50,           # số lượng bản ghi (mặc định: 50)
-            "offset": 0            # số lượng bỏ qua (mặc định: 0)
-        }
-        """
         try:
             user_id = request.jwt_payload.get('user_id')
             db_name = request.jwt_payload.get('db')
