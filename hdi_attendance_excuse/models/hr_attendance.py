@@ -161,35 +161,46 @@ class HRAttendance(models.Model):
         return dt.astimezone(tz)
 
     def _get_work_schedule(self, employee):
-        if not employee or not employee.department_id:
-            # Giá trị mặc định nếu không có phòng ban
-            return {
-                'start_time': 8.5,
-                'end_time': 18.0,
-                'late_tolerance': 0.25,
-            }
+        """
+        Lấy lịch làm việc từ resource.calendar của nhân viên
+        Trả về start_time, end_time và late_tolerance
+        """
+        # Giá trị mặc định
+        default_schedule = {
+            'start_time': 8.5,  # 8:30
+            'end_time': 18.0,   # 18:00
+            'late_tolerance': 0.25,  # 15 phút
+        }
 
-        # Tìm cấu hình cho phòng ban
-        schedule = self.env['department.work.schedule'].search([
-            ('department_id', '=', employee.department_id.id),
-            ('active', '=', True)
-        ], limit=1)
+        if not employee:
+            return default_schedule
 
-        if schedule:
-            # Chuyển đổi late_tolerance từ phút sang giờ (phút / 60)
-            late_tolerance_hours = schedule.late_tolerance / 60.0
+        # Lấy calendar từ employee
+        calendar = employee.resource_calendar_id
+        if not calendar:
+            # Nếu không có calendar riêng, lấy calendar của company
+            calendar = employee.company_id.resource_calendar_id
+        
+        if not calendar:
+            return default_schedule
+
+        # Lấy giờ làm việc từ calendar attendance (thường là thứ 2)
+        # Tìm attendance đầu tiên (có thể có nhiều ca trong ngày)
+        attendance = calendar.attendance_ids.filtered(lambda a: a.dayofweek == '0')[:1]  # 0 = Monday
+        
+        if not attendance:
+            # Nếu không có thứ 2, lấy bất kỳ ngày nào
+            attendance = calendar.attendance_ids[:1]
+        
+        if attendance:
+            # hour_from và hour_to đã là float (8.5 = 8:30)
             return {
-                'start_time': schedule.check_in_time,
-                'end_time': schedule.check_out_time,
-                'late_tolerance': late_tolerance_hours,
+                'start_time': attendance.hour_from,
+                'end_time': attendance.hour_to,
+                'late_tolerance': 0.25,  # 15 phút - có thể config sau
             }
-        else:
-            # Giá trị mặc định nếu không tìm thấy cấu hình
-            return {
-                'start_time': 8.5,
-                'end_time': 18.0,
-                'late_tolerance': 0.25,
-            }
+        
+        return default_schedule
 
     @api.depends('check_in', 'check_out', 'excuse_ids', 'excuse_ids.state', 'is_invalid_record')
     def _compute_attendance_status(self):
