@@ -40,6 +40,7 @@ class HRAttendance(models.Model):
         [
             ('valid', 'Chấm công hợp lệ'),
             ('late_or_early', 'Đi muộn/về sớm'),
+            ('missing_checkin_out', 'Thiếu chấm công'),
             ('excuse_rejected', 'Từ chối giải trình'),
             ('pending_excuse_approval', 'Đang chờ duyệt giải trình'),
             ('excuse_approved', 'Hoàn thành phê duyệt'),
@@ -115,29 +116,36 @@ class HRAttendance(models.Model):
                     record.is_invalid_record = True
                     continue
 
-            # Kiểm tra các trường hợp không hợp lệ
-            if record.check_in and record.check_out:
+            # 1. Kiểm tra thiếu chấm công (missing_checkin_out) → không hợp lệ
+            if not record.check_in or not record.check_out:
+                is_valid = False
+            # 2. Kiểm tra dữ liệu có lỗi
+            elif record.check_in and record.check_out:
                 # Check-out phải sau check-in
                 if record.check_out <= record.check_in:
                     is_valid = False
-
                 # Kiểm tra khoảng thời gian quá dài (vượt quá 24 giờ)
-                time_diff = (record.check_out - record.check_in).total_seconds() / 3600
-                if time_diff > 24:
+                elif (record.check_out - record.check_in).total_seconds() / 3600 > 24:
                     is_valid = False
-
                 # Kiểm tra auto-checkout tại midnight (23:59:59)
-                co = record._convert_to_local_time(record.check_out)
-                if co.hour == 23 and co.minute == 59 and co.second == 59:
-                    is_valid = False
+                else:
+                    co = record._convert_to_local_time(record.check_out)
+                    if co.hour == 23 and co.minute == 59 and co.second == 59:
+                        is_valid = False
+                    else:
+                        # 3. Kiểm tra đi muộn/về sớm → không hợp lệ
+                        schedule = record._get_work_schedule(record.employee_id)
+                        ci = record._convert_to_local_time(record.check_in)
+                        check_in_hour = ci.hour + ci.minute / 60.0
+                        late_threshold = schedule['start_time'] + schedule['late_tolerance']
 
-            # Không có check-in (bản ghi không đầy đủ)
-            elif not record.check_in:
-                is_valid = False
-
-            # Có check-in nhưng không có check-out (đối với ngày cũ)
-            elif record.check_in and not record.check_out:
-                is_valid = False
+                        if check_in_hour > late_threshold:
+                            is_valid = False
+                        else:
+                            check_out_hour = co.hour + co.minute / 60.0
+                            early_threshold = schedule['end_time']
+                            if check_out_hour < early_threshold:
+                                is_valid = False
 
             record.is_invalid_record = is_valid
 
@@ -162,7 +170,7 @@ class HRAttendance(models.Model):
         # Giá trị mặc định
         default_schedule = {
             'start_time': 8.5,  # 8:30
-            'end_time': 18.0,   # 18:00
+            'end_time': 18.0,  # 18:00
             'late_tolerance': 0.25,  # 15 phút
         }
 
@@ -174,18 +182,18 @@ class HRAttendance(models.Model):
         if not calendar:
             # Nếu không có calendar riêng, lấy calendar của company
             calendar = employee.company_id.resource_calendar_id
-        
+
         if not calendar:
             return default_schedule
 
         # Lấy giờ làm việc từ calendar attendance (thường là thứ 2)
         # Tìm attendance đầu tiên (có thể có nhiều ca trong ngày)
         attendance = calendar.attendance_ids.filtered(lambda a: a.dayofweek == '0')[:1]  # 0 = Monday
-        
+
         if not attendance:
             # Nếu không có thứ 2, lấy bất kỳ ngày nào
             attendance = calendar.attendance_ids[:1]
-        
+
         if attendance:
             # hour_from và hour_to đã là float (8.5 = 8:30)
             return {
@@ -193,7 +201,7 @@ class HRAttendance(models.Model):
                 'end_time': attendance.hour_to,
                 'late_tolerance': 0.25,  # 15 phút - có thể config sau
             }
-        
+
         return default_schedule
 
     @api.depends('check_in', 'check_out', 'excuse_ids', 'excuse_ids.state', 'is_invalid_record')
@@ -212,7 +220,11 @@ class HRAttendance(models.Model):
 
             # 1. Kiểm tra bản ghi không hợp lệ (is_invalid_record = False)
             if not record.is_invalid_record:
-                status = 'missing_checkin_out'
+                # Xác định nguyên nhân cụ thể: missing hay late/early
+                if not record.check_in or not record.check_out:
+                    status = 'missing_checkin_out'
+                else:
+                    status = 'late_or_early'
             # 2. Kiểm tra có giải trình bị từ chối
             elif any(e.state == 'rejected' for e in record.excuse_ids):
                 status = 'excuse_rejected'
@@ -222,26 +234,6 @@ class HRAttendance(models.Model):
             # 4. Kiểm tra có giải trình đã được duyệt
             elif any(e.state == 'approved' for e in record.excuse_ids):
                 status = 'excuse_approved'
-            # 5. Kiểm tra đi muộn/về sớm
-            elif record.check_in and record.check_out:
-                schedule = record._get_work_schedule(record.employee_id)
-                is_late_or_early = False
-
-                ci = record._convert_to_local_time(record.check_in)
-                check_in_hour = ci.hour + ci.minute / 60.0
-                late_threshold = schedule['start_time'] + schedule['late_tolerance']
-                if check_in_hour > late_threshold:
-                    is_late_or_early = True
-
-                if not is_late_or_early:
-                    co = record._convert_to_local_time(record.check_out)
-                    check_out_hour = co.hour + co.minute / 60.0
-                    early_threshold = schedule['end_time']
-                    if check_out_hour < early_threshold:
-                        is_late_or_early = True
-
-                if is_late_or_early:
-                    status = 'late_or_early'
 
             record.attendance_status = status
 
