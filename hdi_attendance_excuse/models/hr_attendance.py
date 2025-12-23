@@ -143,15 +143,17 @@ class HRAttendance(models.Model):
         
         # Kiểm tra đi muộn
         ci = self._convert_to_local_time(self.check_in)
-        check_in_hour = ci.hour + ci.minute / 60.0
+        check_in_hour = ci.hour + ci.minute / 60.0 + ci.second / 3600.0
         late_threshold = schedule['start_time'] + schedule['late_tolerance']
+        
         if check_in_hour > late_threshold:
             return True
         
         # Kiểm tra về sớm
         co = self._convert_to_local_time(self.check_out)
-        check_out_hour = co.hour + co.minute / 60.0
+        check_out_hour = co.hour + co.minute / 60.0 + co.second / 3600.0
         early_threshold = schedule['end_time'] - schedule['early_tolerance']
+        
         if check_out_hour < early_threshold:
             return True
         
@@ -172,7 +174,11 @@ class HRAttendance(models.Model):
 
     def _get_work_schedule(self, employee):
         """
-        Lấy lịch làm việc từ resource.calendar của nhân viên
+        Lấy lịch làm việc từ resource.calendar của nhân viên cho ngày check_in
+        Nếu có nhiều ca trong ngày:
+        - Check-in nằm trong ca nào → lấy ca đó
+        - Check-in trước tất cả ca → lấy ca đầu tiên
+        - Check-in sau ca 1 và trước ca 2 → lấy ca 2 (ca tiếp theo)
         Trả về start_time, end_time và late_tolerance
         """
         # Giá trị mặc định
@@ -183,7 +189,7 @@ class HRAttendance(models.Model):
             'early_tolerance': 0.25,  # 15 phút được phép về sớm
         }
 
-        if not employee:
+        if not employee or not self.check_in:
             return default_schedule
 
         # Lấy calendar từ employee
@@ -195,24 +201,53 @@ class HRAttendance(models.Model):
         if not calendar:
             return default_schedule
 
-        # Lấy giờ làm việc từ calendar attendance (thường là thứ 2)
-        # Tìm attendance đầu tiên (có thể có nhiều ca trong ngày)
-        attendance = calendar.attendance_ids.filtered(lambda a: a.dayofweek == '0')[:1]  # 0 = Monday
+        # Lấy ngày trong tuần của check_in (0=Monday, 6=Sunday)
+        check_in_local = self._convert_to_local_time(self.check_in)
+        day_of_week = str(check_in_local.weekday())  # 0=Monday, 6=Sunday → convert to string
+        check_in_hour = check_in_local.hour + check_in_local.minute / 60.0 + check_in_local.second / 3600.0
 
-        if not attendance:
-            # Nếu không có thứ 2, lấy bất kỳ ngày nào
-            attendance = calendar.attendance_ids[:1]
+        # Lấy attendance của ngày hôm đó
+        # calendar.attendance_ids có dayofweek (0=Monday, 6=Sunday)
+        attendance_today = calendar.attendance_ids.filtered(lambda a: a.dayofweek == day_of_week)
+        
+        if not attendance_today:
+            # Nếu không có lịch làm việc ngày hôm đó (có thể là ngày nghỉ) → trả về default
+            return default_schedule
+        
+        # Sắp xếp theo hour_from
+        attendance_today = attendance_today.sorted(key=lambda a: a.hour_from)
+        
+        # Nếu chỉ có 1 ca → lấy ca đó
+        if len(attendance_today) == 1:
+            attendance = attendance_today[0]
+        else:
+            # Nếu có nhiều ca → tìm ca phù hợp với check_in
+            attendance = None
+            
+            # 1. Tìm ca mà check_in nằm trong khoảng [hour_from, hour_to)
+            for att in attendance_today:
+                if att.hour_from <= check_in_hour < att.hour_to:
+                    attendance = att
+                    break
+            
+            # 2. Nếu không tìm thấy, tìm ca tiếp theo (hour_from > check_in_hour)
+            if not attendance:
+                for att in attendance_today:
+                    if att.hour_from > check_in_hour:
+                        attendance = att
+                        break
+            
+            # 3. Nếu vẫn không tìm thấy, lấy ca cuối cùng (check_in sau tất cả ca)
+            if not attendance:
+                attendance = attendance_today[-1]
 
-        if attendance:
-            # hour_from và hour_to đã là float (8.5 = 8:30)
-            return {
-                'start_time': attendance.hour_from,
-                'end_time': attendance.hour_to,
-                'late_tolerance': 0.25,   # 15 phút được phép đi muộn
-                'early_tolerance': 0.25,  # 15 phút được phép về sớm
-            }
-
-        return default_schedule
+        # hour_from và hour_to đã là float (8.5 = 8:30)
+        return {
+            'start_time': attendance.hour_from,
+            'end_time': attendance.hour_to,
+            'late_tolerance': 0.25,   # 15 phút được phép đi muộn
+            'early_tolerance': 0.25,  # 15 phút được phép về sớm
+        }
 
     @api.depends('check_in', 'check_out', 'excuse_ids', 'excuse_ids.state', 'is_invalid_record', 'employee_id', 'employee_id.resource_calendar_id', 'employee_id.company_id.resource_calendar_id')
     def _compute_attendance_status(self):
