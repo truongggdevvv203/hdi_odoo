@@ -13,7 +13,7 @@ class HRAttendance(models.Model):
     is_excused = fields.Boolean(
         string='Đã giải trình',
         compute='_compute_is_excused',
-        store=True 
+        store=True
     )
 
     has_pending_excuse = fields.Boolean(
@@ -25,7 +25,14 @@ class HRAttendance(models.Model):
     requires_excuse = fields.Boolean(
         string='Cần giải trình',
         compute='_compute_requires_excuse',
-        store=True
+        store=False
+    )
+
+    is_invalid_record = fields.Boolean(
+        string='Bản ghi không hợp lệ',
+        compute='_compute_is_invalid_record',
+        store=True,
+        help='Tự động kiểm tra check-in/check-out không hợp lệ (bỏ qua ngày hôm nay)'
     )
 
     @api.depends('excuse_ids', 'excuse_ids.state')
@@ -77,6 +84,50 @@ class HRAttendance(models.Model):
                 requires = True
 
             record.requires_excuse = requires
+
+    @api.depends('check_in', 'check_out')
+    def _compute_is_invalid_record(self):
+        """
+        Kiểm tra bản ghi không hợp lệ dựa trên check-in và check-out
+        Bỏ qua các bản ghi của ngày hôm nay
+        Tự động cập nhật khi dữ liệu trong DB thay đổi
+        """
+        for record in self:
+            is_invalid = False
+
+            # Bỏ qua bản ghi của ngày hôm nay
+            if record.check_in:
+                check_in_date = fields.Datetime.context_timestamp(record, record.check_in).date()
+                today = fields.Date.context_today(record)
+                if check_in_date == today:
+                    record.is_invalid_record = False
+                    continue
+
+            # Kiểm tra các trường hợp không hợp lệ
+            if record.check_in and record.check_out:
+                # Check-out phải sau check-in
+                if record.check_out <= record.check_in:
+                    is_invalid = True
+
+                # Kiểm tra khoảng thời gian quá dài (vượt quá 24 giờ)
+                time_diff = (record.check_out - record.check_in).total_seconds() / 3600
+                if time_diff > 24:
+                    is_invalid = True
+
+                # Kiểm tra auto-checkout tại midnight (23:59:59)
+                co = fields.Datetime.context_timestamp(record, record.check_out)
+                if co.hour == 23 and co.minute == 59 and co.second == 59:
+                    is_invalid = True
+
+            # Không có check-in (bản ghi không đầy đủ)
+            elif not record.check_in:
+                is_invalid = True
+
+            # Có check-in nhưng không có check-out (đối với ngày cũ)
+            elif record.check_in and not record.check_out:
+                is_invalid = True
+
+            record.is_invalid_record = is_invalid
 
     def _get_work_schedule(self, employee):
         if not employee or not employee.department_id:
@@ -132,4 +183,3 @@ class HRAttendance(models.Model):
                         'state': 'draft',
                         'notes': 'Tự động phát hiện: Quên check-out (auto-checkout tại midnight)',
                     })
-
