@@ -13,7 +13,7 @@ class HRAttendance(models.Model):
     is_excused = fields.Boolean(
         string='Đã giải trình',
         compute='_compute_is_excused',
-        store=True
+        store=True 
     )
 
     has_pending_excuse = fields.Boolean(
@@ -79,10 +79,6 @@ class HRAttendance(models.Model):
             record.requires_excuse = requires
 
     def _get_work_schedule(self, employee):
-        """
-        Lấy cấu hình giờ làm việc theo phòng ban.
-        Nếu không tìm thấy, sử dụng giá trị mặc định.
-        """
         if not employee or not employee.department_id:
             # Giá trị mặc định nếu không có phòng ban
             return {
