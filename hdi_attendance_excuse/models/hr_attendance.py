@@ -30,18 +30,16 @@ class HRAttendance(models.Model):
     )
 
     is_invalid_record = fields.Boolean(
-        string='Tính hợp lệ của bản ghi',
+        string='Chấm công hợp lệ',
         compute='_compute_is_invalid_record',
         store=True,
-        default=True,
-        help='True: Hợp lệ | False: Không hợp lệ (bỏ qua ngày hôm nay)'
+        default=True
     )
 
     attendance_status = fields.Selection(
         [
             ('valid', 'Chấm công hợp lệ'),
             ('late_or_early', 'Đi muộn/về sớm'),
-            ('missing_checkin_out', 'Thiếu chấm công'),
             ('excuse_rejected', 'Từ chối giải trình'),
             ('pending_excuse_approval', 'Đang chờ duyệt giải trình'),
             ('excuse_approved', 'Hoàn thành phê duyệt'),
@@ -195,16 +193,6 @@ class HRAttendance(models.Model):
 
     @api.depends('check_in', 'check_out', 'excuse_ids', 'excuse_ids.state', 'is_invalid_record')
     def _compute_attendance_status(self):
-        """
-        Tính toán trạng thái chi tiết của bản ghi chấm công
-        Thứ tự kiểm tra ưu tiên:
-        1. Từ chối giải trình (excuse_rejected)
-        2. Đang chờ duyệt giải trình (pending_excuse_approval)
-        3. Hoàn thành phê duyệt (excuse_approved)
-        4. Thiếu chấm công (missing_checkin_out)
-        5. Đi muộn/về sớm (late_or_early)
-        6. Chấm công hợp lệ (valid)
-        """
         for record in self:
             status = 'valid'
 
