@@ -8,7 +8,6 @@
     'base',
     'hr',
     'hr_attendance',
-    'hdi_payroll',
   ],
   'data': [
     # Security
