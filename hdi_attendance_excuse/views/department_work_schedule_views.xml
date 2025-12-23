@@ -30,19 +30,19 @@
             </field>
         </record>
 
-        <!-- Tree View -->
-        <record id="department_work_schedule_tree" model="ir.ui.view">
-            <field name="name">department.work.schedule.tree</field>
+        <!-- List View -->
+        <record id="department_work_schedule_list" model="ir.ui.view">
+            <field name="name">department.work.schedule.list</field>
             <field name="model">department.work.schedule</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="department_id" />
                     <field name="check_in_time" />
                     <field name="check_out_time" />
                     <field name="late_tolerance" />
                     <field name="early_tolerance" />
                     <field name="active" />
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -64,7 +64,7 @@
         <record id="department_work_schedule_action" model="ir.actions.act_window">
             <field name="name">Cấu hình Giờ Làm Việc</field>
             <field name="res_model">department.work.schedule</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
                     Tạo cấu hình giờ làm việc cho từng phòng ban
