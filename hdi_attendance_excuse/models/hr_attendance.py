@@ -103,12 +103,6 @@ class HRAttendance(models.Model):
 
     @api.depends('check_in', 'check_out')
     def _compute_is_invalid_record(self):
-        """
-        Kiểm tra bản ghi hợp lệ/không hợp lệ dựa trên check-in và check-out
-        True: Hợp lệ | False: Không hợp lệ
-        Bỏ qua các bản ghi của ngày hôm nay
-        Tự động cập nhật khi dữ liệu trong DB thay đổi
-        """
         for record in self:
             is_valid = True
 
