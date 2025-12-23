@@ -191,10 +191,6 @@ def _verify_token_http(f):
 
 
 def _authenticate_user(db_name, login, password):
-    """
-    Xác thực user với database - tương thích với Odoo 18
-    Returns: user_id nếu thành công, None nếu thất bại
-    """
     try:
         import odoo
         from odoo.modules.registry import Registry

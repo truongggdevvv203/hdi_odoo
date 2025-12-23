@@ -514,17 +514,6 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
     @http.route('/api/v1/attendance-excuse/update', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http
     def update_excuse(self):
-        """
-        Sửa giải trình chấm công (chỉ khi trạng thái là draft)
-        
-        Request body:
-        {
-            "excuse_id": int,                   # ID giải trình (bắt buộc)
-            "reason": str,                      # Lý do giải trình (không bắt buộc)
-            "requested_checkin": datetime,      # Giờ check-in yêu cầu sửa (không bắt buộc)
-            "requested_checkout": datetime      # Giờ check-out yêu cầu sửa (không bắt buộc)
-        }
-        """
         try:
             # Lấy dữ liệu từ request body
             try:
@@ -669,14 +658,6 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
     @http.route('/api/v1/attendance-excuse/delete', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token_http
     def delete_excuse(self):
-        """
-        Xóa giải trình chấm công (chỉ khi trạng thái là draft)
-        
-        Request body:
-        {
-            "excuse_id": int
-        }
-        """
         try:
             # Lấy dữ liệu từ request body
             try:
