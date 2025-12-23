@@ -220,11 +220,32 @@ class HRAttendance(models.Model):
 
             # 1. Kiểm tra bản ghi không hợp lệ (is_invalid_record = False)
             if not record.is_invalid_record:
-                # Xác định nguyên nhân cụ thể: missing hay late/early
+                # Xác định nguyên nhân cụ thể
                 if not record.check_in or not record.check_out:
                     status = 'missing_checkin_out'
                 else:
-                    status = 'late_or_early'
+                    # Nếu không missing, kiểm tra xem có đi muộn/sớm thực sự hay không
+                    schedule = record._get_work_schedule(record.employee_id)
+                    is_late_or_early = False
+                    
+                    ci = record._convert_to_local_time(record.check_in)
+                    check_in_hour = ci.hour + ci.minute / 60.0
+                    late_threshold = schedule['start_time'] + schedule['late_tolerance']
+                    if check_in_hour > late_threshold:
+                        is_late_or_early = True
+                    
+                    if not is_late_or_early:
+                        co = record._convert_to_local_time(record.check_out)
+                        check_out_hour = co.hour + co.minute / 60.0
+                        early_threshold = schedule['end_time']
+                        if check_out_hour < early_threshold:
+                            is_late_or_early = True
+                    
+                    if is_late_or_early:
+                        status = 'late_or_early'
+                    else:
+                        # Nếu có đầy đủ check-in/out và không muộn/sớm → hợp lệ
+                        status = 'valid'
             # 2. Kiểm tra có giải trình bị từ chối
             elif any(e.state == 'rejected' for e in record.excuse_ids):
                 status = 'excuse_rejected'
