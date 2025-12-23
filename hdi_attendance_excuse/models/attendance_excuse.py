@@ -293,7 +293,11 @@ class AttendanceExcuse(models.Model):
     def _get_work_schedule(self, employee):
         """
         Lấy lịch làm việc từ resource.calendar của nhân viên
-        Trả về start_time, end_time và late_tolerance
+        Luôn lấy start_time từ ca đầu tiên và end_time từ ca cuối cùng trong ngày
+        (để tính toán muộn/sớm với giờ làm việc chính thức)
+        
+        Ví dụ: Nếu có ca sáng 8:30-12:00, trưa 12:00-13:30, chiều 13:30-18:00
+        → start_time = 8.5, end_time = 18.0
         """
         # Giá trị mặc định
         default_schedule = {
@@ -314,20 +318,26 @@ class AttendanceExcuse(models.Model):
         if not calendar:
             return default_schedule
 
-        # Lấy giờ làm việc từ calendar attendance (thường là thứ 2)
-        # Tìm attendance đầu tiên (có thể có nhiều ca trong ngày)
-        attendance = calendar.attendance_ids.filtered(lambda a: a.dayofweek == '0')[:1]  # 0 = Monday
+        # Lấy giờ làm việc từ calendar attendance
+        # Lấy tất cả attendance của ngày thứ 2 (đại diện)
+        attendances = calendar.attendance_ids.filtered(lambda a: a.dayofweek == '0')
         
-        if not attendance:
+        if not attendances:
             # Nếu không có thứ 2, lấy bất kỳ ngày nào
-            attendance = calendar.attendance_ids[:1]
+            attendances = calendar.attendance_ids
         
-        if attendance:
-            # hour_from và hour_to đã là float (8.5 = 8:30)
+        if attendances:
+            # Sắp xếp theo hour_from
+            attendances = attendances.sorted(key=lambda a: a.hour_from)
+            
+            # Lấy start_time từ ca đầu tiên, end_time từ ca cuối cùng
+            first = attendances[0]
+            last = attendances[-1]
+            
             return {
-                'start_time': attendance.hour_from,
-                'end_time': attendance.hour_to,
-                'late_tolerance': 0.25,  # 15 phút - có thể config sau
+                'start_time': first.hour_from,
+                'end_time': last.hour_to,
+                'late_tolerance': 0.25,  # 15 phút
             }
         
         return default_schedule

@@ -175,11 +175,11 @@ class HRAttendance(models.Model):
     def _get_work_schedule(self, employee):
         """
         Lấy lịch làm việc từ resource.calendar của nhân viên cho ngày check_in
-        Nếu có nhiều ca trong ngày:
-        - Check-in nằm trong ca nào → lấy ca đó
-        - Check-in trước tất cả ca → lấy ca đầu tiên
-        - Check-in sau ca 1 và trước ca 2 → lấy ca 2 (ca tiếp theo)
-        Trả về start_time, end_time và late_tolerance
+        Luôn lấy start_time từ ca đầu tiên và end_time từ ca cuối cùng trong ngày
+        (để tính toán muộn/sớm với giờ làm việc chính thức)
+        
+        Ví dụ: Nếu có ca sáng 8:30-12:00, trưa 12:00-13:30, chiều 13:30-18:00
+        → start_time = 8.5, end_time = 18.0
         """
         # Giá trị mặc định
         default_schedule = {
@@ -204,7 +204,6 @@ class HRAttendance(models.Model):
         # Lấy ngày trong tuần của check_in (0=Monday, 6=Sunday)
         check_in_local = self._convert_to_local_time(self.check_in)
         day_of_week = str(check_in_local.weekday())  # 0=Monday, 6=Sunday → convert to string
-        check_in_hour = check_in_local.hour + check_in_local.minute / 60.0 + check_in_local.second / 3600.0
 
         # Lấy attendance của ngày hôm đó
         # calendar.attendance_ids có dayofweek (0=Monday, 6=Sunday)
@@ -217,34 +216,14 @@ class HRAttendance(models.Model):
         # Sắp xếp theo hour_from
         attendance_today = attendance_today.sorted(key=lambda a: a.hour_from)
         
-        # Nếu chỉ có 1 ca → lấy ca đó
-        if len(attendance_today) == 1:
-            attendance = attendance_today[0]
-        else:
-            # Nếu có nhiều ca → tìm ca phù hợp với check_in
-            attendance = None
-            
-            # 1. Tìm ca mà check_in nằm trong khoảng [hour_from, hour_to)
-            for att in attendance_today:
-                if att.hour_from <= check_in_hour < att.hour_to:
-                    attendance = att
-                    break
-            
-            # 2. Nếu không tìm thấy, tìm ca tiếp theo (hour_from > check_in_hour)
-            if not attendance:
-                for att in attendance_today:
-                    if att.hour_from > check_in_hour:
-                        attendance = att
-                        break
-            
-            # 3. Nếu vẫn không tìm thấy, lấy ca cuối cùng (check_in sau tất cả ca)
-            if not attendance:
-                attendance = attendance_today[-1]
+        # Lấy start_time từ ca đầu tiên, end_time từ ca cuối cùng
+        # Điều này đúng cho ngày làm việc với nhiều ca (sáng-trưa-chiều)
+        first_attendance = attendance_today[0]
+        last_attendance = attendance_today[-1]
 
-        # hour_from và hour_to đã là float (8.5 = 8:30)
         return {
-            'start_time': attendance.hour_from,
-            'end_time': attendance.hour_to,
+            'start_time': first_attendance.hour_from,      # Ca đầu tiên (sáng)
+            'end_time': last_attendance.hour_to,           # Ca cuối cùng (chiều)
             'late_tolerance': 0.25,   # 15 phút được phép đi muộn
             'early_tolerance': 0.25,  # 15 phút được phép về sớm
         }
