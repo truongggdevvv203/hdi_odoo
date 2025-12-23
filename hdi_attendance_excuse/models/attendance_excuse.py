@@ -66,24 +66,19 @@ class AttendanceExcuse(models.Model):
         self.requested_checkin = False
         self.requested_checkout = False
 
-        # Nếu late: requested_checkout = original_checkout (nhân viên chỉ cần sửa check-in)
-        if self.excuse_type == 'late':
+        # Nếu late_or_early: nhân viên có thể sửa cả check-in và check-out
+        if self.excuse_type == 'late_or_early':
             self.requested_checkin = self.original_checkin
             self.requested_checkout = self.original_checkout
 
-        # Nếu early: requested_checkin = original_checkin (nhân viên chỉ cần sửa check-out)
-        elif self.excuse_type == 'early':
+        # Nếu missing_checkin_out: nhân viên cần điền check-in/out
+        elif self.excuse_type == 'missing_checkin_out':
             self.requested_checkin = self.original_checkin
             self.requested_checkout = self.original_checkout
-
-        # Nếu missing_checkout: requested_checkin = original_checkin (nhân viên cần điền check-out)
-        elif self.excuse_type == 'missing_checkout':
-            self.requested_checkin = self.original_checkin
 
     excuse_type = fields.Selection([
-        ('late', 'Đi muộn'),
-        ('early', 'Về sớm'),
-        ('missing_checkout', 'Quên check-out'),
+        ('late_or_early', 'Đi muộn/về sớm'),
+        ('missing_checkin_out', 'Thiếu chấm công'),
     ], string="Loại giải trình", compute='_compute_excuse_type', store=True,
         tracking=True)
 
@@ -262,30 +257,27 @@ class AttendanceExcuse(models.Model):
                 record.original_checkin = False
                 record.original_checkout = False
 
-    @api.depends('original_checkin', 'original_checkout', 'attendance_id')
+    @api.depends('original_checkin', 'original_checkout', 'attendance_id', 'attendance_id.attendance_status', 'attendance_id.is_invalid_record')
     def _compute_excuse_type(self):
+        """
+        Xác định loại giải trình dựa trên trạng thái chấm công từ HRAttendance
+        Chỉ có 2 loại: late_or_early và missing_checkin_out
+        """
         for record in self:
-            excuse_type = 'late'
-            if not record.original_checkout:
-                record.excuse_type = 'missing_checkout'
+            if not record.attendance_id:
+                record.excuse_type = 'late_or_early'
                 continue
-
-            local_checkin = self._convert_to_local_time(record.original_checkin)
-            check_in_hour = local_checkin.hour + local_checkin.minute / 60.0
-            schedule = self._get_work_schedule(record.employee_id)
-
-            if check_in_hour > (schedule['start_time'] + schedule['late_tolerance']):
-                record.excuse_type = 'late'
-                continue
-
-            local_checkout = self._convert_to_local_time(record.original_checkout)
-            check_out_hour = local_checkout.hour + local_checkout.minute / 60.0
-
-            if check_out_hour < schedule['end_time']:
-                record.excuse_type = 'early'
-                continue
-
-            record.excuse_type = 'late'
+            
+            att = record.attendance_id
+            
+            # Nếu không có check-out hoặc không hợp lệ (missing) → missing_checkin_out
+            if not record.original_checkout or not att.is_invalid_record:
+                if att.attendance_status == 'missing_checkin_out':
+                    record.excuse_type = 'missing_checkin_out'
+                else:
+                    record.excuse_type = 'late_or_early'
+            else:
+                record.excuse_type = 'late_or_early'
 
     def _get_company_timezone(self):
         return pytz.timezone(self.env.user.tz or 'Asia/Ho_Chi_Minh')
@@ -346,7 +338,6 @@ class AttendanceExcuse(models.Model):
             target_date = fields.Date.context_today(self)
 
         self._detect_late_arrival(target_date)
-        self._detect_early_departure(target_date)
         self._detect_missing_checkout(target_date)
 
         return {
@@ -361,94 +352,79 @@ class AttendanceExcuse(models.Model):
         }
 
     def _detect_late_arrival(self, target_date):
+        """
+        Phát hiện và tạo giải trình cho những bản ghi đi muộn/sớm
+        Dựa vào attendance_status từ HRAttendance
+        """
         attendances = self.env['hr.attendance'].search([
             ('check_in', '>=', datetime.combine(target_date, datetime.min.time())),
             ('check_in', '<=', datetime.combine(target_date, datetime.max.time())),
+            ('attendance_status', '=', 'late_or_early'),
+            ('is_invalid_record', '=', False),
         ])
 
         for att in attendances:
-            if not att.check_in:
+            if not att.check_in or not att.check_out:
                 continue
 
             existing = self.search([
                 ('attendance_id', '=', att.id),
-                ('excuse_type', '=', 'late'),
+                ('excuse_type', '=', 'late_or_early'),
             ], limit=1)
 
             if existing:
                 continue
 
+            # Tính số phút chênh lệch
             local_checkin = self._convert_to_local_time(att.check_in)
             check_in_hour = local_checkin.hour + local_checkin.minute / 60.0
-
             schedule = self._get_work_schedule(att.employee_id)
             late_threshold = schedule['start_time'] + schedule['late_tolerance']
 
             if check_in_hour > late_threshold:
                 late_minutes = int((check_in_hour - schedule['start_time']) * 60)
-
                 self.create({
                     'employee_id': att.employee_id.id,
                     'date': target_date,
                     'attendance_id': att.id,
                     'late_minutes': late_minutes,
                     'state': 'draft',
-                    'notes': f'Tự động phát hiện: Đi muộn {late_minutes} phút',
+                    'notes': f'Tự động phát hiện: Đi muộn/về sớm {late_minutes} phút',
                 })
-
-    def _detect_early_departure(self, target_date):
-
-        attendances = self.env['hr.attendance'].search([
-            ('check_in', '>=', datetime.combine(target_date, datetime.min.time())),
-            ('check_in', '<=', datetime.combine(target_date, datetime.max.time())),
-            ('check_out', '!=', False),
-        ])
-
-        for att in attendances:
-            if not att.check_out:
-                continue
-
-            existing = self.search([
-                ('attendance_id', '=', att.id),
-                ('excuse_type', '=', 'early'),
-            ], limit=1)
-
-            if existing:
-                continue
-
-            local_checkout = self._convert_to_local_time(att.check_out)
-            check_out_hour = local_checkout.hour + local_checkout.minute / 60.0
-
-            schedule = self._get_work_schedule(att.employee_id)
-            early_threshold = schedule['end_time']
-
-            if check_out_hour < early_threshold:
-                early_minutes = int((early_threshold - check_out_hour) * 60)
-
-                self.create({
-                    'employee_id': att.employee_id.id,
-                    'date': target_date,
-                    'attendance_id': att.id,
-                    'early_minutes': early_minutes,
-                    'state': 'draft',
-                    'notes': f'Tự động phát hiện: Về sớm {early_minutes} phút',
-                })
+            else:
+                # Kiểm tra về sớm
+                local_checkout = self._convert_to_local_time(att.check_out)
+                check_out_hour = local_checkout.hour + local_checkout.minute / 60.0
+                early_threshold = schedule['end_time']
+                if check_out_hour < early_threshold:
+                    early_minutes = int((early_threshold - check_out_hour) * 60)
+                    self.create({
+                        'employee_id': att.employee_id.id,
+                        'date': target_date,
+                        'attendance_id': att.id,
+                        'early_minutes': early_minutes,
+                        'state': 'draft',
+                        'notes': f'Tự động phát hiện: Đi muộn/về sớm {early_minutes} phút',
+                    })
 
     def _detect_missing_checkout(self, target_date):
-
+        """
+        Phát hiện và tạo giải trình cho những bản ghi thiếu check-out
+        Dựa vào is_invalid_record từ HRAttendance
+        """
         previous_date = target_date - timedelta(days=1)
 
         attendances = self.env['hr.attendance'].search([
             ('check_in', '>=', datetime.combine(previous_date, datetime.min.time())),
             ('check_in', '<=', datetime.combine(previous_date, datetime.max.time())),
             ('check_out', '=', False),
+            ('is_invalid_record', '=', False),
         ])
 
         for att in attendances:
-
             existing = self.search([
                 ('attendance_id', '=', att.id),
-                ('excuse_type', '=', 'missing_checkout'),
+                ('excuse_type', '=', 'missing_checkin_out'),
             ], limit=1)
 
             if not existing:
@@ -457,7 +433,7 @@ class AttendanceExcuse(models.Model):
                     'date': previous_date,
                     'attendance_id': att.id,
                     'state': 'draft',
-                    'notes': 'Tự động phát hiện: Quên check-out',
+                    'notes': 'Tự động phát hiện: Thiếu chấm công',
                 })
 
     def action_submit(self):

@@ -7,9 +7,8 @@ class AttendanceExcuseLimit(models.Model):
     _order = 'excuse_type, id'
 
     excuse_type = fields.Selection([
-        ('late', 'Đi muộn'),
-        ('early', 'Về sớm'),
-        ('missing_checkout', 'Quên check-out'),
+        ('late_or_early', 'Đi muộn/về sớm'),
+        ('missing_checkin_out', 'Thiếu chấm công'),
     ], string='Loại giải trình', required=True, unique=True)
 
     monthly_limit = fields.Integer(
