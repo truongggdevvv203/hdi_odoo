@@ -55,23 +55,63 @@ class HRAttendance(models.Model):
             if any(e.state in ['submitted'] for e in record.excuse_ids):
                 requires = True
 
+            # Lấy cấu hình giờ làm việc theo phòng ban
+            schedule = self._get_work_schedule(record.employee_id)
+
             # Tính toán giải trình cho tất cả các loại out_mode (manual, auto, etc.)
             if record.check_in:
                 ci = fields.Datetime.context_timestamp(record, record.check_in)
                 check_in_hour = ci.hour + ci.minute / 60
-                if check_in_hour > 8.75:
+                late_threshold = schedule['start_time'] + schedule['late_tolerance']
+                if check_in_hour > late_threshold:
                     requires = True
 
             if record.check_out:
                 co = fields.Datetime.context_timestamp(record, record.check_out)
                 check_out_hour = co.hour + co.minute / 60
-                if check_out_hour < 17.75:
+                early_threshold = schedule['end_time']
+                if check_out_hour < early_threshold:
                     requires = True
 
             if record.check_in and not record.check_out:
                 requires = True
 
             record.requires_excuse = requires
+
+    def _get_work_schedule(self, employee):
+        """
+        Lấy cấu hình giờ làm việc theo phòng ban.
+        Nếu không tìm thấy, sử dụng giá trị mặc định.
+        """
+        if not employee or not employee.department_id:
+            # Giá trị mặc định nếu không có phòng ban
+            return {
+                'start_time': 8.5,
+                'end_time': 18.0,
+                'late_tolerance': 0.25,
+            }
+
+        # Tìm cấu hình cho phòng ban
+        schedule = self.env['department.work.schedule'].search([
+            ('department_id', '=', employee.department_id.id),
+            ('active', '=', True)
+        ], limit=1)
+
+        if schedule:
+            # Chuyển đổi late_tolerance từ phút sang giờ (phút / 60)
+            late_tolerance_hours = schedule.late_tolerance / 60.0
+            return {
+                'start_time': schedule.check_in_time,
+                'end_time': schedule.check_out_time,
+                'late_tolerance': late_tolerance_hours,
+            }
+        else:
+            # Giá trị mặc định nếu không tìm thấy cấu hình
+            return {
+                'start_time': 8.5,
+                'end_time': 18.0,
+                'late_tolerance': 0.25,
+            }
 
     @api.model
     def create_missing_checkout_excuses(self):
