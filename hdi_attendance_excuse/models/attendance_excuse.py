@@ -259,10 +259,6 @@ class AttendanceExcuse(models.Model):
 
     @api.depends('original_checkin', 'original_checkout', 'attendance_id', 'attendance_id.attendance_status', 'attendance_id.is_invalid_record')
     def _compute_excuse_type(self):
-        """
-        Xác định loại giải trình dựa trên trạng thái chấm công từ HRAttendance
-        Chỉ có 2 loại: late_or_early và missing_checkin_out
-        """
         for record in self:
             if not record.attendance_id:
                 record.excuse_type = 'late_or_early'
@@ -291,14 +287,6 @@ class AttendanceExcuse(models.Model):
         return dt.astimezone(tz)
 
     def _get_work_schedule(self, employee):
-        """
-        Lấy lịch làm việc từ resource.calendar của nhân viên
-        Luôn lấy start_time từ ca đầu tiên và end_time từ ca cuối cùng trong ngày
-        (để tính toán muộn/sớm với giờ làm việc chính thức)
-        
-        Ví dụ: Nếu có ca sáng 8:30-12:00, trưa 12:00-13:30, chiều 13:30-18:00
-        → start_time = 8.5, end_time = 18.0
-        """
         # Giá trị mặc định
         default_schedule = {
             'start_time': 8.5,  # 8:30

@@ -510,3 +510,258 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
                 'Lỗi server khi xử lý yêu cầu',
                 ResponseFormatter.HTTP_INTERNAL_ERROR
             )
+
+    @http.route('/api/v1/attendance-excuse/update', type='http', auth='none', methods=['POST'], csrf=False)
+    @_verify_token_http
+    def update_excuse(self):
+        """
+        Sửa giải trình chấm công (chỉ khi trạng thái là draft)
+        
+        Request body:
+        {
+            "excuse_id": int,                   # ID giải trình (bắt buộc)
+            "reason": str,                      # Lý do giải trình (không bắt buộc)
+            "requested_checkin": datetime,      # Giờ check-in yêu cầu sửa (không bắt buộc)
+            "requested_checkout": datetime      # Giờ check-out yêu cầu sửa (không bắt buộc)
+        }
+        """
+        try:
+            # Lấy dữ liệu từ request body
+            try:
+                data = json.loads(request.httprequest.data.decode('utf-8'))
+            except Exception:
+                data = {}
+
+            excuse_id = data.get('excuse_id')
+            if not excuse_id:
+                return ResponseFormatter.error_response(
+                    'excuse_id là bắt buộc',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
+
+            user_id = request.jwt_payload.get('user_id')
+            db_name = request.jwt_payload.get('db')
+
+            if not db_name:
+                return ResponseFormatter.error_response(
+                    'Token không chứa thông tin database',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
+
+            import odoo
+            from odoo.modules.registry import Registry
+
+            registry = Registry(db_name)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+
+                # Lấy user và employee
+                user = env['res.users'].browse(user_id)
+                if not user.exists():
+                    return ResponseFormatter.error_response(
+                        'Người dùng không tồn tại',
+                        ResponseFormatter.HTTP_NOT_FOUND
+                    )
+
+                employee = env['hr.employee'].search([
+                    ('user_id', '=', user.id)
+                ], limit=1)
+
+                # Lấy giải trình
+                excuse = env['attendance.excuse'].browse(excuse_id)
+                if not excuse.exists():
+                    return ResponseFormatter.error_response(
+                        'Giải trình không tồn tại',
+                        ResponseFormatter.HTTP_NOT_FOUND
+                    )
+
+                # Kiểm tra quyền
+                if employee and excuse.employee_id.id != employee.id:
+                    return ResponseFormatter.error_response(
+                        'Bạn không có quyền cập nhật giải trình này',
+                        ResponseFormatter.HTTP_FORBIDDEN
+                    )
+
+                # Kiểm tra trạng thái - chỉ có thể sửa khi ở trạng thái draft
+                if excuse.state != 'draft':
+                    return ResponseFormatter.error_response(
+                        f'Chỉ có thể sửa giải trình ở trạng thái draft, hiện tại là {excuse.state}',
+                        ResponseFormatter.HTTP_BAD_REQUEST
+                    )
+
+                try:
+                    # Chuẩn bị dữ liệu cập nhật
+                    update_values = {}
+
+                    # Cập nhật reason nếu được cung cấp
+                    if 'reason' in data:
+                        update_values['reason'] = data.get('reason', '')
+
+                    # Cập nhật requested_checkin nếu được cung cấp
+                    if 'requested_checkin' in data and data.get('requested_checkin'):
+                        try:
+                            requested_checkin = data.get('requested_checkin')
+                            if isinstance(requested_checkin, str):
+                                requested_checkin = datetime.fromisoformat(requested_checkin.replace('Z', '+00:00'))
+                            update_values['requested_checkin'] = requested_checkin
+                        except Exception as e:
+                            _logger.warning(f"Invalid requested_checkin format: {str(e)}")
+                            return ResponseFormatter.error_response(
+                                'Định dạng requested_checkin không hợp lệ',
+                                ResponseFormatter.HTTP_BAD_REQUEST
+                            )
+
+                    # Cập nhật requested_checkout nếu được cung cấp
+                    if 'requested_checkout' in data and data.get('requested_checkout'):
+                        try:
+                            requested_checkout = data.get('requested_checkout')
+                            if isinstance(requested_checkout, str):
+                                requested_checkout = datetime.fromisoformat(requested_checkout.replace('Z', '+00:00'))
+                            update_values['requested_checkout'] = requested_checkout
+                        except Exception as e:
+                            _logger.warning(f"Invalid requested_checkout format: {str(e)}")
+                            return ResponseFormatter.error_response(
+                                'Định dạng requested_checkout không hợp lệ',
+                                ResponseFormatter.HTTP_BAD_REQUEST
+                            )
+
+                    # Cập nhật giải trình
+                    if update_values:
+                        excuse.write(update_values)
+                    
+                    cr.commit()
+
+                    excuse_data = {
+                        'id': excuse.id,
+                        'attendance_id': excuse.attendance_id.id,
+                        'employee_id': excuse.employee_id.id,
+                        'employee_name': excuse.employee_id.name,
+                        'date': excuse.date.isoformat() if excuse.date else None,
+                        'excuse_type': excuse.excuse_type,
+                        'reason': excuse.reason,
+                        'state': excuse.state,
+                        'requested_checkin': excuse.requested_checkin.isoformat() if excuse.requested_checkin else None,
+                        'requested_checkout': excuse.requested_checkout.isoformat() if excuse.requested_checkout else None,
+                        'created_at': excuse.create_date.isoformat() if excuse.create_date else None,
+                        'updated_at': excuse.write_date.isoformat() if excuse.write_date else None,
+                    }
+
+                    return ResponseFormatter.success_response(
+                        'Cập nhật giải trình thành công',
+                        excuse_data
+                    )
+
+                except Exception as e:
+                    cr.rollback()
+                    _logger.error(f"Error updating excuse: {str(e)}", exc_info=True)
+                    return ResponseFormatter.error_response(
+                        'Lỗi khi cập nhật giải trình',
+                        ResponseFormatter.HTTP_INTERNAL_ERROR
+                    )
+
+        except Exception as e:
+            _logger.error(f"Update excuse error: {str(e)}", exc_info=True)
+            return ResponseFormatter.error_response(
+                'Lỗi server khi xử lý yêu cầu',
+                ResponseFormatter.HTTP_INTERNAL_ERROR
+            )
+
+    @http.route('/api/v1/attendance-excuse/delete', type='http', auth='none', methods=['POST'], csrf=False)
+    @_verify_token_http
+    def delete_excuse(self):
+        """
+        Xóa giải trình chấm công (chỉ khi trạng thái là draft)
+        
+        Request body:
+        {
+            "excuse_id": int
+        }
+        """
+        try:
+            # Lấy dữ liệu từ request body
+            try:
+                data = json.loads(request.httprequest.data.decode('utf-8'))
+            except Exception:
+                data = {}
+
+            excuse_id = data.get('excuse_id')
+            if not excuse_id:
+                return ResponseFormatter.error_response(
+                    'excuse_id là bắt buộc',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
+
+            user_id = request.jwt_payload.get('user_id')
+            db_name = request.jwt_payload.get('db')
+
+            if not db_name:
+                return ResponseFormatter.error_response(
+                    'Token không chứa thông tin database',
+                    ResponseFormatter.HTTP_BAD_REQUEST
+                )
+
+            import odoo
+            from odoo.modules.registry import Registry
+
+            registry = Registry(db_name)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+
+                # Lấy user và employee
+                user = env['res.users'].browse(user_id)
+                if not user.exists():
+                    return ResponseFormatter.error_response(
+                        'Người dùng không tồn tại',
+                        ResponseFormatter.HTTP_NOT_FOUND
+                    )
+
+                employee = env['hr.employee'].search([
+                    ('user_id', '=', user.id)
+                ], limit=1)
+
+                # Lấy giải trình
+                excuse = env['attendance.excuse'].browse(excuse_id)
+                if not excuse.exists():
+                    return ResponseFormatter.error_response(
+                        'Giải trình không tồn tại',
+                        ResponseFormatter.HTTP_NOT_FOUND
+                    )
+
+                # Kiểm tra quyền
+                if employee and excuse.employee_id.id != employee.id:
+                    return ResponseFormatter.error_response(
+                        'Bạn không có quyền xóa giải trình này',
+                        ResponseFormatter.HTTP_FORBIDDEN
+                    )
+
+                # Kiểm tra trạng thái - chỉ có thể xóa khi ở trạng thái draft
+                if excuse.state != 'draft':
+                    return ResponseFormatter.error_response(
+                        f'Chỉ có thể xóa giải trình ở trạng thái draft, hiện tại là {excuse.state}',
+                        ResponseFormatter.HTTP_BAD_REQUEST
+                    )
+
+                try:
+                    # Xóa giải trình
+                    excuse.unlink()
+                    cr.commit()
+
+                    return ResponseFormatter.success_response(
+                        'Xóa giải trình thành công',
+                        {'excuse_id': excuse_id}
+                    )
+
+                except Exception as e:
+                    cr.rollback()
+                    _logger.error(f"Error deleting excuse: {str(e)}", exc_info=True)
+                    return ResponseFormatter.error_response(
+                        'Lỗi khi xóa giải trình',
+                        ResponseFormatter.HTTP_INTERNAL_ERROR
+                    )
+
+        except Exception as e:
+            _logger.error(f"Delete excuse error: {str(e)}", exc_info=True)
+            return ResponseFormatter.error_response(
+                'Lỗi server khi xử lý yêu cầu',
+                ResponseFormatter.HTTP_INTERNAL_ERROR
+            )
