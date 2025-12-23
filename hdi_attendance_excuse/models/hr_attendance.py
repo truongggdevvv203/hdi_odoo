@@ -38,7 +38,7 @@ class HRAttendance(models.Model):
         for record in self:
             record.has_pending_excuse = any(e.state in ['submitted', 'pending'] for e in record.excuse_ids)
 
-    @api.depends('excuse_ids', 'excuse_ids.state', 'check_in', 'check_out')
+    @api.depends('excuse_ids', 'excuse_ids.state', 'check_in', 'check_out', 'out_mode')
     def _compute_requires_excuse(self):
         for record in self:
             requires = False
@@ -55,6 +55,7 @@ class HRAttendance(models.Model):
             if any(e.state in ['submitted'] for e in record.excuse_ids):
                 requires = True
 
+            # Tính toán giải trình cho tất cả các loại out_mode (manual, auto, etc.)
             if record.check_in:
                 ci = fields.Datetime.context_timestamp(record, record.check_in)
                 check_in_hour = ci.hour + ci.minute / 60

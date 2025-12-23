@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Form View -->
+        <record id="department_work_schedule_form" model="ir.ui.view">
+            <field name="name">department.work.schedule.form</field>
+            <field name="model">department.work.schedule</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="department_id" options="{'no_create_edit': False}" />
+                                <field name="active" />
+                            </group>
+                            <group>
+                                <field name="check_in_time" widget="float_time" />
+                                <field name="check_out_time" widget="float_time" />
+                            </group>
+                            <group>
+                                <field name="late_tolerance" help="Phút" />
+                                <field name="early_tolerance" help="Phút" />
+                            </group>
+                        </group>
+                        <group>
+                            <field name="notes" nolabel="1" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Tree View -->
+        <record id="department_work_schedule_tree" model="ir.ui.view">
+            <field name="name">department.work.schedule.tree</field>
+            <field name="model">department.work.schedule</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="department_id" />
+                    <field name="check_in_time" />
+                    <field name="check_out_time" />
+                    <field name="late_tolerance" />
+                    <field name="early_tolerance" />
+                    <field name="active" />
+                </tree>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="department_work_schedule_search" model="ir.ui.view">
+            <field name="name">department.work.schedule.search</field>
+            <field name="model">department.work.schedule</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="department_id" />
+                    <separator />
+                    <filter name="active_filter" string="Kích hoạt" domain="[('active', '=', True)]" />
+                    <filter name="inactive_filter" string="Không kích hoạt" domain="[('active', '=', False)]" />
+                </search>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="department_work_schedule_action" model="ir.actions.act_window">
+            <field name="name">Cấu hình Giờ Làm Việc</field>
+            <field name="res_model">department.work.schedule</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Tạo cấu hình giờ làm việc cho từng phòng ban
+                </p>
+            </field>
+        </record>
+    </data>
+</odoo>

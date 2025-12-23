@@ -299,11 +299,39 @@ class AttendanceExcuse(models.Model):
         return dt.astimezone(tz)
 
     def _get_work_schedule(self, employee):
-        return {
-            'start_time': 8.5,
-            'end_time': 18.0,
-            'late_tolerance': 0.25,
-        }
+        """
+        Lấy cấu hình giờ làm việc theo phòng ban.
+        Nếu không tìm thấy, sử dụng giá trị mặc định.
+        """
+        if not employee or not employee.department_id:
+            # Giá trị mặc định nếu không có phòng ban
+            return {
+                'start_time': 8.5,
+                'end_time': 18.0,
+                'late_tolerance': 0.25,
+            }
+
+        # Tìm cấu hình cho phòng ban
+        schedule = self.env['department.work.schedule'].search([
+            ('department_id', '=', employee.department_id.id),
+            ('active', '=', True)
+        ], limit=1)
+
+        if schedule:
+            # Chuyển đổi late_tolerance từ phút sang giờ (phút / 60)
+            late_tolerance_hours = schedule.late_tolerance / 60.0
+            return {
+                'start_time': schedule.check_in_time,
+                'end_time': schedule.check_out_time,
+                'late_tolerance': late_tolerance_hours,
+            }
+        else:
+            # Giá trị mặc định nếu không tìm thấy cấu hình
+            return {
+                'start_time': 8.5,
+                'end_time': 18.0,
+                'late_tolerance': 0.25,
+            }
 
     @api.model
     def detect_and_create_excuses(self, target_date=None):

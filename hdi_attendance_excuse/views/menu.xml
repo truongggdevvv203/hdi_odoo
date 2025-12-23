@@ -26,4 +26,11 @@
             parent="menu_attendance_excuse_root"
             action="action_attendance_excuse_limit"
             sequence="30"/>
+
+    <menuitem
+            id="menu_department_work_schedule"
+            name="Cấu hình Giờ Làm Việc"
+            parent="menu_attendance_excuse_root"
+            action="department_work_schedule_action"
+            sequence="40"/>
 </odoo>
