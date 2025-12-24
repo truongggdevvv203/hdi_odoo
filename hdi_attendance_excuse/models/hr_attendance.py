@@ -265,6 +265,43 @@ class HRAttendance(models.Model):
             record.attendance_status = status
 
     @api.model
+    def auto_checkout_at_midnight(self):
+        """
+        Tự động checkout vào 23:59:59 cho các nhân viên chưa checkout
+        Được chạy từ cron job hàng ngày
+        """
+        import datetime
+        
+        # Lấy danh sách các nhân viên đã checkin nhưng chưa checkout hôm nay
+        today = fields.Date.context_today(self)
+        
+        # Lấy tất cả nhân viên
+        employees = self.env['hr.employee'].search([])
+        
+        for employee in employees:
+            # Tìm attendance record của hôm nay chưa có checkout
+            attendance = self.search([
+                ('employee_id', '=', employee.id),
+                ('check_in', '>=', datetime.datetime.combine(today, datetime.time.min)),
+                ('check_in', '<=', datetime.datetime.combine(today, datetime.time.max)),
+                ('check_out', '=', False),
+            ], limit=1)
+            
+            if attendance:
+                # Lấy timezone của company
+                company = employee.company_id or self.env.company
+                tz = pytz.timezone(company.partner_id.tz or 'Asia/Ho_Chi_Minh')
+                
+                # Tạo thời gian checkout 23:59:59 ở local timezone
+                local_midnight = tz.localize(datetime.datetime.combine(today, datetime.time(23, 59, 59)))
+                
+                # Convert sang UTC để lưu vào database
+                utc_checkout = local_midnight.astimezone(pytz.UTC).replace(tzinfo=None)
+                
+                # Cập nhật checkout
+                attendance.check_out = utc_checkout
+
+    @api.model
     def create_missing_checkout_excuses(self):
         AttendanceExcuse = self.env['attendance.excuse']
 
