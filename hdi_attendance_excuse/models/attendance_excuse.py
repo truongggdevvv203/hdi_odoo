@@ -598,3 +598,167 @@ class AttendanceExcuse(models.Model):
         return self.search([
             ('state', '=', 'submitted'),
         ], order='date desc')
+
+    # API Methods for mobile integration
+    @api.model
+    def api_create_excuse(self, data, user_id):
+        """API method để tạo giải trình chấm công"""
+        # Kiểm tra dữ liệu bắt buộc
+        required_fields = ['attendance_id', 'excuse_type']
+        for field in required_fields:
+            if not data.get(field):
+                raise UserError(f'{field} là bắt buộc')
+
+        current_user = self.env['res.users'].browse(user_id)
+        if not current_user.exists():
+            raise UserError('User không tồn tại')
+
+        current_employee = current_user.employee_id
+        if not current_employee:
+            raise UserError('User không phải là nhân viên')
+
+        # Validate attendance
+        attendance = self.env['hr.attendance'].browse(data['attendance_id'])
+        if not attendance.exists():
+            raise UserError('Không tìm thấy bản ghi chấm công')
+
+        # Chỉ có thể tạo giải trình cho chính mình hoặc nếu là HR/Admin
+        can_create = (current_user.has_group('base.group_system') or
+                     current_user.has_group('hr.group_hr_manager') or
+                     current_employee.id == attendance.employee_id.id)
+
+        if not can_create:
+            raise UserError('Không có quyền tạo giải trình cho nhân viên khác')
+
+        # Validate excuse_type
+        if data['excuse_type'] not in ['late_or_early', 'missing_checkin_out']:
+            raise UserError('excuse_type không hợp lệ')
+
+        # Tạo excuse
+        excuse_vals = {
+            'attendance_id': data['attendance_id'],
+            'excuse_type': data['excuse_type'],
+            'reason': data.get('reason', ''),
+        }
+
+        # Thêm requested times nếu có
+        if data.get('requested_checkin'):
+            excuse_vals['requested_checkin'] = data['requested_checkin']
+        if data.get('requested_checkout'):
+            excuse_vals['requested_checkout'] = data['requested_checkout']
+
+        excuse = self.create(excuse_vals)
+
+        return {
+            'id': excuse.id,
+            'attendance_id': excuse.attendance_id.id,
+            'employee_id': excuse.employee_id.id,
+            'employee_name': excuse.employee_id.name,
+            'excuse_type': excuse.excuse_type,
+            'state': excuse.state,
+            'reason': excuse.reason,
+            'requested_checkin': excuse.requested_checkin.isoformat() if excuse.requested_checkin else None,
+            'requested_checkout': excuse.requested_checkout.isoformat() if excuse.requested_checkout else None,
+        }
+
+    @api.model
+    def api_get_my_excuse_list(self, user_id, limit=10, offset=0, state=None):
+        """API method để lấy danh sách giải trình của user"""
+        current_user = self.env['res.users'].browse(user_id)
+        if not current_user.exists():
+            raise UserError('User không tồn tại')
+
+        current_employee = current_user.employee_id
+        if not current_employee:
+            raise UserError('User không phải là nhân viên')
+
+        # Build domain
+        domain = [('employee_id', '=', current_employee.id)]
+        
+        if state:
+            domain.append(('state', '=', state))
+
+        # Lấy danh sách excuse
+        excuses = self.search(domain, limit=limit, offset=offset, order='date desc')
+        total_count = self.search_count(domain)
+
+        excuse_data = []
+        for excuse in excuses:
+            excuse_data.append({
+                'id': excuse.id,
+                'attendance_id': excuse.attendance_id.id,
+                'employee_id': excuse.employee_id.id,
+                'employee_name': excuse.employee_id.name,
+                'date': excuse.date.isoformat() if excuse.date else None,
+                'excuse_type': excuse.excuse_type,
+                'state': excuse.state,
+                'reason': excuse.reason,
+                'original_checkin': excuse.original_checkin.isoformat() if excuse.original_checkin else None,
+                'original_checkout': excuse.original_checkout.isoformat() if excuse.original_checkout else None,
+                'requested_checkin': excuse.requested_checkin.isoformat() if excuse.requested_checkin else None,
+                'requested_checkout': excuse.requested_checkout.isoformat() if excuse.requested_checkout else None,
+            })
+
+        return {
+            'excuses': excuse_data,
+            'total_count': total_count,
+            'limit': limit,
+            'offset': offset,
+        }
+
+    def api_get_excuse_detail(self, user_id):
+        """API method để lấy chi tiết giải trình"""
+        current_user = self.env['res.users'].browse(user_id)
+        if not current_user.exists():
+            raise UserError('User không tồn tại')
+
+        current_employee = current_user.employee_id
+
+        # Kiểm tra quyền - chỉ xem được của chính mình hoặc nếu là HR/Admin
+        can_view = (current_user.has_group('base.group_system') or
+                   current_user.has_group('hr.group_hr_manager') or
+                   (current_employee and current_employee.id == self.employee_id.id))
+
+        if not can_view:
+            raise UserError('Không có quyền xem thông tin này')
+
+        return {
+            'id': self.id,
+            'attendance_id': self.attendance_id.id,
+            'employee_id': self.employee_id.id,
+            'employee_name': self.employee_id.name,
+            'date': self.date.isoformat() if self.date else None,
+            'excuse_type': self.excuse_type,
+            'state': self.state,
+            'reason': self.reason,
+            'original_checkin': self.original_checkin.isoformat() if self.original_checkin else None,
+            'original_checkout': self.original_checkout.isoformat() if self.original_checkout else None,
+            'requested_checkin': self.requested_checkin.isoformat() if self.requested_checkin else None,
+            'requested_checkout': self.requested_checkout.isoformat() if self.requested_checkout else None,
+        }
+
+    def api_submit_excuse(self, user_id):
+        """API method để submit giải trình"""
+        current_user = self.env['res.users'].browse(user_id)
+        if not current_user.exists():
+            raise UserError('User không tồn tại')
+
+        current_employee = current_user.employee_id
+
+        # Kiểm tra quyền
+        can_submit = (current_user.has_group('base.group_system') or
+                     current_user.has_group('hr.group_hr_manager') or
+                     (current_employee and current_employee.id == self.employee_id.id))
+
+        if not can_submit:
+            raise UserError('Không có quyền submit giải trình này')
+
+        if self.state != 'draft':
+            raise UserError('Chỉ có thể submit giải trình ở trạng thái draft')
+
+        self.action_submit()
+
+        return {
+            'id': self.id,
+            'state': self.state,
+        }
