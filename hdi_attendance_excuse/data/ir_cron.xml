@@ -12,17 +12,4 @@
         <field name="nextcall">2025-12-24 16:59:00</field>
         <field name="user_id" ref="base.user_admin"/>
     </record>
-
-    <!-- Cron Job: Auto-create missing checkout excuses daily (23:59 UTC+7 = 16:59 UTC) -->
-    <!-- <record id="ir_cron_create_missing_checkout_excuses" model="ir.cron">
-        <field name="name">Tạo giải trình quên check-out hàng ngày (UTC+7)</field>
-        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
-        <field name="state">code</field>
-        <field name="code">model.create_missing_checkout_excuses()</field>
-        <field name="interval_number">1</field>
-        <field name="interval_type">days</field>
-        <field name="active" eval="True"/>
-        <field name="nextcall">2025-12-25 16:59:00</field>
-        <field name="user_id" ref="base.user_admin"/>
-    </record> -->
 </odoo>
