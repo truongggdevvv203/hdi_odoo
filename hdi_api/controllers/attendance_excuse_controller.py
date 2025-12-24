@@ -227,3 +227,86 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
         except Exception as e:
             _logger.error(f"Error in delete_excuse: {str(e)}", exc_info=True)
             return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR)
+
+    # ========== APPROVE ==========
+    @http.route('/api/v1/attendance-excuse/approve', type='http', auth='none', methods=['POST'], csrf=False)
+    @_verify_token_http
+    def approve_excuse(self):
+        """Phê duyệt giải trình"""
+        try:
+            data = _get_json_data()
+            excuse_id = data.get('excuse_id')
+            jwt_payload = getattr(request, 'jwt_payload', {})
+            user_id = jwt_payload.get('user_id')
+
+            if not excuse_id:
+                return ResponseFormatter.error_response('excuse_id là bắt buộc', ResponseFormatter.HTTP_BAD_REQUEST)
+
+            db_name = jwt_payload.get('db')
+            import odoo
+            from odoo.modules.registry import Registry
+
+            registry = Registry(db_name)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+                
+                try:
+                    excuse = env['attendance.excuse'].sudo().browse(excuse_id)
+                    
+                    # Call action_approve từ model
+                    excuse.api_approve_excuse(user_id, data.get('corrected_checkin'), data.get('corrected_checkout'))
+                    cr.commit()
+                    
+                    result = excuse.api_get_excuse_detail(user_id)
+                    return ResponseFormatter.success_response('Phê duyệt giải trình thành công', result)
+                
+                except Exception as e:
+                    cr.rollback()
+                    _logger.error(f"Error approving excuse: {str(e)}", exc_info=True)
+                    raise
+
+        except Exception as e:
+            _logger.error(f"Error in approve_excuse: {str(e)}", exc_info=True)
+            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR)
+
+    # ========== REJECT ==========
+    @http.route('/api/v1/attendance-excuse/reject', type='http', auth='none', methods=['POST'], csrf=False)
+    @_verify_token_http
+    def reject_excuse(self):
+        """Từ chối giải trình"""
+        try:
+            data = _get_json_data()
+            excuse_id = data.get('excuse_id')
+            rejection_reason = data.get('rejection_reason', '')
+            jwt_payload = getattr(request, 'jwt_payload', {})
+            user_id = jwt_payload.get('user_id')
+
+            if not excuse_id:
+                return ResponseFormatter.error_response('excuse_id là bắt buộc', ResponseFormatter.HTTP_BAD_REQUEST)
+
+            db_name = jwt_payload.get('db')
+            import odoo
+            from odoo.modules.registry import Registry
+
+            registry = Registry(db_name)
+            with registry.cursor() as cr:
+                env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
+                
+                try:
+                    excuse = env['attendance.excuse'].sudo().browse(excuse_id)
+                    
+                    # Call api_reject_excuse từ model
+                    excuse.api_reject_excuse(user_id, rejection_reason)
+                    cr.commit()
+                    
+                    result = excuse.api_get_excuse_detail(user_id)
+                    return ResponseFormatter.success_response('Từ chối giải trình thành công', result)
+                
+                except Exception as e:
+                    cr.rollback()
+                    _logger.error(f"Error rejecting excuse: {str(e)}", exc_info=True)
+                    raise
+
+        except Exception as e:
+            _logger.error(f"Error in reject_excuse: {str(e)}", exc_info=True)
+            return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR)

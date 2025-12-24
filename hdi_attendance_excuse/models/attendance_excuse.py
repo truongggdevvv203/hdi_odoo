@@ -692,3 +692,96 @@ class AttendanceExcuse(models.Model):
             'id': self.id,
             'state': self.state,
         }
+
+    def api_approve_excuse(self, user_id, corrected_checkin=None, corrected_checkout=None):
+        """API: Phê duyệt giải trình"""
+        current_user = self.env['res.users'].browse(user_id)
+        if not current_user.exists():
+            raise UserError('User không tồn tại')
+
+        # Kiểm tra trạng thái
+        if self.state != 'submitted':
+            raise UserError(f'Chỉ có thể phê duyệt giải trình ở trạng thái submitted, hiện tại là {self.state}')
+
+        # Kiểm tra quyền phê duyệt
+        can_approve = (current_user.has_group('base.group_system') or
+                      current_user.has_group('hr.group_hr_manager') or
+                      (self.approver_id and self.approver_id.id == current_user.id))
+
+        if not can_approve:
+            raise UserError('Không có quyền phê duyệt giải trình này')
+
+        # Cập nhật corrected times nếu được cung cấp
+        update_values = {
+            'state': 'approved',
+            'approver_id': current_user.id,
+            'approval_date': fields.Datetime.now(),
+        }
+
+        if corrected_checkin:
+            update_values['corrected_checkin'] = corrected_checkin
+        
+        if corrected_checkout:
+            update_values['corrected_checkout'] = corrected_checkout
+
+        self.write(update_values)
+
+        # Cập nhật attendance nếu có corrected times
+        if self.attendance_id:
+            att_update = {}
+            if self.corrected_checkin:
+                att_update['check_in'] = self.corrected_checkin
+            if self.corrected_checkout:
+                att_update['check_out'] = self.corrected_checkout
+            
+            if att_update:
+                self.attendance_id.write(att_update)
+
+        self.message_post(body=f"Yêu cầu giải trình đã được phê duyệt bởi {current_user.name}")
+
+        return {
+            'id': self.id,
+            'state': self.state,
+            'approver_id': self.approver_id.id,
+            'approver_name': self.approver_id.name,
+            'approval_date': self.approval_date.isoformat() if self.approval_date else None,
+        }
+
+    def api_reject_excuse(self, user_id, rejection_reason=''):
+        """API: Từ chối giải trình"""
+        current_user = self.env['res.users'].browse(user_id)
+        if not current_user.exists():
+            raise UserError('User không tồn tại')
+
+        # Kiểm tra trạng thái
+        if self.state != 'submitted':
+            raise UserError(f'Chỉ có thể từ chối giải trình ở trạng thái submitted, hiện tại là {self.state}')
+
+        # Kiểm tra quyền từ chối
+        can_reject = (current_user.has_group('base.group_system') or
+                     current_user.has_group('hr.group_hr_manager') or
+                     (self.approver_id and self.approver_id.id == current_user.id))
+
+        if not can_reject:
+            raise UserError('Không có quyền từ chối giải trình này')
+
+        update_values = {
+            'state': 'rejected',
+            'approver_id': current_user.id,
+            'approval_date': fields.Datetime.now(),
+        }
+
+        if rejection_reason:
+            update_values['rejection_reason'] = rejection_reason
+
+        self.write(update_values)
+        self.message_post(body=f"Yêu cầu giải trình đã bị từ chối bởi {current_user.name}. Lý do: {rejection_reason if rejection_reason else 'Không cung cấp'}")
+
+        return {
+            'id': self.id,
+            'state': self.state,
+            'approver_id': self.approver_id.id,
+            'approver_name': self.approver_id.name,
+            'approval_date': self.approval_date.isoformat() if self.approval_date else None,
+            'rejection_reason': self.rejection_reason,
+        }
