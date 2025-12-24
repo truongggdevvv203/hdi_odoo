@@ -10,7 +10,6 @@ _logger = logging.getLogger(__name__)
 
 
 class TimeOffController(http.Controller):
-    """API endpoints cho chức năng quản lý xin nghỉ"""
 
     @http.route('/api/time-off/types', type='http', auth='none', methods=['GET'], csrf=False)
     @_verify_token_http

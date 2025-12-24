@@ -127,29 +127,21 @@ class HRAttendance(models.Model):
                 record.is_invalid_record = False
                 continue
 
-            # Nếu không có lỗi nào → hợp lệ
             record.is_invalid_record = True
 
     def _is_late_or_early(self):
-        """
-        Kiểm tra nhân viên có đi muộn hoặc về sớm quá tolerance không
-        Được phép đi muộn tối đa 15 phút và về sớm tối đa 15 phút
-        Trả về True nếu vượt quá tolerance (không hợp lệ)
-        """
         if not self.check_in or not self.check_out:
             return False
         
         schedule = self._get_work_schedule(self.employee_id)
-        
-        # Kiểm tra đi muộn
+
         ci = self._convert_to_local_time(self.check_in)
         check_in_hour = ci.hour + ci.minute / 60.0 + ci.second / 3600.0
         late_threshold = schedule['start_time'] + schedule['late_tolerance']
         
         if check_in_hour > late_threshold:
             return True
-        
-        # Kiểm tra về sớm
+
         co = self._convert_to_local_time(self.check_out)
         check_out_hour = co.hour + co.minute / 60.0 + co.second / 3600.0
         early_threshold = schedule['end_time'] - schedule['early_tolerance']
@@ -160,11 +152,9 @@ class HRAttendance(models.Model):
         return False
 
     def _get_company_timezone(self):
-        """Lấy timezone của công ty/user"""
         return pytz.timezone(self.env.user.tz or 'Asia/Ho_Chi_Minh')
 
     def _convert_to_local_time(self, dt):
-        """Chuyển đổi datetime sang local time"""
         if not dt:
             return None
         if dt.tzinfo is None:
@@ -173,59 +163,41 @@ class HRAttendance(models.Model):
         return dt.astimezone(tz)
 
     def _get_work_schedule(self, employee):
-        """
-        Lấy lịch làm việc từ resource.calendar của nhân viên cho ngày check_in
-        Luôn lấy start_time từ ca đầu tiên và end_time từ ca cuối cùng trong ngày
-        (để tính toán muộn/sớm với giờ làm việc chính thức)
-        
-        Ví dụ: Nếu có ca sáng 8:30-12:00, trưa 12:00-13:30, chiều 13:30-18:00
-        → start_time = 8.5, end_time = 18.0
-        """
-        # Giá trị mặc định
         default_schedule = {
-            'start_time': 8.5,  # 8:30
-            'end_time': 18.0,   # 18:00
-            'late_tolerance': 0.25,   # 15 phút được phép đi muộn
-            'early_tolerance': 0.25,  # 15 phút được phép về sớm
+            'start_time': 8.5,
+            'end_time': 18.0,
+            'late_tolerance': 0.25,
+            'early_tolerance': 0.25,
         }
 
         if not employee or not self.check_in:
             return default_schedule
 
-        # Lấy calendar từ employee
         calendar = employee.resource_calendar_id
         if not calendar:
-            # Nếu không có calendar riêng, lấy calendar của company
             calendar = employee.company_id.resource_calendar_id
 
         if not calendar:
             return default_schedule
 
-        # Lấy ngày trong tuần của check_in (0=Monday, 6=Sunday)
         check_in_local = self._convert_to_local_time(self.check_in)
-        day_of_week = str(check_in_local.weekday())  # 0=Monday, 6=Sunday → convert to string
+        day_of_week = str(check_in_local.weekday())
 
-        # Lấy attendance của ngày hôm đó
-        # calendar.attendance_ids có dayofweek (0=Monday, 6=Sunday)
         attendance_today = calendar.attendance_ids.filtered(lambda a: a.dayofweek == day_of_week)
         
         if not attendance_today:
-            # Nếu không có lịch làm việc ngày hôm đó (có thể là ngày nghỉ) → trả về default
             return default_schedule
-        
-        # Sắp xếp theo hour_from
+
         attendance_today = attendance_today.sorted(key=lambda a: a.hour_from)
-        
-        # Lấy start_time từ ca đầu tiên, end_time từ ca cuối cùng
-        # Điều này đúng cho ngày làm việc với nhiều ca (sáng-trưa-chiều)
+
         first_attendance = attendance_today[0]
         last_attendance = attendance_today[-1]
 
         return {
-            'start_time': first_attendance.hour_from,      # Ca đầu tiên (sáng)
-            'end_time': last_attendance.hour_to,           # Ca cuối cùng (chiều)
-            'late_tolerance': 0.25,   # 15 phút được phép đi muộn
-            'early_tolerance': 0.25,  # 15 phút được phép về sớm
+            'start_time': first_attendance.hour_from,
+            'end_time': last_attendance.hour_to,
+            'late_tolerance': 0.25,
+            'early_tolerance': 0.25,
         }
 
     @api.depends('check_in', 'check_out', 'excuse_ids', 'excuse_ids.state', 'is_invalid_record', 'employee_id', 'employee_id.resource_calendar_id', 'employee_id.company_id.resource_calendar_id')
@@ -233,7 +205,6 @@ class HRAttendance(models.Model):
         for record in self:
             status = 'valid'
 
-            # Bỏ qua bản ghi của ngày hôm nay
             if record.check_in:
                 check_in_local = record._convert_to_local_time(record.check_in)
                 check_in_date = check_in_local.date()
@@ -242,23 +213,17 @@ class HRAttendance(models.Model):
                     record.attendance_status = status
                     continue
 
-            # 1. Kiểm tra bản ghi không hợp lệ (is_invalid_record = False)
             if not record.is_invalid_record:
-                # Xác định nguyên nhân cụ thể
                 if not record.check_in or not record.check_out:
                     status = 'missing_checkin_out'
                 elif record._is_late_or_early():
                     status = 'late_or_early'
                 else:
-                    # Nếu có đầy đủ check-in/out và không muộn/sớm → hợp lệ
                     status = 'valid'
-            # 2. Kiểm tra có giải trình bị từ chối
             elif any(e.state == 'rejected' for e in record.excuse_ids):
                 status = 'excuse_rejected'
-            # 3. Kiểm tra có giải trình đang chờ duyệt
             elif any(e.state in ['submitted', 'pending'] for e in record.excuse_ids):
                 status = 'pending_excuse_approval'
-            # 4. Kiểm tra có giải trình đã được duyệt
             elif any(e.state == 'approved' for e in record.excuse_ids):
                 status = 'excuse_approved'
 
@@ -266,20 +231,13 @@ class HRAttendance(models.Model):
 
     @api.model
     def auto_checkout_at_midnight(self):
-        """
-        Tự động checkout vào 23:59:59 cho các nhân viên chưa checkout
-        Được chạy từ cron job hàng ngày
-        """
         import datetime
-        
-        # Lấy danh sách các nhân viên đã checkin nhưng chưa checkout hôm nay
+
         today = fields.Date.context_today(self)
-        
-        # Lấy tất cả nhân viên
+
         employees = self.env['hr.employee'].search([])
         
         for employee in employees:
-            # Tìm attendance record của hôm nay chưa có checkout
             attendance = self.search([
                 ('employee_id', '=', employee.id),
                 ('check_in', '>=', datetime.datetime.combine(today, datetime.time.min)),
@@ -288,17 +246,13 @@ class HRAttendance(models.Model):
             ], limit=1)
             
             if attendance:
-                # Lấy timezone của company
                 company = employee.company_id or self.env.company
                 tz = pytz.timezone(company.partner_id.tz or 'Asia/Ho_Chi_Minh')
-                
-                # Tạo thời gian checkout 23:59:59 ở local timezone
+
                 local_midnight = tz.localize(datetime.datetime.combine(today, datetime.time(23, 59, 59)))
-                
-                # Convert sang UTC để lưu vào database
+
                 utc_checkout = local_midnight.astimezone(pytz.UTC).replace(tzinfo=None)
-                
-                # Cập nhật checkout
+
                 attendance.check_out = utc_checkout
 
     # @api.model
