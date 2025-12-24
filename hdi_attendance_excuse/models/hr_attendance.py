@@ -325,27 +325,3 @@ class HRAttendance(models.Model):
                 utc_checkout = local_midnight.astimezone(pytz.UTC).replace(tzinfo=None)
 
                 attendance.check_out = utc_checkout
-
-    # @api.model
-    # def create_missing_checkout_excuses(self):
-    #     AttendanceExcuse = self.env['attendance.excuse']
-
-    #     attendances = self.search([
-    #         ('check_in', '!=', False),
-    #         ('check_out', '!=', False),
-    #     ])
-
-    #     for att in attendances:
-    #         existing = AttendanceExcuse.search([
-    #             ('attendance_id', '=', att.id),
-    #             ('excuse_type', '=', 'missing_checkin_out'),
-    #         ], limit=1)
-
-    #         if not existing:
-    #             co = att._convert_to_local_time(att.check_out)
-    #             if co.hour == 23 and co.minute == 59 and co.second == 59:
-    #                 AttendanceExcuse.create({
-    #                     'attendance_id': att.id,
-    #                     'state': 'draft',
-    #                     'notes': 'Tự động phát hiện: Quên check-out (auto-checkout tại midnight)',
-    #                 })
