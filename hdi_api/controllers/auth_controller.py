@@ -25,12 +25,9 @@ def _get_jwt_secret_key():
         return DEFAULT_JWT_SECRET_KEY
 
 
-def _is_token_blacklisted(token, db_name=None):
+def _is_token_blacklisted(token, db_name):
     """Kiểm tra token có trong blacklist không"""
     try:
-        if not db_name:
-            db_name = request.session.db or request.env.cr.dbname
-
         import odoo
         from odoo.modules.registry import Registry
 
@@ -316,9 +313,6 @@ class MobileAppAuthAPI(http.Controller):
             db_name = request.jwt_payload.get('db')
             old_token_exp = request.jwt_payload.get('exp')
 
-            if not db_name:
-                return ResponseFormatter.error_response('Token không chứa thông tin database', ResponseFormatter.HTTP_BAD_REQUEST)
-
             import odoo
             from odoo.modules.registry import Registry
 
@@ -417,9 +411,6 @@ class MobileAppAuthAPI(http.Controller):
             user_id = request.jwt_payload.get('user_id')
             db_name = request.jwt_payload.get('db')
 
-            if not db_name:
-                return ResponseFormatter.error_response('Token không chứa thông tin database', ResponseFormatter.HTTP_BAD_REQUEST)
-
             # Lấy thông tin user
             import odoo
             from odoo.modules.registry import Registry
@@ -477,9 +468,6 @@ class MobileAppAuthAPI(http.Controller):
 
             user_id = request.jwt_payload.get('user_id')
             db_name = request.jwt_payload.get('db')
-
-            if not db_name:
-                return ResponseFormatter.error_response('Token không chứa thông tin database', ResponseFormatter.HTTP_BAD_REQUEST)
 
             import odoo
             from odoo.modules.registry import Registry
