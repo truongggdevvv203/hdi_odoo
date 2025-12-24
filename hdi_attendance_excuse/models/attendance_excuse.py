@@ -435,10 +435,14 @@ class AttendanceExcuse(models.Model):
                 })
 
     def action_submit(self):
-
+        """
+        Gửi giải trình (draft -> submitted)
+        """
         for record in self:
             if record.state != 'draft':
-                continue
+                raise UserError(
+                    f'Chỉ có thể gửi giải trình ở trạng thái draft, hiện tại là {record.state}'
+                )
 
             if record.employee_id and record.date and record.excuse_type:
                 self._check_monthly_limit(record.employee_id, record.excuse_type,
@@ -496,6 +500,22 @@ class AttendanceExcuse(models.Model):
                 f"({limit_config.monthly_limit} lần/tháng) trong tháng {date.month}/{date.year}. "
                 f"Hiện tại: {total_count}/{limit_config.monthly_limit}"
             )
+
+    def write(self, values):
+        """
+        Override write để validate state
+        Chỉ có thể update khi ở trạng thái draft
+        """
+        for record in self:
+            # Nếu có thay đổi values (không phải gọi từ action_submit/action_approve/etc)
+            if record.state != 'draft':
+                # Cho phép update nếu đang thay đổi state hoặc approver (từ action_submit/approve/reject)
+                if 'state' not in values and 'approver_id' not in values and 'approval_date' not in values:
+                    raise UserError(
+                        f'Chỉ có thể sửa giải trình ở trạng thái draft, hiện tại là {record.state}'
+                    )
+        
+        return super().write(values)
 
     def action_approve(self):
         for record in self:
@@ -555,6 +575,19 @@ class AttendanceExcuse(models.Model):
     def action_reset_to_draft(self):
         for record in self:
             record.state = 'draft'
+
+    def unlink(self):
+        """
+        Override unlink để validate trạng thái
+        Chỉ có thể xóa khi ở trạng thái draft
+        """
+        for record in self:
+            if record.state != 'draft':
+                raise UserError(
+                    f'Chỉ có thể xóa giải trình ở trạng thái draft, hiện tại là {record.state}'
+                )
+        
+        return super().unlink()
 
     def get_my_requests(self):
         return self.search([

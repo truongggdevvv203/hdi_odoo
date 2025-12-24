@@ -466,15 +466,8 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
                         ResponseFormatter.HTTP_FORBIDDEN
                     )
 
-                # Kiểm tra trạng thái
-                if excuse.state != 'draft':
-                    return ResponseFormatter.error_response(
-                        f'Giải trình phải ở trạng thái draft, hiện tại là {excuse.state}',
-                        ResponseFormatter.HTTP_BAD_REQUEST
-                    )
-
                 try:
-                    # Gửi giải trình
+                    # Gửi giải trình (logic validate state trong model's action_submit)
                     excuse.action_submit()
                     cr.commit()
 
@@ -490,6 +483,12 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
                         excuse_data
                     )
 
+                except UserError as ue:
+                    cr.rollback()
+                    return ResponseFormatter.error_response(
+                        str(ue),
+                        ResponseFormatter.HTTP_BAD_REQUEST
+                    )
                 except ValidationError as ve:
                     cr.rollback()
                     return ResponseFormatter.error_response(
@@ -571,13 +570,6 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
                         ResponseFormatter.HTTP_FORBIDDEN
                     )
 
-                # Kiểm tra trạng thái - chỉ có thể sửa khi ở trạng thái draft
-                if excuse.state != 'draft':
-                    return ResponseFormatter.error_response(
-                        f'Chỉ có thể sửa giải trình ở trạng thái draft, hiện tại là {excuse.state}',
-                        ResponseFormatter.HTTP_BAD_REQUEST
-                    )
-
                 try:
                     # Chuẩn bị dữ liệu cập nhật
                     update_values = {}
@@ -614,7 +606,7 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
                                 ResponseFormatter.HTTP_BAD_REQUEST
                             )
 
-                    # Cập nhật giải trình
+                    # Cập nhật giải trình (logic validate state trong model's write)
                     if update_values:
                         excuse.write(update_values)
                     
@@ -640,6 +632,12 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
                         excuse_data
                     )
 
+                except UserError as ue:
+                    cr.rollback()
+                    return ResponseFormatter.error_response(
+                        str(ue),
+                        ResponseFormatter.HTTP_BAD_REQUEST
+                    )
                 except Exception as e:
                     cr.rollback()
                     _logger.error(f"Error updating excuse: {str(e)}", exc_info=True)
@@ -715,15 +713,9 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
                         ResponseFormatter.HTTP_FORBIDDEN
                     )
 
-                # Kiểm tra trạng thái - chỉ có thể xóa khi ở trạng thái draft
-                if excuse.state != 'draft':
-                    return ResponseFormatter.error_response(
-                        f'Chỉ có thể xóa giải trình ở trạng thái draft, hiện tại là {excuse.state}',
-                        ResponseFormatter.HTTP_BAD_REQUEST
-                    )
-
                 try:
                     # Xóa giải trình
+                    # Toàn bộ logic validate (state, etc) đều trong model's unlink()
                     excuse.unlink()
                     cr.commit()
 
@@ -732,6 +724,12 @@ class MobileAppAttendanceExcuseAPI(http.Controller):
                         {'excuse_id': excuse_id}
                     )
 
+                except UserError as ue:
+                    cr.rollback()
+                    return ResponseFormatter.error_response(
+                        str(ue),
+                        ResponseFormatter.HTTP_BAD_REQUEST
+                    )
                 except Exception as e:
                     cr.rollback()
                     _logger.error(f"Error deleting excuse: {str(e)}", exc_info=True)

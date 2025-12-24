@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from odoo import http
 from odoo.http import request
+from odoo.exceptions import UserError
 
 from .auth_controller import _verify_token
 from ..utils.response_formatter import ResponseFormatter
@@ -13,22 +14,16 @@ _logger = logging.getLogger(__name__)
 class AttendanceAPI(http.Controller):
     """API endpoints cho chức năng chấm công"""
 
-    def _get_employee_from_user(self, user_id, db_name):
-        """Lấy employee từ user_id"""
-        try:
-            import odoo
-            from odoo.modules.registry import Registry
+    def _get_employee_from_user(self, env, user_id):
+        """Lấy employee từ user_id trong environment"""
+        employee = env['hr.employee'].search([
+            ('user_id', '=', user_id)
+        ], limit=1)
 
-            registry = Registry(db_name)
-            with registry.cursor() as cr:
-                env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
-                employee = env['hr.employee'].sudo().search([
-                    ('user_id', '=', user_id)
-                ], limit=1)
-                return employee
-        except Exception as e:
-            _logger.error(f"Error getting employee: {str(e)}", exc_info=True)
-            return None
+        if not employee:
+            raise UserError('Không tìm thấy nhân viên liên kết với tài khoản này')
+        
+        return employee
 
     @http.route('/api/v1/attendance/check-in', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
@@ -51,50 +46,32 @@ class AttendanceAPI(http.Controller):
             with registry.cursor() as cr:
                 env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
 
-                # Lấy employee
-                employee = env['hr.employee'].sudo().search([
-                    ('user_id', '=', user_id)
-                ], limit=1)
-
-                if not employee:
-                    return ResponseFormatter.error_response(
-                        'Không tìm thấy nhân viên liên kết với tài khoản này',
-                        ResponseFormatter.HTTP_NOT_FOUND
+                try:
+                    # Lấy employee và thực hiện check-in (logic trong model)
+                    employee = self._get_employee_from_user(env, user_id)
+                    result = env['hr.attendance'].api_check_in(employee.id)
+                    
+                    cr.commit()
+                    
+                    return ResponseFormatter.success_response(
+                        'Chấm công vào thành công',
+                        result,
+                        ResponseFormatter.HTTP_OK
                     )
 
-                # Kiểm tra xem đã check-in chưa
-                last_attendance = env['hr.attendance'].sudo().search([
-                    ('employee_id', '=', employee.id),
-                    ('check_out', '=', False)
-                ], limit=1)
-
-                if last_attendance:
+                except UserError as ue:
+                    cr.rollback()
                     return ResponseFormatter.error_response(
-                        'Bạn đã chấm công vào rồi. Vui lòng chấm công ra trước khi chấm công vào lại.',
-                        ResponseFormatter.HTTP_BAD_REQUEST,
-                        {
-                            'check_in': last_attendance.check_in.isoformat() if last_attendance.check_in else None
-                        }
+                        str(ue),
+                        ResponseFormatter.HTTP_BAD_REQUEST
                     )
-
-                # Tạo bản ghi chấm công
-                attendance = env['hr.attendance'].sudo().create({
-                    'employee_id': employee.id,
-                    'check_in': datetime.now(),
-                })
-
-                cr.commit()
-
-                return ResponseFormatter.success_response(
-                    'Chấm công vào thành công',
-                    {
-                        'id': attendance.id,
-                        'employee_id': employee.id,
-                        'employee_name': employee.name,
-                        'check_in': attendance.check_in.isoformat() if attendance.check_in else None,
-                    },
-                    ResponseFormatter.HTTP_OK
-                )
+                except Exception as e:
+                    cr.rollback()
+                    _logger.error(f"Check-in error: {str(e)}", exc_info=True)
+                    return ResponseFormatter.error_response(
+                        f'Lỗi khi chấm công vào: {str(e)}',
+                        ResponseFormatter.HTTP_INTERNAL_ERROR
+                    )
 
         except Exception as e:
             _logger.error(f"Check-in error: {str(e)}", exc_info=True)
@@ -124,76 +101,32 @@ class AttendanceAPI(http.Controller):
             with registry.cursor() as cr:
                 env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
 
-                # Lấy employee
-                employee = env['hr.employee'].sudo().search([
-                    ('user_id', '=', user_id)
-                ], limit=1)
-
-                if not employee:
-                    return ResponseFormatter.error_response(
-                        'Không tìm thấy nhân viên liên kết với tài khoản này',
-                        ResponseFormatter.HTTP_NOT_FOUND
+                try:
+                    # Lấy employee và thực hiện check-out (logic trong model)
+                    employee = self._get_employee_from_user(env, user_id)
+                    result = env['hr.attendance'].api_check_out(employee.id)
+                    
+                    cr.commit()
+                    
+                    return ResponseFormatter.success_response(
+                        'Chấm công ra thành công',
+                        result,
+                        ResponseFormatter.HTTP_OK
                     )
 
-                # Tìm bản ghi chấm công chưa check-out
-                attendance = env['hr.attendance'].sudo().search([
-                    ('employee_id', '=', employee.id),
-                    ('check_out', '=', False)
-                ], limit=1, order='check_in desc')
-
-                if not attendance:
+                except UserError as ue:
+                    cr.rollback()
                     return ResponseFormatter.error_response(
-                        'Không tìm thấy bản ghi chấm công vào. Vui lòng chấm công vào trước.',
+                        str(ue),
                         ResponseFormatter.HTTP_BAD_REQUEST
                     )
-
-                try:
-                    # Kiểm tra và xóa overtime record cũ nếu tồn tại
-                    attendance_date = attendance.check_in.date() if attendance.check_in else datetime.now().date()
-                    old_overtime = env['hr.attendance.overtime'].sudo().search([
-                        ('employee_id', '=', employee.id),
-                        ('date', '=', str(attendance_date))
-                    ])
-                    if old_overtime:
-                        old_overtime.sudo().unlink()
-
-                    # Cập nhật check-out
-                    attendance.sudo().write({
-                        'check_out': datetime.now(),
-                    })
-                    cr.commit()
-                except Exception as write_error:
-                    _logger.warning(f"Check-out update warning: {str(write_error)}")
+                except Exception as e:
                     cr.rollback()
-
-                    # Fallback: cập nhật trực tiếp database
-                    try:
-                        cr.execute(
-                            "UPDATE hr_attendance SET check_out = %s WHERE id = %s",
-                            (datetime.now(), attendance.id)
-                        )
-                        cr.commit()
-                        _logger.info(f"Check-out successful via direct SQL for employee {employee.name}")
-                    except Exception as e:
-                        _logger.error(f"Check-out failed: {str(e)}", exc_info=True)
-                        cr.rollback()
-                        raise e
-
-                # Tính thời gian làm việc
-                worked_hours = attendance.worked_hours if hasattr(attendance, 'worked_hours') else 0
-
-                return ResponseFormatter.success_response(
-                    'Chấm công ra thành công',
-                    {
-                        'id': attendance.id,
-                        'employee_id': employee.id,
-                        'employee_name': employee.name,
-                        'check_in': attendance.check_in.isoformat() if attendance.check_in else None,
-                        'check_out': attendance.check_out.isoformat() if attendance.check_out else None,
-                        'worked_hours': worked_hours,
-                    },
-                    ResponseFormatter.HTTP_OK
-                )
+                    _logger.error(f"Check-out error: {str(e)}", exc_info=True)
+                    return ResponseFormatter.error_response(
+                        f'Lỗi khi chấm công ra: {str(e)}',
+                        ResponseFormatter.HTTP_INTERNAL_ERROR
+                    )
 
         except Exception as e:
             _logger.error(f"Check-out error: {str(e)}", exc_info=True)

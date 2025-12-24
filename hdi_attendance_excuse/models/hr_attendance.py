@@ -230,6 +230,77 @@ class HRAttendance(models.Model):
             record.attendance_status = status
 
     @api.model
+    def api_check_in(self, employee_id):
+        """
+        API method cho check-in
+        Kiểm tra và tạo attendance record
+        """
+        # Kiểm tra xem đã check-in chưa
+        last_attendance = self.search([
+            ('employee_id', '=', employee_id),
+            ('check_out', '=', False)
+        ], limit=1)
+
+        if last_attendance:
+            raise UserError(
+                'Bạn đã chấm công vào rồi. Vui lòng chấm công ra trước khi chấm công vào lại.'
+            )
+
+        # Tạo bản ghi chấm công
+        attendance = self.create({
+            'employee_id': employee_id,
+            'check_in': fields.Datetime.now(),
+        })
+
+        return {
+            'id': attendance.id,
+            'employee_id': attendance.employee_id.id,
+            'employee_name': attendance.employee_id.name,
+            'check_in': attendance.check_in.isoformat() if attendance.check_in else None,
+        }
+
+    @api.model
+    def api_check_out(self, employee_id):
+        """
+        API method cho check-out
+        Kiểm tra và cập nhật attendance record
+        """
+        # Tìm bản ghi chấm công chưa check-out
+        attendance = self.search([
+            ('employee_id', '=', employee_id),
+            ('check_out', '=', False)
+        ], limit=1, order='check_in desc')
+
+        if not attendance:
+            raise UserError(
+                'Không tìm thấy bản ghi chấm công vào. Vui lòng chấm công vào trước.'
+            )
+
+        # Kiểm tra và xóa overtime record cũ nếu tồn tại
+        if attendance.check_in:
+            attendance_date = attendance.check_in.date()
+            old_overtime = self.env['hr.attendance.overtime'].search([
+                ('employee_id', '=', employee_id),
+                ('date', '=', str(attendance_date))
+            ])
+            if old_overtime:
+                old_overtime.unlink()
+
+        # Cập nhật check-out
+        attendance.write({
+            'check_out': fields.Datetime.now(),
+        })
+
+        return {
+            'id': attendance.id,
+            'employee_id': attendance.employee_id.id,
+            'employee_name': attendance.employee_id.name,
+            'check_in': attendance.check_in.isoformat() if attendance.check_in else None,
+            'check_out': attendance.check_out.isoformat() if attendance.check_out else None,
+            'worked_hours': attendance.worked_hours if hasattr(attendance, 'worked_hours') else 0,
+        }
+
+    @api.model
     def auto_checkout_at_midnight(self):
         import datetime
 
