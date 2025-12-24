@@ -44,7 +44,7 @@ class AttendanceExcuse(models.Model):
     attendance_id = fields.Many2one(
         'hr.attendance',
         string='Bản ghi chấm công',
-        ondelete='set null',
+        ondelete='cascade',
         index=True,
         required=True
     )
