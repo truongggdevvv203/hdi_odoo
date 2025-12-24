@@ -1,3 +1,7 @@
+"""
+Attendance Excuse Model
+Quản lý giải trình chấm công cho nhân viên
+"""
 from odoo import models, fields, api
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
@@ -6,7 +10,7 @@ import pytz
 
 class AttendanceExcuse(models.Model):
     _name = 'attendance.excuse'
-    _description = 'Attendance Excuse (Giải trình chấm công)'
+    _description = 'Giải trình chấm công'
     _order = 'date desc, employee_id'
     _rec_name = 'display_name'
     _inherit = ['mail.thread', 'mail.activity.mixin']
@@ -37,60 +41,19 @@ class AttendanceExcuse(models.Model):
         tracking=True
     )
 
-    @api.depends('attendance_id')
-    def _compute_employee_id(self):
-        """Tự động lấy employee từ attendance_id"""
-        for record in self:
-            if record.attendance_id:
-                record.employee_id = record.attendance_id.employee_id
-            # Nếu không có attendance_id, giữ nguyên giá trị hiện tại
-
-    @api.depends('attendance_id')
-    def _compute_date(self):
-        """Tự động lấy ngày từ attendance_id"""
-        for record in self:
-            if record.attendance_id and record.attendance_id.check_in:
-                check_in_date = fields.Datetime.context_timestamp(record, record.attendance_id.check_in).date()
-                record.date = check_in_date
-            # Nếu không có attendance_id, giữ nguyên giá trị hiện tại
-
-
-
-    @api.onchange('excuse_type')
-    def _onchange_excuse_type(self):
-        """Tự động điền requested_checkin/checkout dựa trên excuse_type"""
-        if not self.attendance_id:
-            return
-
-        # Reset các trường request
-        self.requested_checkin = False
-        self.requested_checkout = False
-
-        # Nếu late_or_early: nhân viên có thể sửa cả check-in và check-out
-        if self.excuse_type == 'late_or_early':
-            self.requested_checkin = self.original_checkin
-            self.requested_checkout = self.original_checkout
-
-        # Nếu missing_checkin_out: nhân viên cần điền check-in/out
-        elif self.excuse_type == 'missing_checkin_out':
-            self.requested_checkin = self.original_checkin
-            self.requested_checkout = self.original_checkout
-
-    excuse_type = fields.Selection([
-        ('late_or_early', 'Đi muộn/về sớm'),
-        ('missing_checkin_out', 'Thiếu chấm công'),
-    ], string="Loại giải trình", compute='_compute_excuse_type', store=True,
-        tracking=True)
-
-    # Attendance references
     attendance_id = fields.Many2one(
         'hr.attendance',
         string='Bản ghi chấm công',
         ondelete='set null',
-        index=True
+        index=True,
+        required=True
     )
 
-    # Details for different excuse types - automatically pulled from hr.attendance
+    excuse_type = fields.Selection([
+        ('late_or_early', 'Đi muộn/về sớm'),
+        ('missing_checkin_out', 'Thiếu chấm công'),
+    ], string="Loại giải trình", compute='_compute_excuse_type', store=True, tracking=True)
+
     original_checkin = fields.Datetime(
         string='Check-in gốc',
         compute='_compute_original_times',
@@ -101,6 +64,14 @@ class AttendanceExcuse(models.Model):
         string='Check-out gốc',
         compute='_compute_original_times',
         store=True
+    )
+
+    requested_checkin = fields.Datetime(
+        string='Check-in yêu cầu sửa'
+    )
+
+    requested_checkout = fields.Datetime(
+        string='Check-out yêu cầu sửa'
     )
 
     corrected_checkin = fields.Datetime(
@@ -125,23 +96,16 @@ class AttendanceExcuse(models.Model):
         readonly=True
     )
 
-    # Request details
     reason = fields.Text(
         string='Lý do',
         help='Lý do chi tiết cho yêu cầu giải trình',
         tracking=True
     )
 
-    # Requested corrections (if applicable)
-    requested_checkin = fields.Datetime(
-        string='Giờ check-in yêu cầu sửa'
+    notes = fields.Text(
+        string='Ghi chú'
     )
 
-    requested_checkout = fields.Datetime(
-        string='Giờ check-out yêu cầu sửa'
-    )
-
-    # Approval workflow
     state = fields.Selection(
         [
             ('draft', 'Nháp'),
@@ -172,10 +136,6 @@ class AttendanceExcuse(models.Model):
         tracking=True
     )
 
-    notes = fields.Text(
-        string='Ghi chú'
-    )
-
     can_approve = fields.Boolean(
         string='Có thể phê duyệt',
         compute='_compute_can_approve',
@@ -194,61 +154,36 @@ class AttendanceExcuse(models.Model):
         store=False
     )
 
-    @api.depends('approver_id')
-    def _compute_is_approver(self):
-        """Check if current user is the approver for this record"""
-        for record in self:
-            record.is_approver = record.approver_id and record.approver_id.id == self.env.user.id
-
-    @api.depends('approver_id', 'state')
-    def _compute_can_approve(self):
-        for record in self:
-            if record.state != 'submitted':
-                record.can_approve = False
-                continue
-
-            if not record.approver_id:
-                record.can_approve = self.env.user.has_group('hr.group_hr_manager')
-                continue
-
-            if record.approver_id.id == self.env.user.id:
-                record.can_approve = True
-                continue
-
-            record.can_approve = self.env.user.has_group('hr.group_hr_manager')
-
-    @api.depends('approver_id', 'state')
-    def _compute_can_reject(self):
-        for record in self:
-            if record.state != 'submitted':
-                record.can_reject = False
-                continue
-
-            if not record.approver_id:
-                record.can_reject = self.env.user.has_group('hr.group_hr_manager')
-                continue
-
-            if record.approver_id.id == self.env.user.id:
-                record.can_reject = True
-                continue
-
-            record.can_reject = self.env.user.has_group('hr.group_hr_manager')
-
     @api.depends('employee_id', 'date', 'excuse_type', 'state')
     def _compute_display_name(self):
+        """Tính tên hiển thị"""
         for record in self:
             if record.employee_id and record.date and record.excuse_type:
                 excuse_label = dict(record._fields['excuse_type'].selection).get(
                     record.excuse_type, record.excuse_type)
-                state_label = dict(record._fields['state'].selection).get(record.state,
-                                                                          record.state)
+                state_label = dict(record._fields['state'].selection).get(record.state, record.state)
                 record.display_name = f"{record.employee_id.name} - {record.date} - {excuse_label} ({state_label})"
             else:
                 record.display_name = "Giải trình chấm công"
 
-    @api.depends('attendance_id', 'attendance_id.check_in',
-                 'attendance_id.check_out')
+    @api.depends('attendance_id')
+    def _compute_employee_id(self):
+        """Lấy nhân viên từ attendance"""
+        for record in self:
+            if record.attendance_id:
+                record.employee_id = record.attendance_id.employee_id
+
+    @api.depends('attendance_id')
+    def _compute_date(self):
+        """Lấy ngày từ attendance"""
+        for record in self:
+            if record.attendance_id and record.attendance_id.check_in:
+                check_in_date = fields.Datetime.context_timestamp(record, record.attendance_id.check_in).date()
+                record.date = check_in_date
+
+    @api.depends('attendance_id', 'attendance_id.check_in', 'attendance_id.check_out')
     def _compute_original_times(self):
+        """Lấy thời gian gốc từ attendance"""
         for record in self:
             if record.attendance_id:
                 record.original_checkin = record.attendance_id.check_in
@@ -257,28 +192,77 @@ class AttendanceExcuse(models.Model):
                 record.original_checkin = False
                 record.original_checkout = False
 
-    @api.depends('original_checkin', 'original_checkout', 'attendance_id', 'attendance_id.attendance_status', 'attendance_id.is_invalid_record')
+    @api.depends('original_checkin', 'original_checkout', 'attendance_id', 
+                 'attendance_id.attendance_status', 'attendance_id.is_invalid_record')
     def _compute_excuse_type(self):
+        """Tự động xác định loại giải trình dựa trên attendance"""
         for record in self:
             if not record.attendance_id:
                 record.excuse_type = 'late_or_early'
                 continue
             
             att = record.attendance_id
-            
-            # Nếu không có check-out hoặc không hợp lệ (missing) → missing_checkin_out
+            # Nếu không có check-out → missing_checkin_out
             if not record.original_checkout or not att.is_invalid_record:
-                if att.attendance_status == 'missing_checkin_out':
-                    record.excuse_type = 'missing_checkin_out'
-                else:
-                    record.excuse_type = 'late_or_early'
+                record.excuse_type = 'missing_checkin_out' if att.attendance_status == 'missing_checkin_out' else 'late_or_early'
             else:
                 record.excuse_type = 'late_or_early'
 
+    @api.depends('approver_id')
+    def _compute_is_approver(self):
+        """Kiểm tra user hiện tại có phải là người phê duyệt"""
+        for record in self:
+            record.is_approver = record.approver_id and record.approver_id.id == self.env.user.id
+
+    @api.depends('approver_id', 'state')
+    def _compute_can_approve(self):
+        """Kiểm tra user có quyền phê duyệt không"""
+        for record in self:
+            if record.state != 'submitted':
+                record.can_approve = False
+                continue
+
+            if not record.approver_id:
+                record.can_approve = self.env.user.has_group('hr.group_hr_manager')
+            elif record.approver_id.id == self.env.user.id:
+                record.can_approve = True
+            else:
+                record.can_approve = self.env.user.has_group('hr.group_hr_manager')
+
+    @api.depends('approver_id', 'state')
+    def _compute_can_reject(self):
+        """Kiểm tra user có quyền từ chối không"""
+        for record in self:
+            if record.state != 'submitted':
+                record.can_reject = False
+                continue
+
+            if not record.approver_id:
+                record.can_reject = self.env.user.has_group('hr.group_hr_manager')
+            elif record.approver_id.id == self.env.user.id:
+                record.can_reject = True
+            else:
+                record.can_reject = self.env.user.has_group('hr.group_hr_manager')
+
+    @api.onchange('excuse_type')
+    def _onchange_excuse_type(self):
+        """Tự động điền request times khi thay đổi loại giải trình"""
+        if not self.attendance_id:
+            return
+
+        self.requested_checkin = False
+        self.requested_checkout = False
+
+        if self.excuse_type in ['late_or_early', 'missing_checkin_out']:
+            self.requested_checkin = self.original_checkin
+            self.requested_checkout = self.original_checkout
+
     def _get_company_timezone(self):
+        """Lấy timezone của công ty"""
         return pytz.timezone(self.env.user.tz or 'Asia/Ho_Chi_Minh')
 
     def _convert_to_local_time(self, dt):
+        """Chuyển đổi datetime sang giờ địa phương"""
         if not dt:
             return None
         if dt.tzinfo is None:
@@ -287,7 +271,7 @@ class AttendanceExcuse(models.Model):
         return dt.astimezone(tz)
 
     def _get_work_schedule(self, employee):
-        # Giá trị mặc định
+        """Lấy lịch làm việc của nhân viên"""
         default_schedule = {
             'start_time': 8.5,  # 8:30
             'end_time': 18.0,   # 18:00
@@ -297,41 +281,77 @@ class AttendanceExcuse(models.Model):
         if not employee:
             return default_schedule
 
-        # Lấy calendar từ employee
-        calendar = employee.resource_calendar_id
-        if not calendar:
-            # Nếu không có calendar riêng, lấy calendar của company
-            calendar = employee.company_id.resource_calendar_id
+        # Lấy calendar từ employee hoặc company
+        calendar = employee.resource_calendar_id or employee.company_id.resource_calendar_id
         
         if not calendar:
             return default_schedule
 
-        # Lấy giờ làm việc từ calendar attendance
-        # Lấy tất cả attendance của ngày thứ 2 (đại diện)
+        # Lấy attendance của thứ 2
         attendances = calendar.attendance_ids.filtered(lambda a: a.dayofweek == '0')
         
         if not attendances:
-            # Nếu không có thứ 2, lấy bất kỳ ngày nào
             attendances = calendar.attendance_ids
         
         if attendances:
-            # Sắp xếp theo hour_from
             attendances = attendances.sorted(key=lambda a: a.hour_from)
-            
-            # Lấy start_time từ ca đầu tiên, end_time từ ca cuối cùng
-            first = attendances[0]
-            last = attendances[-1]
+            first, last = attendances[0], attendances[-1]
             
             return {
                 'start_time': first.hour_from,
                 'end_time': last.hour_to,
-                'late_tolerance': 0.25,  # 15 phút
+                'late_tolerance': 0.25,
             }
         
         return default_schedule
 
+    def _check_monthly_limit(self, employee, excuse_type, date):
+        """Kiểm tra giới hạn giải trình hàng tháng"""
+        limit_config = self.env['attendance.excuse.limit'].search([
+            ('excuse_type', '=', excuse_type),
+            ('active', '=', True)
+        ], limit=1)
+
+        if not limit_config:
+            return
+
+        # Tính ngày đầu và cuối tháng
+        month_start = date.replace(day=1)
+        if date.month == 12:
+            month_end = month_start.replace(year=date.year + 1, month=1) - timedelta(days=1)
+        else:
+            month_end = month_start.replace(month=date.month + 1) - timedelta(days=1)
+
+        # Đếm giải trình đã duyệt và đang chờ duyệt
+        approved_count = self.search_count([
+            ('employee_id', '=', employee.id),
+            ('excuse_type', '=', excuse_type),
+            ('state', '=', 'approved'),
+            ('date', '>=', month_start),
+            ('date', '<=', month_end)
+        ])
+
+        submitted_count = self.search_count([
+            ('employee_id', '=', employee.id),
+            ('excuse_type', '=', excuse_type),
+            ('state', '=', 'submitted'),
+            ('date', '>=', month_start),
+            ('date', '<=', month_end)
+        ])
+
+        total_count = approved_count + submitted_count
+
+        if total_count >= limit_config.monthly_limit:
+            excuse_label = dict(self._fields['excuse_type'].selection).get(excuse_type, excuse_type)
+            raise ValidationError(
+                f"Nhân viên {employee.name} đã vượt quá giới hạn giải trình \"{excuse_label}\" "
+                f"({limit_config.monthly_limit} lần/tháng) trong tháng {date.month}/{date.year}. "
+                f"Hiện tại: {total_count}/{limit_config.monthly_limit}"
+            )
+
     @api.model
     def detect_and_create_excuses(self, target_date=None):
+        """Tự động phát hiện và tạo giải trình chấm công"""
         if target_date is None:
             target_date = fields.Date.context_today(self)
 
@@ -350,10 +370,7 @@ class AttendanceExcuse(models.Model):
         }
 
     def _detect_late_arrival(self, target_date):
-        """
-        Phát hiện và tạo giải trình cho những bản ghi đi muộn/sớm
-        Dựa vào attendance_status từ HRAttendance
-        """
+        """Phát hiện và tạo giải trình cho đi muộn/về sớm"""
         attendances = self.env['hr.attendance'].search([
             ('check_in', '>=', datetime.combine(target_date, datetime.min.time())),
             ('check_in', '<=', datetime.combine(target_date, datetime.max.time())),
@@ -365,12 +382,8 @@ class AttendanceExcuse(models.Model):
             if not att.check_in or not att.check_out:
                 continue
 
-            existing = self.search([
-                ('attendance_id', '=', att.id),
-                ('excuse_type', '=', 'late_or_early'),
-            ], limit=1)
-
-            if existing:
+            # Kiểm tra giải trình đã tồn tại
+            if self.search_count([('attendance_id', '=', att.id), ('excuse_type', '=', 'late_or_early')]):
                 continue
 
             # Tính số phút chênh lệch
@@ -382,34 +395,28 @@ class AttendanceExcuse(models.Model):
             if check_in_hour > late_threshold:
                 late_minutes = int((check_in_hour - schedule['start_time']) * 60)
                 self.create({
-                    'employee_id': att.employee_id.id,
-                    'date': target_date,
                     'attendance_id': att.id,
                     'late_minutes': late_minutes,
                     'state': 'draft',
-                    'notes': f'Tự động phát hiện: Đi muộn/về sớm {late_minutes} phút',
+                    'notes': f'Tự động phát hiện: Đi muộn {late_minutes} phút',
                 })
             else:
                 # Kiểm tra về sớm
                 local_checkout = self._convert_to_local_time(att.check_out)
                 check_out_hour = local_checkout.hour + local_checkout.minute / 60.0
                 early_threshold = schedule['end_time']
+                
                 if check_out_hour < early_threshold:
                     early_minutes = int((early_threshold - check_out_hour) * 60)
                     self.create({
-                        'employee_id': att.employee_id.id,
-                        'date': target_date,
                         'attendance_id': att.id,
                         'early_minutes': early_minutes,
                         'state': 'draft',
-                        'notes': f'Tự động phát hiện: Đi muộn/về sớm {early_minutes} phút',
+                        'notes': f'Tự động phát hiện: Về sớm {early_minutes} phút',
                     })
 
     def _detect_missing_checkout(self, target_date):
-        """
-        Phát hiện và tạo giải trình cho những bản ghi thiếu check-out
-        Dựa vào is_invalid_record từ HRAttendance
-        """
+        """Phát hiện và tạo giải trình cho thiếu check-out"""
         previous_date = target_date - timedelta(days=1)
 
         attendances = self.env['hr.attendance'].search([
@@ -420,112 +427,45 @@ class AttendanceExcuse(models.Model):
         ])
 
         for att in attendances:
-            existing = self.search([
-                ('attendance_id', '=', att.id),
-                ('excuse_type', '=', 'missing_checkin_out'),
-            ], limit=1)
-
-            if not existing:
+            if not self.search_count([('attendance_id', '=', att.id), ('excuse_type', '=', 'missing_checkin_out')]):
                 self.create({
-                    'employee_id': att.employee_id.id,
-                    'date': previous_date,
                     'attendance_id': att.id,
                     'state': 'draft',
                     'notes': 'Tự động phát hiện: Thiếu chấm công',
                 })
 
     def action_submit(self):
-        """
-        Gửi giải trình (draft -> submitted)
-        """
+        """Gửi giải trình để duyệt (UI action)"""
         for record in self:
-            if record.state != 'draft':
-                raise UserError(
-                    f'Chỉ có thể gửi giải trình ở trạng thái draft, hiện tại là {record.state}'
-                )
+            record._submit()
 
-            if record.employee_id and record.date and record.excuse_type:
-                self._check_monthly_limit(record.employee_id, record.excuse_type,
-                                          record.date)
+    def _submit(self):
+        """Internal: thực hiện submit giải trình"""
+        if self.state != 'draft':
+            raise UserError(f'Chỉ có thể gửi ở trạng thái draft, hiện tại là {self.state}')
 
-            # Gán người phê duyệt từ attendance_manager_id
-            if not record.approver_id and record.employee_id:
-                if record.employee_id.attendance_manager_id:
-                    record.approver_id = record.employee_id.attendance_manager_id.user_id.id
-                elif record.employee_id.parent_id and record.employee_id.parent_id.user_id:
-                    record.approver_id = record.employee_id.parent_id.user_id.id
+        if self.employee_id and self.date and self.excuse_type:
+            self._check_monthly_limit(self.employee_id, self.excuse_type, self.date)
 
-            record.state = 'submitted'
-            record.message_post(body="Yêu cầu giải trình đã được gửi")
+        # Gán người phê duyệt
+        if not self.approver_id and self.employee_id:
+            if self.employee_id.attendance_manager_id:
+                self.approver_id = self.employee_id.attendance_manager_id.user_id.id
+            elif self.employee_id.parent_id and self.employee_id.parent_id.user_id:
+                self.approver_id = self.employee_id.parent_id.user_id.id
 
-    def _check_monthly_limit(self, employee, excuse_type, date):
-        limit_config = self.env['attendance.excuse.limit'].search([
-            ('excuse_type', '=', excuse_type),
-            ('active', '=', True)
-        ], limit=1)
-
-        if not limit_config:
-            return
-
-        month_start = date.replace(day=1)
-        if date.month == 12:
-            month_end = month_start.replace(year=date.year + 1, month=1) - timedelta(
-                days=1)
-        else:
-            month_end = month_start.replace(month=date.month + 1) - timedelta(days=1)
-
-        approved_count = self.search_count([
-            ('employee_id', '=', employee.id),
-            ('excuse_type', '=', excuse_type),
-            ('state', '=', 'approved'),
-            ('date', '>=', month_start),
-            ('date', '<=', month_end)
-        ])
-
-        submitted_count = self.search_count([
-            ('employee_id', '=', employee.id),
-            ('excuse_type', '=', excuse_type),
-            ('state', 'in', ['submitted']),
-            ('date', '>=', month_start),
-            ('date', '<=', month_end)
-        ])
-
-        total_count = approved_count + submitted_count
-
-        if total_count >= limit_config.monthly_limit:
-            excuse_label = dict(self._fields['excuse_type'].selection).get(
-                excuse_type, excuse_type)
-            raise ValidationError(
-                f"Nhân viên {employee.name} đã vượt quá giới hạn giải trình \"{excuse_label}\" "
-                f"({limit_config.monthly_limit} lần/tháng) trong tháng {date.month}/{date.year}. "
-                f"Hiện tại: {total_count}/{limit_config.monthly_limit}"
-            )
-
-    def write(self, values):
-        """
-        Override write để validate state
-        Chỉ có thể update khi ở trạng thái draft
-        """
-        for record in self:
-            # Nếu có thay đổi values (không phải gọi từ action_submit/action_approve/etc)
-            if record.state != 'draft':
-                # Cho phép update nếu đang thay đổi state hoặc approver (từ action_submit/approve/reject)
-                if 'state' not in values and 'approver_id' not in values and 'approval_date' not in values:
-                    raise UserError(
-                        f'Chỉ có thể sửa giải trình ở trạng thái draft, hiện tại là {record.state}'
-                    )
-        
-        return super().write(values)
+        self.state = 'submitted'
+        self.message_post(body="Yêu cầu giải trình đã được gửi")
 
     def action_approve(self):
+        """Phê duyệt giải trình"""
         for record in self:
             if record.state != 'submitted':
                 continue
 
             if record.approver_id and record.approver_id.id != self.env.user.id:
                 if not self.env.user.has_group('hr.group_hr_manager'):
-                    raise UserError(
-                        'Bạn không có quyền phê duyệt đơn này. Chỉ người phê duyệt được chỉ định hoặc HR Manager mới có thể phê duyệt.')
+                    raise UserError('Bạn không có quyền phê duyệt đơn này')
 
             record.write({
                 'state': 'approved',
@@ -533,34 +473,30 @@ class AttendanceExcuse(models.Model):
                 'approval_date': fields.Datetime.now(),
             })
 
+            # Cập nhật attendance nếu có requested times
             if record.attendance_id:
                 att = record.attendance_id
+                if record.corrected_checkin or record.requested_checkin:
+                    att.check_in = record.corrected_checkin or record.requested_checkin
+                    if not record.corrected_checkin:
+                        record.corrected_checkin = record.requested_checkin
+                
+                if record.corrected_checkout or record.requested_checkout:
+                    att.check_out = record.corrected_checkout or record.requested_checkout
+                    if not record.corrected_checkout:
+                        record.corrected_checkout = record.requested_checkout
 
-                if record.corrected_checkin:
-                    att.check_in = record.corrected_checkin
-                elif record.requested_checkin:
-                    att.check_in = record.requested_checkin
-                    record.corrected_checkin = record.requested_checkin
-
-                if record.corrected_checkout:
-                    att.check_out = record.corrected_checkout
-                elif record.requested_checkout:
-                    att.check_out = record.requested_checkout
-                    record.corrected_checkout = record.requested_checkout
-
-            record.message_post(
-                body=f"Yêu cầu giải trình đã được phê duyệt bởi {self.env.user.name}"
-            )
+            record.message_post(body=f"Yêu cầu giải trình đã được phê duyệt bởi {self.env.user.name}")
 
     def action_reject(self):
+        """Từ chối giải trình"""
         for record in self:
             if record.state != 'submitted':
                 continue
 
             if record.approver_id and record.approver_id.id != self.env.user.id:
                 if not self.env.user.has_group('hr.group_hr_manager'):
-                    raise UserError(
-                        'Bạn không có quyền từ chối đơn này. Chỉ người phê duyệt được chỉ định hoặc HR Manager mới có thể từ chối.')
+                    raise UserError('Bạn không có quyền từ chối đơn này')
 
             record.write({
                 'state': 'rejected',
@@ -568,42 +504,46 @@ class AttendanceExcuse(models.Model):
                 'approval_date': fields.Datetime.now(),
             })
 
-            record.message_post(
-                body=f"Yêu cầu giải trình đã bị từ chối bởi {self.env.user.name}"
-            )
+            record.message_post(body=f"Yêu cầu giải trình đã bị từ chối bởi {self.env.user.name}")
 
     def action_reset_to_draft(self):
+        """Reset về trạng thái draft"""
         for record in self:
             record.state = 'draft'
 
-    def unlink(self):
-        """
-        Override unlink để validate trạng thái
-        Chỉ có thể xóa khi ở trạng thái draft
-        """
+    def get_my_requests(self):
+        """Lấy các yêu cầu của user hiện tại"""
+        return self.search([('employee_id.user_id', '=', self.env.user.id)], order='date desc')
+
+    def get_pending_approvals(self):
+        """Lấy các yêu cầu chờ duyệt"""
+        return self.search([('state', '=', 'submitted')], order='date desc')
+
+    def write(self, values):
+        """Override: cho phép update chỉ khi ở draft"""
         for record in self:
             if record.state != 'draft':
-                raise UserError(
-                    f'Chỉ có thể xóa giải trình ở trạng thái draft, hiện tại là {record.state}'
-                )
+                # Cho phép update state, approver_id, approval_date (từ action_approve/reject)
+                allowed_fields = {'state', 'approver_id', 'approval_date', 'rejection_reason'}
+                update_fields = set(values.keys())
+                
+                if not update_fields.issubset(allowed_fields):
+                    raise UserError(f'Chỉ có thể sửa ở trạng thái draft, hiện tại là {record.state}')
+        
+        return super().write(values)
+
+    def unlink(self):
+        """Override: cho phép xóa chỉ khi ở draft"""
+        for record in self:
+            if record.state != 'draft':
+                raise UserError(f'Chỉ có thể xóa ở trạng thái draft, hiện tại là {record.state}')
         
         return super().unlink()
 
-    def get_my_requests(self):
-        return self.search([
-            ('employee_id.user_id', '=', self.env.user.id),
-        ], order='date desc')
-
-    def get_pending_approvals(self):
-        return self.search([
-            ('state', '=', 'submitted'),
-        ], order='date desc')
-
-    # API Methods for mobile integration
     @api.model
     def api_create_excuse(self, data, user_id):
-        """API method để tạo giải trình chấm công"""
-        # Kiểm tra dữ liệu bắt buộc
+        """API: Tạo giải trình chấm công"""
+        # Validate dữ liệu bắt buộc
         required_fields = ['attendance_id', 'excuse_type']
         for field in required_fields:
             if not data.get(field):
@@ -622,7 +562,7 @@ class AttendanceExcuse(models.Model):
         if not attendance.exists():
             raise UserError('Không tìm thấy bản ghi chấm công')
 
-        # Chỉ có thể tạo giải trình cho chính mình hoặc nếu là HR/Admin
+        # Kiểm tra quyền
         can_create = (current_user.has_group('base.group_system') or
                      current_user.has_group('hr.group_hr_manager') or
                      current_employee.id == attendance.employee_id.id)
@@ -639,13 +579,9 @@ class AttendanceExcuse(models.Model):
             'attendance_id': data['attendance_id'],
             'excuse_type': data['excuse_type'],
             'reason': data.get('reason', ''),
+            'requested_checkin': data.get('requested_checkin'),
+            'requested_checkout': data.get('requested_checkout'),
         }
-
-        # Thêm requested times nếu có
-        if data.get('requested_checkin'):
-            excuse_vals['requested_checkin'] = data['requested_checkin']
-        if data.get('requested_checkout'):
-            excuse_vals['requested_checkout'] = data['requested_checkout']
 
         excuse = self.create(excuse_vals)
 
@@ -663,7 +599,7 @@ class AttendanceExcuse(models.Model):
 
     @api.model
     def api_get_my_excuse_list(self, user_id, limit=10, offset=0, state=None):
-        """API method để lấy danh sách giải trình của user"""
+        """API: Lấy danh sách giải trình của user"""
         current_user = self.env['res.users'].browse(user_id)
         if not current_user.exists():
             raise UserError('User không tồn tại')
@@ -672,13 +608,10 @@ class AttendanceExcuse(models.Model):
         if not current_employee:
             raise UserError('User không phải là nhân viên')
 
-        # Build domain
         domain = [('employee_id', '=', current_employee.id)]
-        
         if state:
             domain.append(('state', '=', state))
 
-        # Lấy danh sách excuse
         excuses = self.search(domain, limit=limit, offset=offset, order='date desc')
         total_count = self.search_count(domain)
 
@@ -707,14 +640,14 @@ class AttendanceExcuse(models.Model):
         }
 
     def api_get_excuse_detail(self, user_id):
-        """API method để lấy chi tiết giải trình"""
+        """API: Lấy chi tiết giải trình"""
         current_user = self.env['res.users'].browse(user_id)
         if not current_user.exists():
             raise UserError('User không tồn tại')
 
         current_employee = current_user.employee_id
 
-        # Kiểm tra quyền - chỉ xem được của chính mình hoặc nếu là HR/Admin
+        # Kiểm tra quyền
         can_view = (current_user.has_group('base.group_system') or
                    current_user.has_group('hr.group_hr_manager') or
                    (current_employee and current_employee.id == self.employee_id.id))
@@ -738,7 +671,7 @@ class AttendanceExcuse(models.Model):
         }
 
     def api_submit_excuse(self, user_id):
-        """API method để submit giải trình"""
+        """API: Submit giải trình để duyệt"""
         current_user = self.env['res.users'].browse(user_id)
         if not current_user.exists():
             raise UserError('User không tồn tại')
@@ -753,10 +686,7 @@ class AttendanceExcuse(models.Model):
         if not can_submit:
             raise UserError('Không có quyền submit giải trình này')
 
-        if self.state != 'draft':
-            raise UserError('Chỉ có thể submit giải trình ở trạng thái draft')
-
-        self.action_submit()
+        self._submit()
 
         return {
             'id': self.id,
