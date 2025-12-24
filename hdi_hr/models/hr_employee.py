@@ -158,5 +158,3 @@ class HrEmployee(models.Model):
                 'name': employee.company_id.name if employee.company_id else ''
             }
         }
-            else:
-                rec.seniority_text = "0 năm 0 tháng"
