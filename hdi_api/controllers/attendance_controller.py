@@ -3,6 +3,7 @@ API Controller for Attendance
 Xử lý các endpoint API cho chức năng chấm công
 """
 import logging
+import json
 from datetime import datetime, timedelta
 from odoo import http
 from odoo.http import request
@@ -29,14 +30,20 @@ class AttendanceAPI(http.Controller):
     def _get_request_data(self):
         """Lấy dữ liệu từ request (hỗ trợ JSON và form data)"""
         try:
-            # Thử lấy từ JSON body
-            if request.httprequest.content_type and 'application/json' in request.httprequest.content_type:
-                return request.get_json(force=True) or {}
-        except Exception:
+            # Thử lấy từ raw body JSON
+            body = request.httprequest.get_data(as_text=True)
+            if body:
+                data = json.loads(body)
+                _logger.info(f"Parsed JSON body: {data}")
+                return data
+        except Exception as e:
+            _logger.warning(f"Error parsing JSON body: {e}")
             pass
-
+        
         # Fallback sang form data
-        return request.httprequest.form.to_dict()
+        form_data = request.httprequest.form.to_dict()
+        _logger.info(f"Using form data: {form_data}")
+        return form_data
 
     # ========== CHECK-IN ==========
     @http.route('/api/v1/attendance/check-in', type='http', auth='none', methods=['POST'], csrf=False)
