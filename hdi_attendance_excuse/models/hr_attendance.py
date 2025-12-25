@@ -82,32 +82,32 @@ class HRAttendance(models.Model):
                  'employee_id.company_id.resource_calendar_id')
     def _compute_is_invalid_record(self):
         for record in self:
-            # Nếu chưa check-out, coi là hợp lệ (user chưa hết ngày làm việc)
+            # 1. Kiểm tra đi muộn/về sớm quá tolerance → không hợp lệ (kiểm tra TRƯỚC)
+            if record._is_late_or_early():
+                record.is_invalid_record = False
+                continue
+
+            # 2. Nếu chưa check-out, coi là hợp lệ (user chưa hết ngày làm việc)
             if record.check_in and not record.check_out:
                 record.is_invalid_record = True
                 continue
 
-            # 1. Check-out phải sau check-in
+            # 3. Check-out phải sau check-in
             if record.check_out and record.check_out <= record.check_in:
                 record.is_invalid_record = False
                 continue
 
-            # 2. Kiểm tra khoảng thời gian quá dài (vượt quá 24 giờ)
+            # 4. Kiểm tra khoảng thời gian quá dài (vượt quá 24 giờ)
             if record.check_out and (record.check_out - record.check_in).total_seconds() / 3600 > 24:
                 record.is_invalid_record = False
                 continue
 
-            # 3. Kiểm tra auto-checkout tại midnight (23:59:59)
+            # 5. Kiểm tra auto-checkout tại midnight (23:59:59)
             if record.check_out:
                 co = record._convert_to_local_time(record.check_out)
                 if co.hour == 23 and co.minute == 59 and co.second == 59:
                     record.is_invalid_record = False
                     continue
-
-            # 4. Kiểm tra đi muộn/về sớm quá tolerance → không hợp lệ
-            if record._is_late_or_early():
-                record.is_invalid_record = False
-                continue
 
             record.is_invalid_record = True
 
