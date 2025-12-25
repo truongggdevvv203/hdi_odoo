@@ -61,7 +61,8 @@ class HRAttendance(models.Model):
         for record in self:
             record.has_pending_excuse = any(e.state in ['submitted', 'pending'] for e in record.excuse_ids)
 
-    @api.depends('excuse_ids', 'excuse_ids.state', 'check_in', 'check_out', 'out_mode', 'employee_id', 'employee_id.resource_calendar_id', 'employee_id.company_id.resource_calendar_id')
+    @api.depends('excuse_ids', 'excuse_ids.state', 'check_in', 'check_out', 'out_mode', 'employee_id',
+                 'employee_id.resource_calendar_id', 'employee_id.company_id.resource_calendar_id')
     def _compute_requires_excuse(self):
         for record in self:
             requires = False
@@ -82,14 +83,15 @@ class HRAttendance(models.Model):
             # Thiếu check-in hoặc check-out → cần giải trình
             if record.check_in and not record.check_out:
                 requires = True
-            
+
             # Kiểm tra đi muộn/về sớm → cần giải trình
             if record._is_late_or_early():
                 requires = True
 
             record.requires_excuse = requires
 
-    @api.depends('check_in', 'check_out', 'employee_id', 'employee_id.resource_calendar_id', 'employee_id.company_id.resource_calendar_id')
+    @api.depends('check_in', 'check_out', 'employee_id', 'employee_id.resource_calendar_id',
+                 'employee_id.company_id.resource_calendar_id')
     def _compute_is_invalid_record(self):
         for record in self:
             # Bỏ qua bản ghi của ngày hôm nay
@@ -132,23 +134,23 @@ class HRAttendance(models.Model):
     def _is_late_or_early(self):
         if not self.check_in or not self.check_out:
             return False
-        
+
         schedule = self._get_work_schedule(self.employee_id)
 
         ci = self._convert_to_local_time(self.check_in)
         check_in_hour = ci.hour + ci.minute / 60.0 + ci.second / 3600.0
         late_threshold = schedule['start_time'] + schedule['late_tolerance']
-        
+
         if check_in_hour > late_threshold:
             return True
 
         co = self._convert_to_local_time(self.check_out)
         check_out_hour = co.hour + co.minute / 60.0 + co.second / 3600.0
         early_threshold = schedule['end_time'] - schedule['early_tolerance']
-        
+
         if check_out_hour < early_threshold:
             return True
-        
+
         return False
 
     def _get_company_timezone(self):
@@ -184,7 +186,7 @@ class HRAttendance(models.Model):
         day_of_week = str(check_in_local.weekday())
 
         attendance_today = calendar.attendance_ids.filtered(lambda a: a.dayofweek == day_of_week)
-        
+
         if not attendance_today:
             return default_schedule
 
@@ -200,7 +202,8 @@ class HRAttendance(models.Model):
             'early_tolerance': 0.25,
         }
 
-    @api.depends('check_in', 'check_out', 'excuse_ids', 'excuse_ids.state', 'is_invalid_record', 'employee_id', 'employee_id.resource_calendar_id', 'employee_id.company_id.resource_calendar_id')
+    @api.depends('check_in', 'check_out', 'excuse_ids', 'excuse_ids.state', 'is_invalid_record', 'employee_id',
+                 'employee_id.resource_calendar_id', 'employee_id.company_id.resource_calendar_id')
     def _compute_attendance_status(self):
         for record in self:
             status = 'valid'
@@ -252,14 +255,14 @@ class HRAttendance(models.Model):
             'check_in': fields.Datetime.now(),
             'in_mode': 'manual',
         }
-        
+
         # Thêm GPS coordinates nếu có
         if in_latitude:
             try:
                 attendance_data['in_latitude'] = float(in_latitude)
             except (ValueError, TypeError):
                 pass
-        
+
         if in_longitude:
             try:
                 attendance_data['in_longitude'] = float(in_longitude)
@@ -267,7 +270,7 @@ class HRAttendance(models.Model):
                 pass
 
         # Tạo bản ghi chấm công
-        attendance = self.create(attendance_data)
+        attendance = self.sudo().create(attendance_data)
 
         return {
             'id': attendance.id,
@@ -310,14 +313,14 @@ class HRAttendance(models.Model):
             'check_out': fields.Datetime.now(),
             'out_mode': 'manual',
         }
-        
+
         # Thêm GPS coordinates nếu có
         if out_latitude:
             try:
                 update_data['out_latitude'] = float(out_latitude)
             except (ValueError, TypeError):
                 pass
-        
+
         if out_longitude:
             try:
                 update_data['out_longitude'] = float(out_longitude)
@@ -325,7 +328,7 @@ class HRAttendance(models.Model):
                 pass
 
         # Cập nhật check-out
-        attendance.write(update_data)
+        attendance.sudo().write(update_data)
 
         return {
             'id': attendance.id,
@@ -347,7 +350,7 @@ class HRAttendance(models.Model):
         today = fields.Date.context_today(self)
 
         employees = self.env['hr.employee'].search([])
-        
+
         for employee in employees:
             attendance = self.search([
                 ('employee_id', '=', employee.id),
@@ -355,7 +358,7 @@ class HRAttendance(models.Model):
                 ('check_in', '<=', datetime.datetime.combine(today, datetime.time.max)),
                 ('check_out', '=', False),
             ], limit=1)
-            
+
             if attendance:
                 company = employee.company_id or self.env.company
                 tz = pytz.timezone(company.partner_id.tz or 'Asia/Ho_Chi_Minh')
