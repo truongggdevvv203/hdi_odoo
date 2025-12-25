@@ -81,9 +81,13 @@ class AttendanceAPI(http.Controller):
                 out_latitude = data.get('out_latitude')
                 out_longitude = data.get('out_longitude')
                 
+                _logger.info(f"Check-out data received: out_latitude={out_latitude}, out_longitude={out_longitude}")
+                
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
                 result = env['hr.attendance'].api_check_out(employee.id, out_latitude, out_longitude)
                 cr.commit()
+                
+                _logger.info(f"Check-out result: {result}")
                 
                 return ResponseFormatter.success_response('Chấm công ra thành công', result, ResponseFormatter.HTTP_OK)
             except Exception as e:

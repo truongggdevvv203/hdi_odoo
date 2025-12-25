@@ -287,6 +287,9 @@ class HRAttendance(models.Model):
         API method cho check-out
         Kiểm tra và cập nhật attendance record
         """
+        import logging
+        _logger = logging.getLogger(__name__)
+        
         # Tìm bản ghi chấm công chưa check-out
         attendance = self.search([
             ('employee_id', '=', employee_id),
@@ -315,20 +318,32 @@ class HRAttendance(models.Model):
         }
 
         # Thêm GPS coordinates nếu có
+        _logger.info(f"GPS params: out_latitude={out_latitude}, out_longitude={out_longitude}")
         if out_latitude:
             try:
                 update_data['out_latitude'] = float(out_latitude)
-            except (ValueError, TypeError):
+                _logger.info(f"Added out_latitude: {float(out_latitude)}")
+            except (ValueError, TypeError) as e:
+                _logger.error(f"Error converting out_latitude: {e}")
                 pass
 
         if out_longitude:
             try:
                 update_data['out_longitude'] = float(out_longitude)
-            except (ValueError, TypeError):
+                _logger.info(f"Added out_longitude: {float(out_longitude)}")
+            except (ValueError, TypeError) as e:
+                _logger.error(f"Error converting out_longitude: {e}")
                 pass
 
+        _logger.info(f"Update data before write: {update_data}")
+        
         # Cập nhật check-out
         attendance.sudo().write(update_data)
+
+        # Re-fetch record để lấy giá trị mới nhất từ database
+        attendance = self.browse(attendance.id).sudo()
+        
+        _logger.info(f"After write - out_latitude: {attendance.out_latitude}, out_longitude: {attendance.out_longitude}")
 
         return {
             'id': attendance.id,
