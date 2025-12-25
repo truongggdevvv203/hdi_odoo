@@ -112,11 +112,12 @@ class HRAttendance(models.Model):
             record.is_invalid_record = True
 
     def _is_late_or_early(self):
-        if not self.check_in or not self.check_out:
+        if not self.check_in:
             return False
 
         schedule = self._get_work_schedule(self.employee_id)
 
+        # Kiểm tra đi muộn (chỉ cần check_in)
         ci = self._convert_to_local_time(self.check_in)
         check_in_hour = ci.hour + ci.minute / 60.0 + ci.second / 3600.0
         late_threshold = schedule['start_time'] + schedule['late_tolerance']
@@ -124,12 +125,14 @@ class HRAttendance(models.Model):
         if check_in_hour > late_threshold:
             return True
 
-        co = self._convert_to_local_time(self.check_out)
-        check_out_hour = co.hour + co.minute / 60.0 + co.second / 3600.0
-        early_threshold = schedule['end_time'] - schedule['early_tolerance']
+        # Kiểm tra về sớm (cần check_out)
+        if self.check_out:
+            co = self._convert_to_local_time(self.check_out)
+            check_out_hour = co.hour + co.minute / 60.0 + co.second / 3600.0
+            early_threshold = schedule['end_time'] - schedule['early_tolerance']
 
-        if check_out_hour < early_threshold:
-            return True
+            if check_out_hour < early_threshold:
+                return True
 
         return False
 
@@ -188,7 +191,10 @@ class HRAttendance(models.Model):
         for record in self:
             status = 'valid'
 
-            if not record.is_invalid_record:
+            if record.is_invalid_record:
+                # Bản ghi hợp lệ
+                status = 'valid'
+            else:
                 # Bản ghi không hợp lệ - check giải trình
                 if any(e.state == 'rejected' for e in record.excuse_ids):
                     status = 'excuse_rejected'
@@ -200,9 +206,6 @@ class HRAttendance(models.Model):
                     status = 'late_or_early'
                 else:
                     status = 'valid'
-            else:
-                # Bản ghi hợp lệ
-                status = 'valid'
 
             record.attendance_status = status
 
