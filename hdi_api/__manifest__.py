@@ -1,7 +1,7 @@
 {
     'name': 'HDI API - Mobile App Integration',
     'version': '18.0.1.0.0',
-    'category': 'api',
+    'category': 'hdi',
     'description': """
         API endpoints for mobile app integration with JWT Token authentication
     """,

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_wms_root"
+              name="Quản lý Kho"
+              parent="stock.menu_stock_root"
+              sequence="15"
+              groups="group_wms_user"/>
+
+    <menuitem id="menu_batch"
+              name="Lô hàng / Pallet"
+              parent="menu_wms_root"
+              action="action_batch"
+              sequence="10"/>
+
+    <menuitem id="menu_picking_list"
+              name="Bảng kê lấy hàng"
+              parent="menu_wms_root"
+              action="action_picking_list"
+              sequence="15"/>
+
+    <menuitem id="menu_putaway_suggestion"
+              name="Gợi ý Đặt hàng"
+              parent="menu_wms_root"
+              action="action_putaway_suggestion"
+              sequence="20"/>
+
+    <menuitem id="menu_loose_items"
+              name="Hàng lẻ"
+              parent="menu_wms_root"
+              action="action_loose_line"
+              sequence="30"/>
+
+    <menuitem id="menu_inventory_check_root"
+              name="Kiểm kê"
+              parent="menu_wms_root"
+              sequence="40"
+              groups="group_wms_user"/>
+
+    <menuitem id="menu_inventory_check_batch"
+              name="Kiểm kê theo Batch"
+              parent="menu_inventory_check_root"
+              action="action_wms_inventory_check_batch"
+              sequence="10"/>
+
+    <menuitem id="menu_inventory_check_barcode"
+              name="Kiểm kê quét Barcode"
+              parent="menu_inventory_check_root"
+              action="action_wms_inventory_check_barcode"
+              sequence="20"/>
+
+</odoo>

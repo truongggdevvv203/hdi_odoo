@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Picking List Tree View -->
+    <record id="view_picking_list_tree" model="ir.ui.view">
+        <field name="name">hdi.picking.list.tree</field>
+        <field name="model">hdi.picking.list</field>
+        <field name="arch" type="xml">
+            <list string="Bảng kê lấy hàng"
+                  decoration-info="state in ('draft', 'waiting')"
+                  decoration-warning="state == 'in_progress'"
+                  decoration-success="state in ('completed', 'scanned')">
+                <field name="name"/>
+                <field name="picking_id"/>
+                <field name="outgoing_type" widget="badge" optional="show"/>
+                <field name="assigned_user_id"/>
+                <field name="total_planned_qty" sum="Total"/>
+                <field name="total_picked_qty" sum="Total"/>
+                <field name="completion_rate" widget="progressbar"/>
+                <field name="state" widget="badge"/>
+                <field name="assigned_date" optional="hide"/>
+                <field name="done_date" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Picking List Form View -->
+    <record id="view_picking_list_form" model="ir.ui.view">
+        <field name="name">hdi.picking.list.form</field>
+        <field name="model">hdi.picking.list</field>
+        <field name="arch" type="xml">
+            <form string="Bảng kê lấy hàng">
+                <header>
+                    <!-- Bước 4: Gán người thực hiện -->
+                    <button name="action_assign_user" string="Gán người thực hiện"
+                            type="object" invisible="state != 'draft'"
+                            class="btn-primary"
+                            confirm="Xác nhận gán người thực hiện và gửi thông báo?"/>
+
+                    <!-- Bước 7: Bắt đầu lấy hàng -->
+                    <button name="action_start_picking" string="Bắt đầu lấy hàng"
+                            type="object" invisible="state != 'waiting'"
+                            class="btn-primary"/>
+
+                    <!-- Bước 9: Xác nhận đã lấy hàng -->
+                    <button name="action_confirm_picked" string="Xác nhận đã lấy hàng"
+                            type="object" invisible="state != 'in_progress'"
+                            class="btn-success"/>
+
+                    <!-- Bước 13: Quét barcode -->
+                    <button name="action_start_scan_barcode" string="Quét Barcode"
+                            type="object" invisible="state != 'done'"
+                            class="btn-info"/>
+
+                    <!-- Bước 15.2: Xác nhận đã quét xong -->
+                    <button name="action_confirm_scanned" string="Xác nhận đã quét xong"
+                            type="object" invisible="state != 'done'"
+                            class="btn-success"/>
+
+                    <!-- Bước 11.2: Hoàn thành -->
+                    <button name="action_complete" string="Hoàn thành"
+                            type="object" invisible="state != 'scanned'"
+                            class="btn-success"/>
+
+                    <!-- Bước 11.1: Tạo bảng kê bổ sung -->
+                    <button name="action_create_supplementary_list" string="Tạo bảng kê bổ sung"
+                            type="object" invisible="state not in ('done', 'scanned')"
+                            class="btn-warning"/>
+
+                    <button name="action_cancel" string="Hủy"
+                            type="object" invisible="state in ('completed', 'cancel')"
+                            class="btn-secondary"
+                            confirm="Xác nhận hủy bảng kê này?"/>
+
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="picking_id" readonly="state != 'draft'"/>
+                            <field name="picking_type" invisible="1"/>
+                            <field name="outgoing_type" widget="badge"
+                                   decoration-success="outgoing_type == 'sale'"
+                                   decoration-info="outgoing_type == 'transfer'"
+                                   decoration-warning="outgoing_type == 'production'"/>
+                            <field name="destination_warehouse_id"
+                                   invisible="outgoing_type != 'transfer'"
+                                   readonly="state != 'draft'"/>
+                            <field name="created_by_id" readonly="1"/>
+                            <field name="assigned_user_id"/>
+                        </group>
+                        <group>
+                            <field name="total_planned_qty"/>
+                            <field name="total_picked_qty"/>
+                            <field name="total_scanned_qty"/>
+                            <field name="completion_rate" widget="progressbar"/>
+                        </group>
+                    </group>
+
+                    <group string="Thời gian">
+                        <group>
+                            <field name="assigned_date" readonly="1"/>
+                            <field name="start_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="done_date" readonly="1"/>
+                            <field name="scanned_date" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Chi tiết lấy hàng" name="lines">
+                            <field name="line_ids" widget="one2many">
+                                <list editable="bottom"
+                                      decoration-success="is_picked and not is_out_of_stock"
+                                      decoration-danger="is_out_of_stock"
+                                      decoration-warning="warning">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="location_id"/>
+                                    <field name="location_priority" optional="hide"/>
+                                    <field name="batch_id" optional="show"/>
+                                    <field name="planned_qty"/>
+                                    <field name="available_qty" readonly="1"/>
+                                    <field name="picked_qty"/>
+                                    <field name="scanned_qty" readonly="1"/>
+                                    <field name="is_picked" readonly="1"/>
+                                    <field name="is_out_of_stock" readonly="1"/>
+                                    <field name="warning" optional="show"/>
+                                    <button name="action_confirm_picked" type="object"
+                                            icon="fa-check" title="Xác nhận đã lấy"
+                                            invisible="is_picked"/>
+                                    <button name="action_mark_out_of_stock" type="object"
+                                            icon="fa-times" title="Không có hàng"
+                                            invisible="is_picked"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Ghi chú" name="notes">
+                            <field name="notes" placeholder="Ghi chú thêm về bảng kê này..."/>
+                            <field name="warning_message" readonly="1"
+                                   invisible="not warning_message"
+                                   class="text-danger"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Picking List Scanner View (Mobile-friendly) -->
+    <record id="view_picking_list_form_scanner" model="ir.ui.view">
+        <field name="name">hdi.picking.list.form.scanner</field>
+        <field name="model">hdi.picking.list</field>
+        <field name="priority">999</field>
+        <field name="arch" type="xml">
+            <form string="Quét Barcode">
+                <header>
+                    <button name="action_confirm_scanned" string="Xác nhận đã quét xong"
+                            type="object" class="btn-success"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="picking_id" readonly="1"/>
+                        <field name="total_picked_qty" readonly="1"/>
+                        <field name="total_scanned_qty" readonly="1"/>
+                    </group>
+
+                    <group string="Quét Barcode" class="mt-4">
+                        <div class="alert alert-info">
+                            <strong>Hướng dẫn quét:</strong><br/>
+                            • Quét QR code của Batch (nếu có)<br/>
+                            • Hoặc quét từng barcode sản phẩm<br/>
+                            • Số lượng đã quét sẽ tự động cập nhật
+                        </div>
+                    </group>
+
+                    <notebook>
+                        <page string="Danh sách">
+                            <field name="line_ids" widget="one2many">
+                                <list decoration-success="scanned_qty >= planned_qty"
+                                      decoration-warning="scanned_qty &lt; planned_qty">
+                                    <field name="product_id"/>
+                                    <field name="batch_id"/>
+                                    <field name="location_id"/>
+                                    <field name="planned_qty"/>
+                                    <field name="scanned_qty"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Picking List Kanban View -->
+    <record id="view_picking_list_kanban" model="ir.ui.view">
+        <field name="name">hdi.picking.list.kanban</field>
+        <field name="model">hdi.picking.list</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state">
+                <field name="name"/>
+                <field name="picking_id"/>
+                <field name="outgoing_type"/>
+                <field name="assigned_user_id"/>
+                <field name="total_planned_qty"/>
+                <field name="total_picked_qty"/>
+                <field name="completion_rate"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <strong class="o_kanban_record_title">
+                                    <field name="name"/>
+                                </strong>
+                                <div>
+                                    <i class="fa fa-file-text-o"/> <field name="picking_id"/>
+                                </div>
+                                <div>
+                                    <i class="fa fa-tag"/> <field name="outgoing_type"/>
+                                </div>
+                                <div>
+                                    <i class="fa fa-user"/> <field name="assigned_user_id"/>
+                                </div>
+                                <div>
+                                    <i class="fa fa-cubes"/>
+                                    <field name="total_picked_qty"/> / <field name="total_planned_qty"/>
+                                </div>
+                                <div class="mt8">
+                                    <field name="completion_rate" widget="progressbar"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Picking List Action -->
+    <record id="action_picking_list" model="ir.actions.act_window">
+        <field name="name">Bảng kê lấy hàng</field>
+        <field name="res_model">hdi.picking.list</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo bảng kê lấy hàng đầu tiên
+            </p>
+            <p>
+                Bảng kê lấy hàng hướng dẫn nhân viên kho lấy hàng từ đúng vị trí theo FIFO
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Picking Suggestion Line List View -->
+    <record id="view_picking_suggestion_line_list" model="ir.ui.view">
+        <field name="name">hdi.picking.suggestion.line.list</field>
+        <field name="model">hdi.picking.suggestion.line</field>
+        <field name="arch" type="xml">
+            <list create="false" delete="false" edit="false">
+                <field name="sequence"/>
+                <field name="product_id"/>
+                <field name="batch_id"/>
+                <field name="location_id"/>
+                <field name="location_priority" optional="show"/>
+                <field name="fifo_date" optional="show"/>
+                <field name="qty_needed"/>
+                <field name="available_qty"/>
+                <field name="suggested_qty"/>
+                <field name="warning" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Picking Suggestion Wizard List (required for Odoo) -->
+    <record id="view_picking_suggestion_wizard_list" model="ir.ui.view">
+        <field name="name">hdi.picking.suggestion.wizard.list</field>
+        <field name="model">hdi.picking.suggestion.wizard</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false">
+                <field name="picking_id"/>
+                <field name="total_qty_needed"/>
+                <field name="total_qty_suggested"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Picking Suggestion Wizard Form -->
+    <record id="view_picking_suggestion_wizard_form" model="ir.ui.view">
+        <field name="name">hdi.picking.suggestion.wizard.form</field>
+        <field name="model">hdi.picking.suggestion.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Gợi ý lấy hàng theo FIFO">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="picking_id" readonly="1" class="oe_inline"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="picking_type" invisible="1"/>
+                            <label for="picking_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="total_qty_needed" class="oe_inline"/>
+                            <field name="total_qty_suggested" class="oe_inline"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="notes" readonly="1" class="alert alert-info" nolabel="1"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Gợi ý lấy hàng (FIFO)" name="suggestions">
+                            <field name="suggestion_line_ids" mode="list">
+                                <list create="false" delete="false" edit="false">
+                                    <field name="sequence"/>
+                                    <field name="product_id"/>
+                                    <field name="batch_id"/>
+                                    <field name="location_id"/>
+                                    <field name="location_priority" optional="show"/>
+                                    <field name="fifo_date" optional="show"/>
+                                    <field name="qty_needed"/>
+                                    <field name="available_qty"/>
+                                    <field name="suggested_qty"/>
+                                    <field name="warning" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_create_picking_list" string="Tạo bảng kê lấy hàng"
+                            type="object" class="btn-primary"/>
+                    <button string="Đóng" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Picking Suggestion Wizard Action -->
+    <record id="action_picking_suggestion_wizard" model="ir.actions.act_window">
+        <field name="name">Gợi ý lấy hàng</field>
+        <field name="res_model">hdi.picking.suggestion.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

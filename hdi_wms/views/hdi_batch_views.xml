@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Batch Tree View -->
+    <record id="view_batch_tree" model="ir.ui.view">
+        <field name="name">hdi.batch.list</field>
+        <field name="model">hdi.batch</field>
+        <field name="arch" type="xml">
+            <list string="Lô hàng" editable="bottom"
+                  decoration-success="state=='stored'"
+                  decoration-info="state in ('in_receiving', 'in_putaway')">
+                <field name="name" string="Mã lô"/>
+                <field name="barcode" string="Mã vạch"/>
+                <field name="batch_type" string="Loại"/>
+                <field name="product_id" string="Sản phẩm"/>
+                <field name="total_quantity" string="Số lượng" sum="Total"/>
+                <field name="location_id" string="Vị trí"/>
+                <field name="location_dest_id" string="Vị trí đích" optional="hide"/>
+                <field name="picking_id" string="Phiếu xuất nhập" optional="hide"/>
+                <field name="state" widget="badge"/>
+                <field name="wms_status" optional="hide"/>
+                <button name="action_start_putaway" type="object"
+                        string="Gợi ý vị trí" icon="fa-map-marker"
+                        title="Gợi ý vị trí"
+                        invisible="state != 'in_receiving'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Batch Form View -->
+    <record id="view_batch_form" model="ir.ui.view">
+        <field name="name">hdi.batch.form</field>
+        <field name="model">hdi.batch</field>
+        <field name="arch" type="xml">
+            <form string="Lô hàng">
+                <header>
+                    <!-- Incoming workflow -->
+                    <button name="action_start_receiving" string="Bắt đầu Nhập hàng"
+                            type="object" invisible="state != 'draft'"
+                            class="btn-primary"/>
+                    <button name="action_start_putaway" string="Bắt đầu Đặt hàng"
+                            type="object" invisible="state != 'in_receiving'"
+                            class="btn-primary"/>
+                    <button name="action_confirm_storage" string="Xác nhận Lưu kho"
+                            type="object" invisible="state != 'in_putaway'"
+                            class="btn-success"/>
+                    <button name="action_suggest_putaway" string="Gợi ý Vị trí"
+                            type="object" invisible="state not in ('in_receiving', 'in_putaway')"
+                            class="btn-secondary"/>
+                    
+                    <!-- Outgoing workflow -->
+                    <button name="action_start_picking" string="Bắt đầu lấy hàng"
+                            type="object" invisible="state != 'stored'"
+                            class="btn-primary"/>
+                    <button name="action_confirm_picked" string="Xác nhận đã lấy"
+                            type="object" invisible="state != 'in_picking'"
+                            class="btn-success"/>
+                    
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves" type="object"
+                                class="oe_stat_button" icon="fa-exchange">
+                            <field name="move_count" widget="statinfo" string="Chuyển kho"/>
+                        </button>
+                        <button name="action_view_quants" type="object"
+                                class="oe_stat_button" icon="fa-cubes">
+                            <field name="quant_count" widget="statinfo" string="Tồn kho"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="barcode" string="Mã vạch"/>
+                            <field name="batch_type" string="Loại lô"/>
+                            <field name="product_id" string="Sản phẩm"/>
+                            <field name="picking_id" string="Phiếu kho"/>
+                        </group>
+                        <group>
+                            <field name="location_id" string="Vị trí hiện tại"/>
+                            <field name="location_dest_id" string="Vị trí đích"/>
+                            <field name="user_id" string="Người thực hiện"/>
+                            <field name="wms_status" widget="badge" string="Trạng thái WMS"/>
+                        </group>
+                    </group>
+                    <group string="Số lượng">
+                        <group>
+                            <field name="planned_quantity" string="Số lượng dự kiến"/>
+                            <field name="total_quantity" string="Tổng số lượng thực tế"/>
+                            <field name="available_quantity" string="Có sẵn"/>
+                            <field name="reserved_quantity" string="Đã đặt"/>
+                        </group>
+                        <group>
+                            <field name="weight" string="Trọng lượng (kg)"/>
+                            <field name="volume" string="Thể tích (m³)"/>
+                        </group>
+                    </group>
+                    <group string="Kích thước vật lý" groups="base.group_no_one">
+                        <group>
+                            <field name="height"/>
+                            <field name="width"/>
+                        </group>
+                        <group>
+                            <field name="length"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Stock Moves" name="moves">
+                            <field name="move_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="product_id"/>
+                                    <field name="product_uom_qty"/>
+                                    <field name="location_id"/>
+                                    <field name="location_dest_id"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Quants (Inventory)" name="quants">
+                            <field name="quant_ids" readonly="1">
+                                <list>
+                                    <field name="product_id"/>
+                                    <field name="lot_id"/>
+                                    <field name="location_id"/>
+                                    <field name="quantity"/>
+                                    <field name="reserved_quantity"/>
+                                    <field name="available_quantity"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Additional notes..."/>
+                        </page>
+                        <page string="Chứng từ Nhập khẩu" name="import_documents">
+                            <group>
+                                <field name="import_invoice_number" string="Số hóa đơn nhập khẩu"/>
+                                <field name="import_packing_list" string="Phiếu đóng gói"/>
+                                <field name="import_bill_of_lading" string="Vận đơn"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Batch Kanban View -->
+    <record id="view_batch_kanban" model="ir.ui.view">
+        <field name="name">hdi.batch.kanban</field>
+        <field name="model">hdi.batch</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state">
+                <field name="name"/>
+                <field name="barcode"/>
+                <field name="product_id"/>
+                <field name="total_quantity"/>
+                <field name="location_id"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="oe_kanban_card_header">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
+                                <div>
+                                    <i class="fa fa-barcode" title="Barcode"/> <field name="barcode"/>
+                                </div>
+                                <div>
+                                    <i class="fa fa-cube" title="Product"/> <field name="product_id"/>
+                                </div>
+                                <div>
+                                    <i class="fa fa-sort-numeric-asc" title="Quantity"/> <field name="total_quantity"/>
+                                </div>
+                                <div>
+                                    <i class="fa fa-map-marker" title="Location"/> <field name="location_id"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_batch" model="ir.actions.act_window">
+        <field name="name">Lô hàng / Pallet</field>
+        <field name="res_model">hdi.batch</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo Lô hàng / Pallet đầu tiên
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Scanner templates -->
+    <t t-name="hdi_wms.BarcodeScanner">
+        <div class="wms_scanner_view">
+            <h3>WMS Scanner</h3>
+            <!-- Scanner UI components -->
+        </div>
+    </t>
+</templates>

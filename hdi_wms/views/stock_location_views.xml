@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ✅ INHERIT stock.location form - KHÔNG tạo mới -->
+    <record id="view_location_form_wms" model="ir.ui.view">
+        <field name="name">stock.location.form.wms</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="stock.view_location_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add WMS fields after usage -->
+            <field name="usage" position="after">
+                <field name="coordinate_x" groups="hdi_wms.group_wms_manager"/>
+                <field name="coordinate_y" groups="hdi_wms.group_wms_manager"/>
+                <field name="coordinate_z" groups="hdi_wms.group_wms_manager"/>
+                <field name="coordinate_display" readonly="1" groups="hdi_wms.group_wms_user"/>
+                <field name="storage_type" groups="hdi_wms.group_wms_manager"/>
+                <field name="moving_class" groups="hdi_wms.group_wms_manager"/>
+            </field>
+
+            <!-- Add capacity fields if there's a capacity group -->
+            <field name="company_id" position="after">
+                <field name="max_volume" groups="hdi_wms.group_wms_manager"/>
+                <field name="max_weight" groups="hdi_wms.group_wms_manager"/>
+                <field name="location_priority" groups="hdi_wms.group_wms_manager"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Tree view extension -->
+    <record id="view_location_tree_wms" model="ir.ui.view">
+        <field name="name">stock.location.tree.wms</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="stock.view_location_tree2"/>
+        <field name="arch" type="xml">
+            <field name="usage" position="after">
+                <field name="coordinate_display" optional="show" groups="hdi_wms.group_wms_user"/>
+                <field name="batch_count" optional="show" groups="hdi_wms.group_wms_user"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

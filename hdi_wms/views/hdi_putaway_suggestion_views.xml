@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Putaway Suggestion Action -->
+    <record id="action_putaway_suggestion" model="ir.actions.act_window">
+        <field name="name">Gợi ý Đặt hàng</field>
+        <field name="res_model">hdi.putaway.suggestion</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có gợi ý đặt hàng nào
+            </p>
+        </field>
+    </record>
+
+    <!-- Putaway Suggestion Tree -->
+    <record id="view_putaway_suggestion_tree" model="ir.ui.view">
+        <field name="name">hdi.putaway.suggestion.tree</field>
+        <field name="model">hdi.putaway.suggestion</field>
+        <field name="arch" type="xml">
+            <list string="Gợi ý vị trí lưu kho">
+                <field name="location_display" string="Vị trí"/>
+                <field name="coordinates" string="Tọa độ"/>
+                <field name="score" string="Điểm"/>
+                <field name="priority" string="Ưu tiên"/>
+                <field name="capacity_sufficient" widget="boolean_toggle" string="Dung lượng OK"/>
+                <field name="match_reasons" string="Lý do phù hợp"/>
+                <field name="state" widget="badge" string="Trạng thái"/>
+                <button name="action_select" string="Chọn" type="object"
+                        class="btn-primary" invisible="state != 'suggested'"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Loose Line Action -->
+    <record id="action_loose_line" model="ir.actions.act_window">
+        <field name="name">Hàng lẻ</field>
+        <field name="res_model">hdi.loose.line</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Không có hàng lẻ nào
+            </p>
+        </field>
+    </record>
+
+    <!-- Loose Line Tree -->
+    <record id="view_loose_line_tree" model="ir.ui.view">
+        <field name="name">hdi.loose.line.tree</field>
+        <field name="model">hdi.loose.line</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="product_id"/>
+                <field name="quantity"/>
+                <field name="product_uom_id"/>
+                <field name="location_id"/>
+                <field name="location_dest_id"/>
+                <field name="lot_id"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

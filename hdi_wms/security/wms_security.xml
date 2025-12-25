@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- WMS Module Category -->
+    <record id="module_category_wms" model="ir.module.category">
+        <field name="name">Warehouse Management System</field>
+        <field name="description">Advanced WMS features</field>
+        <field name="sequence">8</field>
+    </record>
+
+    <!-- WMS User Groups -->
+    <record id="group_wms_user" model="res.groups">
+        <field name="name">WMS User</field>
+        <field name="category_id" ref="module_category_wms"/>
+        <field name="implied_ids" eval="[(4, ref('stock.group_stock_user'))]"/>
+        <field name="comment">Basic WMS user - can scan, view batches, create batches</field>
+    </record>
+
+    <record id="group_wms_manager" model="res.groups">
+        <field name="name">WMS Manager</field>
+        <field name="category_id" ref="module_category_wms"/>
+        <field name="implied_ids" eval="[(4, ref('group_wms_user')), (4, ref('stock.group_stock_manager'))]"/>
+        <field name="comment">WMS Manager - full WMS configuration and operations</field>
+    </record>
+
+    <!-- Scanner User Group -->
+    <record id="group_wms_scanner" model="res.groups">
+        <field name="name">WMS Scanner User</field>
+        <field name="category_id" ref="module_category_wms"/>
+        <field name="implied_ids" eval="[(4, ref('group_wms_user'))]"/>
+        <field name="comment">Mobile/handheld scanner user</field>
+    </record>
+
+</odoo>

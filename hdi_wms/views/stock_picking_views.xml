@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_picking_form_wms" model="ir.ui.view">
+        <field name="name">stock.picking.form.wms</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add WMS State after state -->
+            <field name="state" position="after">
+                <field name="wms_state" widget="badge"
+                       decoration-info="wms_state in ('batch_creation', 'picking_ready')"
+                       decoration-warning="wms_state in ('putaway_pending', 'picking_progress')"
+                       decoration-success="wms_state == 'wms_done'"
+                       groups="hdi_wms.group_wms_user"/>
+                <!-- Hiển thị loại xuất kho cho outgoing -->
+                <field name="outgoing_type" widget="badge"
+                       invisible="picking_type_code != 'outgoing'"
+                       decoration-success="outgoing_type == 'sale'"
+                       decoration-info="outgoing_type == 'transfer'"
+                       decoration-warning="outgoing_type == 'production'"
+                       groups="hdi_wms.group_wms_user"/>
+            </field>
+
+            <!-- Add WMS buttons in header -->
+            <button name="button_validate" position="before">
+                <!-- Incoming buttons -->
+                <button name="action_confirm_handover" type="object" string="Xác nhận bàn giao"
+                        invisible="production_handover_signed_by or state not in ('assigned', 'confirmed') or picking_type_code != 'incoming'"
+                        class="btn-warning"
+                        groups="hdi_wms.group_wms_user"/>
+                <button name="action_create_batch" type="object" string="Tạo Lô hàng"
+                        invisible="state != 'assigned' or not use_batch_management or picking_type_code != 'incoming'"
+                        class="btn-primary"
+                        groups="hdi_wms.group_wms_user"/>
+
+                <!-- QC Batch button (NK_NV_02, 03, 04) -->
+                <button name="action_start_batch_qc" type="object" string="QC Batch"
+                        invisible="not require_batch_qc or batch_qc_status != 'pending'"
+                        class="btn-info"
+                        groups="hdi_wms.group_wms_user"/>
+                <button name="action_pass_batch_qc" type="object" string="✓ QC Batch Đạt"
+                        invisible="not require_batch_qc or batch_qc_status != 'in_progress'"
+                        class="btn-success"
+                        groups="hdi_wms.group_wms_user"/>
+
+                <!-- QC Hàng button (NK_NV_03, 04) -->
+                <button name="action_start_product_qc" type="object" string="QC Hàng"
+                        invisible="not require_product_qc or product_qc_status != 'pending'"
+                        class="btn-info"
+                        groups="hdi_wms.group_wms_user"/>
+                <button name="action_pass_product_qc" type="object" string="✓ QC Hàng Đạt"
+                        invisible="not require_product_qc or product_qc_status != 'in_progress'"
+                        class="btn-success"
+                        groups="hdi_wms.group_wms_user"/>
+
+                <button name="action_suggest_putaway_all" type="object" string="Gợi ý Vị trí"
+                        invisible="wms_state not in ('batch_creation', 'putaway_pending') or picking_type_code != 'incoming'"
+                        class="btn-secondary"
+                        groups="hdi_wms.group_wms_user"/>
+
+                <!-- Approval button (NK_NV_02, 03, 04) -->
+                <button name="action_approve_receiving" type="object" string="✍ Ký xác nhận"
+                        invisible="not require_officer_approval or approval_date or picking_type_code != 'incoming'"
+                        class="btn-primary"
+                        groups="hdi_wms.group_wms_user"/>
+
+                <!-- Outgoing buttons -->
+                <button name="action_suggest_picking" type="object" string="Gợi ý lấy hàng (FIFO)"
+                        invisible="state not in ('assigned', 'confirmed') or picking_type_code != 'outgoing'"
+                        class="btn-primary"
+                        groups="hdi_wms.group_wms_user"/>
+                <button name="action_view_picking_lists" type="object" string="Bảng kê lấy hàng"
+                        invisible="picking_list_count == 0"
+                        class="btn-secondary"
+                        groups="hdi_wms.group_wms_user"/>
+
+                <!-- Scanner -->
+                <button name="action_open_scanner" type="object" string="Quét Mã vạch"
+                        invisible="state not in ('assigned', 'confirmed')"
+                        class="btn-info"
+                        groups="hdi_wms.group_wms_scanner"/>
+            </button>
+
+            <xpath expr="//form/sheet/notebook" position="before">
+                <field name="picking_type_code" invisible="1"/>
+                <field name="picking_list_count" invisible="1"/>
+
+                <!-- Thông tin xuất kho (cho outgoing) -->
+                <group string="Thông tin xuất kho"
+                       invisible="picking_type_code != 'outgoing'"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="outgoing_type" widget="radio" options="{'horizontal': true}"/>
+                        <field name="destination_warehouse_id"
+                               invisible="outgoing_type != 'transfer'"
+                               string="Kho thành phẩm đích"/>
+                    </group>
+                    <group>
+                        <field name="picking_list_count" string="Số bảng kê lấy hàng"/>
+                        <button name="action_view_picking_lists" type="object"
+                                string="→ Xem tất cả bảng kê"
+                                class="oe_link"
+                                invisible="picking_list_count == 0"/>
+                    </group>
+                </group>
+
+                <group string="Thông tin nhập kho"
+                       invisible="picking_type_code != 'incoming'"
+                       groups="hdi_wms.group_wms_user">
+                    <group colspan="2">
+                        <field name="receiving_type" widget="radio"/>
+                    </group>
+                </group>
+
+                <group string="Nhập theo lô"
+                       invisible="picking_type_code != 'incoming'"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="use_batch_management" string="Quản lý theo Lô hàng/Pallet"/>
+                        <field name="scan_detail_level" invisible="not use_batch_management" string="Chi tiết quét mã"/>
+                    </group>
+                    <group>
+                        <field name="production_handover_signed_by" readonly="1" invisible="not production_handover_signed_by" string="Người bàn giao"/>
+                        <field name="production_handover_date" readonly="1" invisible="not production_handover_date" string="Thời gian bàn giao"/>
+                    </group>
+                </group>
+
+                <!-- QC Batch (NK_NV_02, 03, 04) -->
+                <group string="Kiểm tra chất lượng Batch"
+                       invisible="not require_batch_qc"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="require_batch_qc" invisible="1"/>
+                        <field name="batch_qc_status" widget="badge"
+                               decoration-info="batch_qc_status == 'pending'"
+                               decoration-warning="batch_qc_status == 'in_progress'"
+                               decoration-success="batch_qc_status == 'passed'"
+                               decoration-danger="batch_qc_status == 'failed'"/>
+                    </group>
+                    <group>
+                        <button name="action_start_batch_qc" string="Bắt đầu QC Batch"
+                                type="object" class="btn-info"
+                                invisible="batch_qc_status != 'pending'"/>
+                        <button name="action_pass_batch_qc" string="✓ QC Đạt"
+                                type="object" class="btn-success"
+                                invisible="batch_qc_status != 'in_progress'"/>
+                    </group>
+                </group>
+
+                <!-- QC Hàng (NK_NV_03, 04) -->
+                <group string="Kiểm tra chất lượng Hàng"
+                       invisible="not require_product_qc"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="require_product_qc" invisible="1"/>
+                        <field name="product_qc_status" widget="badge"
+                               decoration-info="product_qc_status == 'pending'"
+                               decoration-warning="product_qc_status == 'in_progress'"
+                               decoration-success="product_qc_status == 'passed'"
+                               decoration-danger="product_qc_status == 'failed'"/>
+                    </group>
+                    <group>
+                        <button name="action_start_product_qc" string="Bắt đầu QC Hàng"
+                                type="object" class="btn-info"
+                                invisible="product_qc_status != 'pending'"/>
+                        <button name="action_pass_product_qc" string="✓ QC Đạt"
+                                type="object" class="btn-success"
+                                invisible="product_qc_status != 'in_progress'"/>
+                    </group>
+                </group>
+
+                <!-- Kiểm tra hàng trả (NK_NV_04) -->
+                <group string="Thông tin hàng trả lại"
+                       invisible="not require_return_check"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="require_return_check" invisible="1"/>
+                        <field name="return_reason"/>
+                        <field name="return_condition"/>
+                    </group>
+                    <group>
+                        <field name="can_restock"/>
+                    </group>
+                </group>
+
+                <!-- Chứng vụ ký xác nhận (NK_NV_02, 03, 04) -->
+                <group string="Chứng vụ ký xác nhận"
+                       invisible="not require_officer_approval"
+                       groups="hdi_wms.group_wms_user">
+                    <group>
+                        <field name="require_officer_approval" invisible="1"/>
+                        <field name="warehouse_officer_id"/>
+                        <field name="approval_date" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="odoo_receipt_number" readonly="1"/>
+                        <button name="action_approve_receiving" string="Xác nhận"
+                                type="object" class="btn-primary"
+                                invisible="approval_date"/>
+                    </group>
+                </group>
+                <field name="require_putaway_suggestion" invisible="1"/>
+                <field name="batch_count" invisible="1"/>
+            </xpath>
+
+            <!-- Add Batch tab (CHỈ cho incoming) -->
+            <notebook position="inside">
+                <page string="Lô hàng" name="wms_batches"
+                      invisible="not use_batch_management or picking_type_code != 'incoming'"
+                      groups="hdi_wms.group_wms_user">
+                    <group>
+                        <group string="Cấu hình Quét">
+                            <field name="scan_mode" widget="radio" options="{'horizontal': true}" string="Chế độ quét"/>
+                            <field name="last_scanned_barcode" readonly="1" placeholder="Chưa quét mã nào" string="Mã vừa quét"/>
+                        </group>
+                        <group string="Trạng thái WMS">
+                            <field name="wms_state" widget="badge"/>
+                            <field name="batch_count" string="Số lô hàng"/>
+                            <button name="action_view_batches" type="object"
+                                    string="➜ Xem tất cả Lô hàng"
+                                    class="oe_link"
+                                    invisible="not batch_count"/>
+                        </group>
+                    </group>
+                    <group>
+                        <button name="action_create_batch" type="object" string="Tạo Lô"
+                                class="btn-primary oe_highlight"
+                                help="Tạo lô hàng/pallet/LPN mới cho phiếu này"/>
+                    </group>
+                    <separator string="Danh sách lô hàng"/>
+                    <field name="batch_ids" nolabel="1" context="{'form_view_ref': 'hdi_wms.view_batch_form', 'tree_view_ref': 'hdi_wms.view_batch_tree'}"/>
+                </page>
+
+                <!-- Loose Items tab (CHỈ cho incoming) -->
+                <page string="Hàng lẻ" name="wms_loose_items"
+                      invisible="not use_batch_management or picking_type_code != 'incoming'"
+                      groups="hdi_wms.group_wms_user">
+                    <field name="loose_line_ids" widget="one2many" string="Danh sách hàng lẻ"/>
+                </page>
+            </notebook>
+
+        </field>
+    </record>
+
+    <!-- Tree view extension -->
+    <record id="view_picking_tree_wms" model="ir.ui.view">
+        <field name="name">stock.picking.tree.wms</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.vpicktree"/>
+        <field name="arch" type="xml">
+            <field name="state" position="after">
+                <field name="wms_state" optional="show" widget="badge"
+                       groups="hdi_wms.group_wms_user"/>
+                <field name="batch_count" optional="show"
+                       groups="hdi_wms.group_wms_user"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Scanner view (mobile-friendly) -->
+    <record id="view_picking_form_scanner" model="ir.ui.view">
+        <field name="name">stock.picking.form.scanner</field>
+        <field name="model">stock.picking</field>
+        <field name="priority">999</field>
+        <field name="arch" type="xml">
+            <form string="Scanner Mode">
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_batches" type="object"
+                                class="oe_stat_button" icon="fa-th">
+                            <field name="batch_count" widget="statinfo" string="Batches"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="picking_type_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="location_id" readonly="1"/>
+                            <field name="location_dest_id" readonly="1"/>
+                            <field name="wms_state" widget="badge"/>
+                        </group>
+                    </group>
+                    <group string="Scanner">
+                        <field name="scan_mode" widget="radio"/>
+                        <field name="last_scanned_barcode" readonly="1"
+                               class="text-success"
+                               style="font-size: 20px; font-weight: bold;"/>
+                    </group>
+                    <notebook>
+                        <page string="Batches">
+                            <field name="batch_ids" widget="one2many"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

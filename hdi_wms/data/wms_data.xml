@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Sequence for Batch Numbers -->
+    <record id="seq_hdi_batch" model="ir.sequence">
+        <field name="name">Batch/LPN Sequence</field>
+        <field name="code">hdi.batch</field>
+        <field name="prefix">BATCH-</field>
+        <field name="padding">6</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Sequence for Picking List Numbers -->
+    <record id="seq_hdi_picking_list" model="ir.sequence">
+        <field name="name">Picking List Sequence</field>
+        <field name="code">hdi.picking.list</field>
+        <field name="prefix">PKL-</field>
+        <field name="padding">6</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Default Product ABC Classification (if not exists) -->
+    <!-- Add to product.product if needed -->
+    
+</odoo>

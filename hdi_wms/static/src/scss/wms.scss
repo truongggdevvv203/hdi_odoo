@@ -1,0 +1,30 @@
+/* HDI WMS Styles */
+
+.wms_scanner_view {
+    font-size: 1.2em;
+}
+
+.wms_barcode_display {
+    background-color: #e8f5e9;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #2e7d32;
+}
+
+.wms_batch_card {
+    border: 2px solid #1976d2;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 5px;
+}
+
+.wms_location_badge {
+    background-color: #ff9800;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9em;
+}
