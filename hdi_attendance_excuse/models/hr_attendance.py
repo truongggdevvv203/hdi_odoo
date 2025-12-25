@@ -112,9 +112,6 @@ class HRAttendance(models.Model):
             record.is_invalid_record = True
 
     def _is_late_or_early(self):
-        import logging
-        _logger = logging.getLogger(__name__)
-        
         if not self.check_in:
             return False
 
@@ -125,10 +122,7 @@ class HRAttendance(models.Model):
         check_in_hour = ci.hour + ci.minute / 60.0 + ci.second / 3600.0
         late_threshold = schedule['start_time'] + schedule['late_tolerance']
 
-        _logger.info(f"DEBUG: check_in={self.check_in}, ci={ci}, check_in_hour={check_in_hour}, late_threshold={late_threshold}, schedule={schedule}")
-
         if check_in_hour > late_threshold:
-            _logger.info(f"DEBUG: LATE - {check_in_hour} > {late_threshold}")
             return True
 
         # Kiểm tra về sớm (cần check_out)
