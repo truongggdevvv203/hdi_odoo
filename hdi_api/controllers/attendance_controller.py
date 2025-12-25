@@ -26,6 +26,18 @@ class AttendanceAPI(http.Controller):
         cr = registry.cursor()
         return odoo.api.Environment(cr, odoo.SUPERUSER_ID, {}), cr
 
+    def _get_request_data(self):
+        """Lấy dữ liệu từ request (hỗ trợ JSON và form data)"""
+        try:
+            # Thử lấy từ JSON body
+            if request.httprequest.content_type and 'application/json' in request.httprequest.content_type:
+                return request.get_json(force=True) or {}
+        except Exception:
+            pass
+
+        # Fallback sang form data
+        return request.httprequest.form.to_dict()
+
     # ========== CHECK-IN ==========
     @http.route('/api/v1/attendance/check-in', type='http', auth='none', methods=['POST'], csrf=False)
     @_verify_token
@@ -34,21 +46,22 @@ class AttendanceAPI(http.Controller):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = self._get_env()
-            
+
             try:
-                # Lấy GPS coordinates từ request
-                in_latitude = request.httprequest.form.get('in_latitude')
-                in_longitude = request.httprequest.form.get('in_longitude')
-                
+                # Lấy GPS coordinates từ request (hỗ trợ cả JSON và form data)
+                data = self._get_request_data()
+                in_latitude = data.get('in_latitude')
+                in_longitude = data.get('in_longitude')
+
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
                 result = env['hr.attendance'].api_check_in(employee.id, in_latitude, in_longitude)
                 cr.commit()
-                
+
                 return ResponseFormatter.success_response('Chấm công vào thành công', result, ResponseFormatter.HTTP_OK)
             except Exception as e:
                 cr.rollback()
                 raise
-        
+
         except Exception as e:
             _logger.error(f"Check-in error: {str(e)}", exc_info=True)
             return ResponseFormatter.error_response(f'Lỗi: {str(e)}', ResponseFormatter.HTTP_INTERNAL_ERROR)
@@ -61,11 +74,12 @@ class AttendanceAPI(http.Controller):
         try:
             user_id = request.jwt_payload.get('user_id')
             env, cr = self._get_env()
-            
+
             try:
                 # Lấy GPS coordinates từ request
-                out_latitude = request.httprequest.form.get('out_latitude')
-                out_longitude = request.httprequest.form.get('out_longitude')
+                data = self._get_request_data()
+                out_latitude = data.get('out_latitude')
+                out_longitude = data.get('out_longitude')
                 
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
                 result = env['hr.attendance'].api_check_out(employee.id, out_latitude, out_longitude)
