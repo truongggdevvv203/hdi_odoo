@@ -53,18 +53,18 @@
 
             <!-- Show IP/Browser for all modes in check-in -->
             <xpath expr="//field[@name='in_ip_address']" position="attributes">
-                <attribute name="invisible">0</attribute>
+                <attribute name="invisible">out_mode in ('kiosk', 'auto_check_out', 'technical')</attribute>
             </xpath>
             <xpath expr="//field[@name='in_browser']" position="attributes">
-                <attribute name="invisible">0</attribute>
+                <attribute name="invisible">out_mode in ('kiosk', 'auto_check_out', 'technical')</attribute>
             </xpath>
 
             <!-- Fix check-out IP/Browser to check out_mode instead of in_mode -->
             <xpath expr="//field[@name='out_ip_address']" position="attributes">
-                <attribute name="invisible">out_mode in ('manual', 'systray')</attribute>
+                <attribute name="invisible">out_mode in ('kiosk', 'auto_check_out', 'technical')</attribute>
             </xpath>
             <xpath expr="//field[@name='out_browser']" position="attributes">
-                <attribute name="invisible">out_mode in ('manual', 'systray')</attribute>
+                <attribute name="invisible">out_mode in ('kiosk', 'auto_check_out', 'technical')</attribute>
             </xpath>
         </field>
     </record>
