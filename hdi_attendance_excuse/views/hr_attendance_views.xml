@@ -40,6 +40,32 @@
                     </page>
                 </notebook>
             </xpath>
+
+            <!-- Override GPS visibility for check-in: show for manual and systray modes only -->
+            <xpath expr="//label[@for='in_country_name']/parent::group" position="attributes">
+                <attribute name="invisible">in_mode in ('kiosk', 'auto_check_out', 'technical')</attribute>
+            </xpath>
+
+            <!-- Override GPS visibility for check-out: show for manual and systray modes only -->
+            <xpath expr="//label[@for='out_country_name']/parent::group" position="attributes">
+                <attribute name="invisible">out_mode in ('kiosk', 'auto_check_out', 'technical')</attribute>
+            </xpath>
+
+            <!-- Show IP/Browser for all modes in check-in -->
+            <xpath expr="//field[@name='in_ip_address']" position="attributes">
+                <attribute name="invisible">0</attribute>
+            </xpath>
+            <xpath expr="//field[@name='in_browser']" position="attributes">
+                <attribute name="invisible">0</attribute>
+            </xpath>
+
+            <!-- Fix check-out IP/Browser to check out_mode instead of in_mode -->
+            <xpath expr="//field[@name='out_ip_address']" position="attributes">
+                <attribute name="invisible">out_mode in ('manual', 'systray')</attribute>
+            </xpath>
+            <xpath expr="//field[@name='out_browser']" position="attributes">
+                <attribute name="invisible">out_mode in ('manual', 'systray')</attribute>
+            </xpath>
         </field>
     </record>
 
