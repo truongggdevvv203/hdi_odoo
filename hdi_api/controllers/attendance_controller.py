@@ -36,8 +36,12 @@ class AttendanceAPI(http.Controller):
             env, cr = self._get_env()
             
             try:
+                # Lấy GPS coordinates từ request
+                in_latitude = request.httprequest.form.get('in_latitude')
+                in_longitude = request.httprequest.form.get('in_longitude')
+                
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-                result = env['hr.attendance'].api_check_in(employee.id)
+                result = env['hr.attendance'].api_check_in(employee.id, in_latitude, in_longitude)
                 cr.commit()
                 
                 return ResponseFormatter.success_response('Chấm công vào thành công', result, ResponseFormatter.HTTP_OK)
@@ -59,8 +63,12 @@ class AttendanceAPI(http.Controller):
             env, cr = self._get_env()
             
             try:
+                # Lấy GPS coordinates từ request
+                out_latitude = request.httprequest.form.get('out_latitude')
+                out_longitude = request.httprequest.form.get('out_longitude')
+                
                 employee = env['hr.employee'].search([('user_id', '=', user_id)], limit=1)
-                result = env['hr.attendance'].api_check_out(employee.id)
+                result = env['hr.attendance'].api_check_out(employee.id, out_latitude, out_longitude)
                 cr.commit()
                 
                 return ResponseFormatter.success_response('Chấm công ra thành công', result, ResponseFormatter.HTTP_OK)
@@ -95,6 +103,8 @@ class AttendanceAPI(http.Controller):
                         'is_checked_in': True,
                         'attendance_id': current_attendance.id,
                         'check_in': current_attendance.check_in.isoformat() if current_attendance.check_in else None,
+                        'in_latitude': current_attendance.in_latitude,
+                        'in_longitude': current_attendance.in_longitude,
                         'employee_name': employee.name,
                     }
                 else:
@@ -154,6 +164,10 @@ class AttendanceAPI(http.Controller):
                         'id': att.id,
                         'check_in': att.check_in.isoformat() if att.check_in else None,
                         'check_out': att.check_out.isoformat() if att.check_out else None,
+                        'in_latitude': att.in_latitude,
+                        'in_longitude': att.in_longitude,
+                        'out_latitude': att.out_latitude,
+                        'out_longitude': att.out_longitude,
                         'worked_hours': worked_hours,
                     })
 

@@ -230,7 +230,7 @@ class HRAttendance(models.Model):
             record.attendance_status = status
 
     @api.model
-    def api_check_in(self, employee_id):
+    def api_check_in(self, employee_id, in_latitude=None, in_longitude=None):
         """
         API method cho check-in
         Kiểm tra và tạo attendance record
@@ -246,21 +246,40 @@ class HRAttendance(models.Model):
                 'Bạn đã chấm công vào rồi. Vui lòng chấm công ra trước khi chấm công vào lại.'
             )
 
-        # Tạo bản ghi chấm công
-        attendance = self.create({
+        # Tạo dữ liệu cho attendance record
+        attendance_data = {
             'employee_id': employee_id,
             'check_in': fields.Datetime.now(),
-        })
+            'in_mode': 'manual',
+        }
+        
+        # Thêm GPS coordinates nếu có
+        if in_latitude:
+            try:
+                attendance_data['in_latitude'] = float(in_latitude)
+            except (ValueError, TypeError):
+                pass
+        
+        if in_longitude:
+            try:
+                attendance_data['in_longitude'] = float(in_longitude)
+            except (ValueError, TypeError):
+                pass
+
+        # Tạo bản ghi chấm công
+        attendance = self.create(attendance_data)
 
         return {
             'id': attendance.id,
             'employee_id': attendance.employee_id.id,
             'employee_name': attendance.employee_id.name,
             'check_in': attendance.check_in.isoformat() if attendance.check_in else None,
+            'in_latitude': attendance.in_latitude,
+            'in_longitude': attendance.in_longitude,
         }
 
     @api.model
-    def api_check_out(self, employee_id):
+    def api_check_out(self, employee_id, out_latitude=None, out_longitude=None):
         """
         API method cho check-out
         Kiểm tra và cập nhật attendance record
@@ -286,10 +305,27 @@ class HRAttendance(models.Model):
             if old_overtime:
                 old_overtime.unlink()
 
-        # Cập nhật check-out
-        attendance.write({
+        # Tạo dữ liệu cập nhật
+        update_data = {
             'check_out': fields.Datetime.now(),
-        })
+            'out_mode': 'manual',
+        }
+        
+        # Thêm GPS coordinates nếu có
+        if out_latitude:
+            try:
+                update_data['out_latitude'] = float(out_latitude)
+            except (ValueError, TypeError):
+                pass
+        
+        if out_longitude:
+            try:
+                update_data['out_longitude'] = float(out_longitude)
+            except (ValueError, TypeError):
+                pass
+
+        # Cập nhật check-out
+        attendance.write(update_data)
 
         return {
             'id': attendance.id,
@@ -297,6 +333,10 @@ class HRAttendance(models.Model):
             'employee_name': attendance.employee_id.name,
             'check_in': attendance.check_in.isoformat() if attendance.check_in else None,
             'check_out': attendance.check_out.isoformat() if attendance.check_out else None,
+            'in_latitude': attendance.in_latitude,
+            'in_longitude': attendance.in_longitude,
+            'out_latitude': attendance.out_latitude,
+            'out_longitude': attendance.out_longitude,
             'worked_hours': attendance.worked_hours if hasattr(attendance, 'worked_hours') else 0,
         }
 

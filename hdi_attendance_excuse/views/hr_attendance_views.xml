@@ -7,6 +7,8 @@
         <field name="inherit_id" ref="hr_attendance.view_attendance_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='check_out']" position="after">
+                <field name="in_mode" optional="show"/>
+                <field name="out_mode" optional="hide"/>
                 <field name="is_invalid_record" optional="show"/>
                 <field name="attendance_status" optional="show"/>
             </xpath>
@@ -24,6 +26,20 @@
                 <field name="requires_excuse" invisible="1"/>
                 <field name="is_excused" invisible="1"/>
                 <field name="has_pending_excuse" invisible="1"/>
+                <field name="in_mode" invisible="1"/>
+                <field name="out_mode" invisible="1"/>
+                
+                <!-- GPS fields for check-in when in_mode is manual -->
+                <group string="Định vị GPS chấm vào" name="gps_checkin_group" invisible="in_mode != 'manual'">
+                    <field name="in_latitude"/>
+                    <field name="in_longitude"/>
+                </group>
+                
+                <!-- GPS fields for check-out when out_mode is manual -->
+                <group string="Định vị GPS chấm ra" name="gps_checkout_group" invisible="out_mode != 'manual'">
+                    <field name="out_latitude"/>
+                    <field name="out_longitude"/>
+                </group>
             </xpath>
 
             <!-- Add excuse tab in the form only when needed -->
