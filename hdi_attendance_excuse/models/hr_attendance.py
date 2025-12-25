@@ -202,40 +202,16 @@ class HRAttendance(models.Model):
                 status = 'valid'
             else:
                 # Bản ghi không hợp lệ - check giải trình
-                
-                # Kiểm tra nếu là bản ghi hôm nay → skip (chưa hết ngày)
-                if record.check_in:
-                    check_in_local = record._convert_to_local_time(record.check_in)
-                    check_in_date = check_in_local.date()
-                    today = fields.Date.context_today(record)
-                    if check_in_date == today:
-                        status = 'valid'
-                    else:
-                        # Bản ghi hôm qua/trước - check thiếu checkout
-                        if not record.check_out:
-                            status = 'missing_checkin_out'
-                        elif any(e.state == 'rejected' for e in record.excuse_ids):
-                            status = 'excuse_rejected'
-                        elif any(e.state in ['submitted', 'pending'] for e in record.excuse_ids):
-                            status = 'pending_excuse_approval'
-                        elif any(e.state == 'approved' for e in record.excuse_ids):
-                            status = 'excuse_approved'
-                        elif record._is_late_or_early():
-                            status = 'late_or_early'
-                        else:
-                            status = 'valid'
+                if any(e.state == 'rejected' for e in record.excuse_ids):
+                    status = 'excuse_rejected'
+                elif any(e.state in ['submitted', 'pending'] for e in record.excuse_ids):
+                    status = 'pending_excuse_approval'
+                elif any(e.state == 'approved' for e in record.excuse_ids):
+                    status = 'excuse_approved'
+                elif record._is_late_or_early():
+                    status = 'late_or_early'
                 else:
-                    # Không có check_in - check giải trình
-                    if any(e.state == 'rejected' for e in record.excuse_ids):
-                        status = 'excuse_rejected'
-                    elif any(e.state in ['submitted', 'pending'] for e in record.excuse_ids):
-                        status = 'pending_excuse_approval'
-                    elif any(e.state == 'approved' for e in record.excuse_ids):
-                        status = 'excuse_approved'
-                    elif record._is_late_or_early():
-                        status = 'late_or_early'
-                    else:
-                        status = 'valid'
+                    status = 'valid'
 
             record.attendance_status = status
 
