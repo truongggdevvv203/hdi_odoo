@@ -68,21 +68,8 @@ class HRAttendance(models.Model):
         for record in self:
             requires = False
 
-            # Bỏ qua bản ghi của ngày hôm nay
-            if record.check_in:
-                check_in_local = record._convert_to_local_time(record.check_in)
-                check_in_date = check_in_local.date()
-                today = fields.Date.context_today(record)
-                if check_in_date == today:
-                    record.requires_excuse = False
-                    continue
-
             # Check if there are any submitted excuses
             if any(e.state in ['submitted'] for e in record.excuse_ids):
-                requires = True
-
-            # Thiếu check-in hoặc check-out → cần giải trình
-            if record.check_in and not record.check_out:
                 requires = True
 
             # Kiểm tra đi muộn/về sớm → cần giải trình
@@ -95,37 +82,29 @@ class HRAttendance(models.Model):
                  'employee_id.company_id.resource_calendar_id')
     def _compute_is_invalid_record(self):
         for record in self:
-            # Bỏ qua bản ghi của ngày hôm nay
-            if record.check_in:
-                check_in_local = record._convert_to_local_time(record.check_in)
-                check_in_date = check_in_local.date()
-                today = fields.Date.context_today(record)
-                if check_in_date == today:
-                    record.is_invalid_record = True
+            # Nếu chưa check-out, coi là hợp lệ (user chưa hết ngày làm việc)
+            if record.check_in and not record.check_out:
+                record.is_invalid_record = True
+                continue
+
+            # 1. Check-out phải sau check-in
+            if record.check_out and record.check_out <= record.check_in:
+                record.is_invalid_record = False
+                continue
+
+            # 2. Kiểm tra khoảng thời gian quá dài (vượt quá 24 giờ)
+            if record.check_out and (record.check_out - record.check_in).total_seconds() / 3600 > 24:
+                record.is_invalid_record = False
+                continue
+
+            # 3. Kiểm tra auto-checkout tại midnight (23:59:59)
+            if record.check_out:
+                co = record._convert_to_local_time(record.check_out)
+                if co.hour == 23 and co.minute == 59 and co.second == 59:
+                    record.is_invalid_record = False
                     continue
 
-            # 1. Kiểm tra thiếu chấm công (missing_checkin_out) → không hợp lệ
-            if not record.check_in or not record.check_out:
-                record.is_invalid_record = False
-                continue
-
-            # 2. Check-out phải sau check-in
-            if record.check_out <= record.check_in:
-                record.is_invalid_record = False
-                continue
-
-            # 3. Kiểm tra khoảng thời gian quá dài (vượt quá 24 giờ)
-            if (record.check_out - record.check_in).total_seconds() / 3600 > 24:
-                record.is_invalid_record = False
-                continue
-
-            # 4. Kiểm tra auto-checkout tại midnight (23:59:59)
-            co = record._convert_to_local_time(record.check_out)
-            if co.hour == 23 and co.minute == 59 and co.second == 59:
-                record.is_invalid_record = False
-                continue
-
-            # 5. Kiểm tra đi muộn/về sớm quá tolerance → không hợp lệ
+            # 4. Kiểm tra đi muộn/về sớm quá tolerance → không hợp lệ
             if record._is_late_or_early():
                 record.is_invalid_record = False
                 continue
@@ -209,27 +188,21 @@ class HRAttendance(models.Model):
         for record in self:
             status = 'valid'
 
-            if record.check_in:
-                check_in_local = record._convert_to_local_time(record.check_in)
-                check_in_date = check_in_local.date()
-                today = fields.Date.context_today(record)
-                if check_in_date == today:
-                    record.attendance_status = status
-                    continue
-
             if not record.is_invalid_record:
-                if not record.check_in or not record.check_out:
-                    status = 'missing_checkin_out'
+                # Bản ghi không hợp lệ - check giải trình
+                if any(e.state == 'rejected' for e in record.excuse_ids):
+                    status = 'excuse_rejected'
+                elif any(e.state in ['submitted', 'pending'] for e in record.excuse_ids):
+                    status = 'pending_excuse_approval'
+                elif any(e.state == 'approved' for e in record.excuse_ids):
+                    status = 'excuse_approved'
                 elif record._is_late_or_early():
                     status = 'late_or_early'
                 else:
                     status = 'valid'
-            elif any(e.state == 'rejected' for e in record.excuse_ids):
-                status = 'excuse_rejected'
-            elif any(e.state in ['submitted', 'pending'] for e in record.excuse_ids):
-                status = 'pending_excuse_approval'
-            elif any(e.state == 'approved' for e in record.excuse_ids):
-                status = 'excuse_approved'
+            else:
+                # Bản ghi hợp lệ
+                status = 'valid'
 
             record.attendance_status = status
 
