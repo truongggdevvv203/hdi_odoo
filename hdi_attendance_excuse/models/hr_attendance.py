@@ -191,27 +191,42 @@ class HRAttendance(models.Model):
             'early_tolerance': 0.25,
         }
 
-    @api.depends('check_in', 'check_out', 'excuse_ids', 'excuse_ids.state', 'is_invalid_record', 'employee_id',
-                 'employee_id.resource_calendar_id', 'employee_id.company_id.resource_calendar_id')
+    @api.depends(
+        'check_in', 'check_out',
+        'excuse_ids', 'excuse_ids.state',
+        'is_invalid_record',
+        'employee_id.resource_calendar_id',
+        'employee_id.company_id.resource_calendar_id'
+    )
     def _compute_attendance_status(self):
         for record in self:
-            status = 'valid'
-
             if record.is_invalid_record:
-                # Bản ghi hợp lệ
-                status = 'valid'
-            else:
-                # Bản ghi không hợp lệ - check giải trình
-                if any(e.state == 'rejected' for e in record.excuse_ids):
-                    status = 'excuse_rejected'
-                elif any(e.state in ['submitted', 'pending'] for e in record.excuse_ids):
-                    status = 'pending_excuse_approval'
-                elif any(e.state == 'approved' for e in record.excuse_ids):
-                    status = 'excuse_approved'
-                elif record._is_late_or_early():
-                    status = 'late_or_early'
+                record.attendance_status = 'valid'
+                continue
+
+            is_late_early = record._is_late_or_early()
+            excuses = record.excuse_ids
+
+            if any(e.state == 'rejected' for e in excuses):
+                status = 'excuse_rejected'
+
+            elif any(e.state in ('submitted', 'pending') for e in excuses):
+                status = 'pending_excuse_approval'
+
+            elif is_late_early:
+                # Có vi phạm nhưng chưa được giải trình đầy đủ
+                approved_excuses = excuses.filtered(lambda e: e.state == 'approved')
+                if approved_excuses:
+                    status = 'late_or_early'  # đi muộn đã duyệt nhưng về sớm chưa
                 else:
-                    status = 'valid'
+                    status = 'late_or_early'
+
+            else:
+                status = 'valid'
+
+            # Chỉ approved khi KHÔNG còn vi phạm
+            if is_late_early is False and excuses and all(e.state == 'approved' for e in excuses):
+                status = 'excuse_approved'
 
             record.attendance_status = status
 
