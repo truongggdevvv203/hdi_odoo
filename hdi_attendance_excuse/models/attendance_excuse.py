@@ -523,8 +523,8 @@ class AttendanceExcuse(models.Model):
         """Override: cho phép update chỉ khi ở draft"""
         for record in self:
             if record.state != 'draft':
-                # Cho phép update state, approver_id, approval_date (từ action_approve/reject)
-                allowed_fields = {'state', 'approver_id', 'approval_date', 'rejection_reason'}
+                # Cho phép update state, approver_id, approval_date, corrected times (từ action_approve/reject)
+                allowed_fields = {'state', 'approver_id', 'approval_date', 'rejection_reason', 'corrected_checkin', 'corrected_checkout'}
                 update_fields = set(values.keys())
                 
                 if not update_fields.issubset(allowed_fields):
