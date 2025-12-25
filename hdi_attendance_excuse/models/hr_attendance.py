@@ -346,16 +346,18 @@ class HRAttendance(models.Model):
         import datetime
 
         today = fields.Date.context_today(self)
+        yesterday = today - datetime.timedelta(days=1)
 
         employees = self.env['hr.employee'].search([])
 
         for employee in employees:
+            # Chỉ auto-checkout cho bản ghi từ HÔM QUA hoặc TRƯỚC ĐÓ
+            # Không auto-checkout cho bản ghi HÔM NAY
             attendance = self.search([
                 ('employee_id', '=', employee.id),
-                ('check_in', '>=', datetime.datetime.combine(today, datetime.time.min)),
-                ('check_in', '<=', datetime.datetime.combine(today, datetime.time.max)),
+                ('check_in', '<', datetime.datetime.combine(today, datetime.time.min)),  # Trước hôm nay
                 ('check_out', '=', False),
-            ], limit=1)
+            ], limit=1, order='check_in desc')  # Lấy bản ghi gần nhất
 
             if attendance:
                 company = employee.company_id or self.env.company
