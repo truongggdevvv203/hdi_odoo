@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'HDI Attendance Kiosk',
-    'version': '1.0.0',
-    'category': 'Human Resources',
+    'version': '18.0.1.0.0',
+    'category': 'hdi',
     'description': 'Attendance check-in/check-out kiosk interface',
     'author': 'HDI',
     'license': 'AGPL-3',
