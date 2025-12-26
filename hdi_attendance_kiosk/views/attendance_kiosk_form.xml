@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Systray Attendance Kiosk Form View -->
-    <record id="view_attendance_kiosk_form" model="ir.ui.view">
+    <data>
+        <!-- Systray Attendance Kiosk Form View -->
+        <record id="view_attendance_kiosk_form" model="ir.ui.view">
         <field name="name">Attendance Kiosk Form</field>
         <field name="model">hr.attendance</field>
         <field name="arch" type="xml">
@@ -264,4 +265,5 @@
             loadKioskStatus();
         });
     </script>
+    </data>
 </odoo>

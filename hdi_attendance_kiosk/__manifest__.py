@@ -9,9 +9,9 @@
     'depends': ['hr_attendance', 'web'],
     'data': [
         'security/ir.model.access.csv',
-        'views/menu.xml',
         'views/attendance_kiosk_form.xml',
         'views/attendance_kiosk_views.xml',
+        'views/menu.xml',
     ],
     'assets': {
         'web.assets_frontend': [
