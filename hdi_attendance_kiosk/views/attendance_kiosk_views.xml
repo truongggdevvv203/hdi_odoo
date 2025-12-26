@@ -44,11 +44,11 @@
 
                         <!-- Action Buttons -->
                         <div class="action-buttons">
-                            <button class="btn btn-check-in" id="check-in-btn" onclick="checkIn()">
+                            <button class="btn btn-check-in" id="check-in-btn" onclick="checkIn()" type="button">
                                 <i class="fa fa-sign-in"></i>
                                 <span>Check-in</span>
                             </button>
-                            <button class="btn btn-check-out" id="check-out-btn" onclick="checkOut()" disabled>
+                            <button class="btn btn-check-out" id="check-out-btn" onclick="checkOut()" type="button" disabled="disabled">
                                 <i class="fa fa-sign-out"></i>
                                 <span>Check-out</span>
                             </button>
