@@ -159,7 +159,10 @@ class HrPayslip(models.Model):
     def _calculate_working_days(self, date_from, date_to):
         """
         Tính số ngày hành chính (ngày làm việc) từ date_from đến date_to
-        Loại bỏ: thứ 7 (weekday 5), chủ nhật (weekday 6)
+        Logic:
+        - Thứ 2 - Thứ 6: 1 ngày
+        - Thứ 7 (Saturday): 0.5 ngày
+        - Chủ nhật: 0 ngày
         
         Args:
             date_from: ngày bắt đầu
@@ -168,24 +171,21 @@ class HrPayslip(models.Model):
         Returns:
             Số ngày hành chính
         """
-        try:
-            import numpy as np
-            # Sử dụng numpy.busday_count nếu available (nhanh hơn)
-            working_days = np.busday_count(date_from, date_to + relativedelta(days=1))
-            return float(working_days)
-        except (ImportError, TypeError):
-            # Fallback: tính thủ công
-            working_days = 0
-            current_date = date_from
+        working_days = 0.0
+        current_date = date_from
+        
+        while current_date <= date_to:
+            weekday = current_date.weekday()
+            # weekday(): Monday=0, Tuesday=1, ..., Saturday=5, Sunday=6
+            if weekday < 5:  # Thứ 2-6 (Monday-Friday)
+                working_days += 1.0
+            elif weekday == 5:  # Thứ 7 (Saturday)
+                working_days += 0.5
+            # Sunday (weekday == 6): không tính
             
-            while current_date <= date_to:
-                # weekday(): Monday=0, Sunday=6
-                # Chỉ đếm Monday-Friday (0-4)
-                if current_date.weekday() < 5:
-                    working_days += 1
-                current_date += relativedelta(days=1)
-            
-            return float(working_days)
+            current_date += relativedelta(days=1)
+        
+        return working_days
 
     @api.onchange('employee_id', 'date_from', 'date_to')
     def _onchange_employee(self):
