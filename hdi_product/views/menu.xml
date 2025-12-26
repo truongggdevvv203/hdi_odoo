@@ -1,5 +1,5 @@
 <odoo>
-    <menuitem id="hdi_product_root" name="HDI Sản phẩm" sequence="10"/>
+    <menuitem id="hdi_product_root" name="Quản lý sản phẩm" sequence="10"/>
 
     <menuitem id="hdi_product_menu"
               name="Sản phẩm"

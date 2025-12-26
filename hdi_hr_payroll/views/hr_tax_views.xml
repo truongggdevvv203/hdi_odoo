@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ============================================ -->
+    <!-- BIỂU THUẾ TNCN                                -->
+    <!-- ============================================ -->
+
+    <record id="view_hr_tax_bracket_tree" model="ir.ui.view">
+        <field name="name">hr.tax.bracket.tree</field>
+        <field name="model">hr.tax.bracket</field>
+        <field name="arch" type="xml">
+            <list string="Biểu thuế TNCN">
+                <field name="name"/>
+                <field name="from_amount" widget="monetary"/>
+                <field name="to_amount" widget="monetary"/>
+                <field name="tax_rate" string="Thuế suất (%)"/>
+                <field name="year"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hr_tax_bracket_form" model="ir.ui.view">
+        <field name="name">hr.tax.bracket.form</field>
+        <field name="model">hr.tax.bracket</field>
+        <field name="arch" type="xml">
+            <form string="Bậc thuế">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="year"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                        <group>
+                            <field name="from_amount" widget="monetary"/>
+                            <field name="to_amount" widget="monetary"/>
+                            <field name="tax_rate"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note" placeholder="Ghi chú thêm về bậc thuế này..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hr_tax_bracket" model="ir.actions.act_window">
+        <field name="name">Biểu thuế TNCN</field>
+        <field name="res_model">hr.tax.bracket</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo bậc thuế TNCN mới
+            </p>
+            <p>
+                Biểu thuế lũy tiến theo quy định Việt Nam có 7 bậc (5% - 35%)
+            </p>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- NGƯỜI PHỤ THUỘC                              -->
+    <!-- ============================================ -->
+
+    <record id="view_hr_employee_dependent_tree" model="ir.ui.view">
+        <field name="name">hr.employee.dependent.tree</field>
+        <field name="model">hr.employee.dependent</field>
+        <field name="arch" type="xml">
+                        <list string="Người phụ thuộc"
+                                    decoration-muted="not is_active"
+                                    decoration-success="is_active">
+                                <field name="employee_id"/>
+                                <field name="name"/>
+                                <field name="relationship"/>
+                                <field name="birth_date"/>
+                                <field name="age"/>
+                                <field name="tax_id"/>
+                                <field name="id_number"/>
+                                <field name="date_from"/>
+                                <field name="date_to"/>
+                                <field name="is_active" widget="boolean_toggle"/>
+                        </list>
+        </field>
+    </record>
+
+    <record id="view_hr_employee_dependent_form" model="ir.ui.view">
+        <field name="name">hr.employee.dependent.form</field>
+        <field name="model">hr.employee.dependent</field>
+        <field name="arch" type="xml">
+            <form string="Người phụ thuộc">
+                <header>
+                    <field name="is_active" widget="boolean_toggle" readonly="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Họ và tên người phụ thuộc"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Thông tin cơ bản">
+                            <field name="employee_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="relationship"/>
+                            <field name="birth_date"/>
+                            <field name="age" readonly="1"/>
+                        </group>
+                        <group string="Giấy tờ">
+                            <field name="tax_id"/>
+                            <field name="id_number"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Điều kiện giảm trừ">
+                            <field name="is_student"/>
+                            <field name="is_disabled"/>
+                        </group>
+                        <group string="Thời gian áp dụng">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Giấy tờ chứng minh" name="attachments">
+                            <field name="attachment_ids" widget="many2many_binary" nolabel="1"/>
+                        </page>
+                        <page string="Ghi chú" name="note">
+                            <field name="note" placeholder="Ghi chú thêm về người phụ thuộc..."/>
+                        </page>
+                    </notebook>
+
+                    <div class="alert alert-info mt-3" role="alert">
+                        <ul>
+                            <li>Người phụ thuộc sẽ được tính giảm trừ thuế <strong>4,400,000 VNĐ/tháng</strong></li>
+                            <li>Chỉ những người phụ thuộc <strong class="text-success">đang active</strong> (trong khoảng thời gian áp dụng) mới được tính giảm trừ</li>
+                            <li>Cần cung cấp đầy đủ giấy tờ chứng minh để phục vụ kiểm tra thuế</li>
+                        </ul>
+                    </div>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hr_employee_dependent_search" model="ir.ui.view">
+        <field name="name">hr.employee.dependent.search</field>
+        <field name="model">hr.employee.dependent</field>
+        <field name="arch" type="xml">
+            <search string="Tìm người phụ thuộc">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="tax_id"/>
+                <field name="id_number"/>
+
+                <filter name="filter_active" string="Đang được giảm trừ"
+                        domain="[('is_active', '=', True)]"/>
+                <filter name="filter_inactive" string="Không còn giảm trừ"
+                        domain="[('is_active', '=', False)]"/>
+
+                <separator/>
+                <filter name="filter_child" string="Con"
+                        domain="[('relationship', '=', 'child')]"/>
+                <filter name="filter_parent" string="Cha/Mẹ"
+                        domain="[('relationship', '=', 'parent')]"/>
+                <filter name="filter_spouse" string="Vợ/Chồng"
+                        domain="[('relationship', '=', 'spouse')]"/>
+
+                <group expand="0" string="Nhóm theo">
+                    <filter name="group_employee" string="Nhân viên"
+                            context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_relationship" string="Quan hệ"
+                            context="{'group_by': 'relationship'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_hr_employee_dependent" model="ir.actions.act_window">
+        <field name="name">Người phụ thuộc</field>
+        <field name="res_model">hr.employee.dependent</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_filter_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Thêm người phụ thuộc mới
+            </p>
+            <p>
+                Người phụ thuộc được sử dụng để tính giảm trừ thuế TNCN.<br/>
+                Mỗi người phụ thuộc active sẽ được giảm trừ 4,400,000 VNĐ/tháng.
+            </p>
+        </field>
+    </record>
+
+</odoo>

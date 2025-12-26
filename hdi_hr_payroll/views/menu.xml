@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Menu chính -->
+    <menuitem id="menu_hr_payroll_root"
+        name="Tính Lương"
+        sequence="75"
+        groups="hr.group_hr_user"
+        web_icon="hdi_payroll,static/description/icon.png"/>
+    
+    <!-- Payslips -->
+    <menuitem id="menu_hr_payroll_payslips"
+        name="Phiếu lương"
+        parent="menu_hr_payroll_root"
+        sequence="10"/>
+    
+    <menuitem id="menu_hr_payslip"
+        name="Tất cả phiếu lương"
+        parent="menu_hr_payroll_payslips"
+        action="action_hr_payslip"
+        sequence="1"/>
+
+    <!-- Configuration -->
+    <menuitem id="menu_hr_payroll_config"
+        name="Cấu hình"
+        parent="menu_hr_payroll_root"
+        sequence="90"
+        groups="hr.group_hr_manager"/>
+    
+    <menuitem id="menu_hr_payroll_structure"
+        name="Cấu trúc lương"
+        parent="menu_hr_payroll_config"
+        action="action_hr_payroll_structure"
+        sequence="1"/>
+    
+    <menuitem id="menu_hr_salary_rule"
+        name="Quy tắc tính lương"
+        parent="menu_hr_payroll_config"
+        action="action_hr_salary_rule"
+        sequence="2"/>
+    
+    <menuitem id="menu_hr_allowance_type"
+        name="Loại phụ cấp"
+        parent="menu_hr_payroll_config"
+        action="action_hr_allowance_type"
+        sequence="10"/>
+    
+    <menuitem id="menu_hr_tax_bracket"
+        name="Biểu thuế TNCN"
+        parent="menu_hr_payroll_config"
+        action="action_hr_tax_bracket"
+        sequence="20"/>
+    
+    <menuitem id="menu_hr_employee_dependent"
+        name="Người phụ thuộc"
+        parent="menu_hr_payroll_config"
+        action="action_hr_employee_dependent"
+        sequence="21"/>
+
+    <!-- Other -->
+    <menuitem id="menu_hr_loan"
+        name="Tạm ứng &amp; Vay"
+        parent="menu_hr_payroll_root"
+        action="action_hr_loan"
+        sequence="30"/>
+    
+    <menuitem id="menu_hr_discipline"
+        name="Kỷ luật"
+        parent="menu_hr_payroll_root"
+        action="action_hr_discipline"
+        sequence="40"/>
+    
+    <menuitem id="menu_hr_reward"
+        name="Khen thưởng"
+        parent="menu_hr_payroll_root"
+        action="action_hr_reward"
+        sequence="50"/>
+
+</odoo>

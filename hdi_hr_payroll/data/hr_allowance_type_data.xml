@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- CÁC LOẠI PHỤ CẤP MẶC ĐỊNH -->
+
+        <!-- Phụ cấp ăn trưa -->
+        <record id="allowance_type_meal" model="hr.allowance.type">
+            <field name="name">Phụ cấp ăn trưa</field>
+            <field name="code">MEAL</field>
+            <field name="sequence">10</field>
+            <field name="amount_type">per_day</field>
+            <field name="default_amount">730000</field>
+            <field name="is_taxable">True</field>
+            <field name="is_insurance_base">True</field>
+        </record>
+
+        <!-- Phụ cấp xăng xe -->
+        <record id="allowance_type_transport" model="hr.allowance.type">
+            <field name="name">Phụ cấp Onsite</field>
+            <field name="code">TRANSPORT</field>
+            <field name="sequence">20</field>
+            <field name="amount_type">fixed</field>
+            <field name="default_amount">1000000</field>
+            <field name="is_taxable">True</field>
+            <field name="is_insurance_base">False</field>
+        </record>
+
+        <!-- Phụ cấp điện thoại -->
+        <record id="allowance_type_phone" model="hr.allowance.type">
+            <field name="name">Phụ cấp điện thoại</field>
+            <field name="code">PHONE</field>
+            <field name="sequence">30</field>
+            <field name="amount_type">fixed</field>
+            <field name="default_amount">300000</field>
+            <field name="is_taxable">True</field>
+            <field name="is_insurance_base">False</field>
+        </record>
+
+        <!-- Phụ cấp nhà ở -->
+        <record id="allowance_type_housing" model="hr.allowance.type">
+            <field name="name">Phụ cấp đồng phục</field>
+            <field name="code">HOUSING</field>
+            <field name="sequence">40</field>
+            <field name="amount_type">fixed</field>
+            <field name="default_amount">2000000</field>
+            <field name="is_taxable">True</field>
+            <field name="is_insurance_base">False</field>
+        </record>
+
+        <!-- Phụ cấp chức vụ -->
+        <record id="allowance_type_position" model="hr.allowance.type">
+            <field name="name">Phụ cấp chức vụ</field>
+            <field name="code">POSITION</field>
+            <field name="sequence">50</field>
+            <field name="amount_type">percentage</field>
+            <field name="default_amount">20</field>
+            <field name="is_taxable">True</field>
+            <field name="is_insurance_base">False</field>
+        </record>
+
+        <!-- Phụ cấp trách nhiệm -->
+        <record id="allowance_type_responsibility" model="hr.allowance.type">
+            <field name="name">Phụ cấp trách nhiệm</field>
+            <field name="code">RESPONSIBILITY</field>
+            <field name="sequence">60</field>
+            <field name="amount_type">fixed</field>
+            <field name="default_amount">1500000</field>
+            <field name="is_taxable">True</field>
+            <field name="is_insurance_base">False</field>
+        </record>
+
+    </data>
+</odoo>

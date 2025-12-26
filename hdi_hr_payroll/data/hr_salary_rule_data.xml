@@ -1,0 +1,595 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- ============================================ -->
+        <!-- 1. LƯƠNG CƠ BẢN                              -->
+        <!-- ============================================ -->
+
+        <record id="rule_basic_salary" model="hr.salary.rule">
+            <field name="name">Lương cơ bản</field>
+            <field name="code">BASIC</field>
+            <field name="sequence">1</field>
+            <field name="category_id" ref="category_basic"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Tính lương theo công thực tế
+# Công thức: Lương = (Lương CB / Công chuẩn) × (Công thực tế + Phép hưởng lương)
+
+# Lấy các loại ngày công - kiểm tra object có number_of_days attribute
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
+
+leave_days = 0
+if hasattr(worked_days, 'LEAVE') and hasattr(worked_days.LEAVE, 'number_of_days'):
+    leave_days = worked_days.LEAVE.number_of_days
+
+# Tổng công được trả lương = Công thực tế + Nghỉ phép hưởng lương
+total_paid_days = work_days + leave_days
+
+if total_paid_days > 0 and payslip.standard_days > 0:
+    # Lương theo ngày = Lương cơ bản / Công chuẩn
+    daily_wage = contract.wage / payslip.standard_days
+    result = daily_wage * total_paid_days
+else:
+    # Không có chấm công => lấy full lương
+    result = contract.wage
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Lương thử việc (theo tỷ lệ % của lương cơ bản) -->
+        <record id="rule_probation_salary" model="hr.salary.rule">
+            <field name="name">Lương thử việc</field>
+            <field name="code">PROBATION</field>
+            <field name="sequence">1</field>
+            <field name="category_id" ref="category_basic"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Tính lương thử việc theo công thực tế
+# Công thức: Lương = (Lương thử việc / Công chuẩn) × (Công thực tế + Phép hưởng lương)
+# Lương thử việc = Lương CB × Tỷ lệ thử việc (mặc định 85%)
+
+# Lấy các loại ngày công
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
+
+leave_days = 0
+if hasattr(worked_days, 'LEAVE') and hasattr(worked_days.LEAVE, 'number_of_days'):
+    leave_days = worked_days.LEAVE.number_of_days
+
+# Tổng công được trả lương
+total_paid_days = work_days + leave_days
+
+# Tính lương thử việc
+probation_wage = contract.wage * (contract.probation_wage_rate / 100.0)
+
+if total_paid_days > 0 and payslip.standard_days > 0:
+    # Lương theo ngày = Lương thử việc / Công chuẩn
+    daily_wage = probation_wage / payslip.standard_days
+    result = daily_wage * total_paid_days
+else:
+    # Không có chấm công => lấy full lương thử việc
+    result = probation_wage
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 2. LƯƠNG NĂNG SUẤT                           -->
+        <!-- ============================================ -->
+
+        <record id="rule_performance_wage" model="hr.salary.rule">
+            <field name="name">Lương năng suất</field>
+            <field name="code">PERFORMANCE</field>
+            <field name="sequence">2</field>
+            <field name="category_id" ref="category_basic"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = inputs.PERFORMANCE and inputs.PERFORMANCE.amount > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Lương năng suất = (Tổng lương NS / Công chuẩn) × Công thực tế
+# CHỈ tính theo công thực tế, KHÔNG tính nghỉ phép
+
+performance_total = 0
+if inputs.PERFORMANCE:
+    performance_total = inputs.PERFORMANCE.amount
+
+# Lấy số công thực tế (WORK100)
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
+
+# Tính: (Tổng lương NS / Công chuẩn) × Công thực tế
+if work_days > 0 and payslip.standard_days > 0:
+    daily_performance = performance_total / payslip.standard_days
+    result = daily_performance * work_days
+else:
+    result = 0
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 3. PHỤ CẤP                                   -->
+        <!-- ============================================ -->
+
+        <!-- Phụ cấp ăn trưa -->
+        <record id="rule_meal_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp ăn trưa</field>
+            <field name="code">ALW_MEAL</field>
+            <field name="sequence">10</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.meal_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Phụ cấp ăn theo ngày công thực tế (không tính phép)
+work_days = 0
+if hasattr(worked_days, 'WORK100') and hasattr(worked_days.WORK100, 'number_of_days'):
+    work_days = worked_days.WORK100.number_of_days
+
+if work_days > 0 and payslip.standard_days > 0:
+    daily_allowance = contract.meal_allowance / payslip.standard_days
+    result = daily_allowance * work_days
+else:
+    result = contract.meal_allowance
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp xăng xe -->
+        <record id="rule_transport_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp xăng xe</field>
+            <field name="code">ALW_TRANSPORT</field>
+            <field name="sequence">11</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.transport_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.transport_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp điện thoại -->
+        <record id="rule_phone_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp điện thoại</field>
+            <field name="code">ALW_PHONE</field>
+            <field name="sequence">12</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.phone_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.phone_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp nhà ở -->
+        <record id="rule_housing_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp nhà ở</field>
+            <field name="code">ALW_HOUSING</field>
+            <field name="sequence">13</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.housing_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.housing_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp onsite -->
+        <record id="rule_onsite_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp onsite</field>
+            <field name="code">ALW_ONSITE</field>
+            <field name="sequence">14</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.onsite_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.onsite_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp đồng phục -->
+        <record id="rule_uniform_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp đồng phục</field>
+            <field name="code">ALW_UNIFORM</field>
+            <field name="sequence">15</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.uniform_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.uniform_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp chức vụ -->
+        <record id="rule_position_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp chức vụ</field>
+            <field name="code">ALW_POSITION</field>
+            <field name="sequence">16</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.position_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.position_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp trách nhiệm -->
+        <record id="rule_responsibility_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp trách nhiệm</field>
+            <field name="code">ALW_RESPONSIBILITY</field>
+            <field name="sequence">17</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.responsibility_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.responsibility_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 2.9. TRỪ LƯƠNG NGHỈ KHÔNG LƯƠNG              -->
+        <!-- ============================================ -->
+
+        <record id="rule_unpaid_leave_deduction" model="hr.salary.rule">
+            <field name="name">Trừ nghỉ không lương</field>
+            <field name="code">UNPAID_DED</field>
+            <field name="sequence">85</field>
+            <field name="category_id" ref="category_deduction"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python"><![CDATA[
+# Chỉ trừ nếu có ngày nghỉ không lương
+unpaid_days = 0
+if hasattr(worked_days, 'UNPAID') and hasattr(worked_days.UNPAID, 'number_of_days'):
+    unpaid_days = worked_days.UNPAID.number_of_days
+result = unpaid_days > 0
+]]></field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Trừ lương theo ngày nghỉ không lương
+unpaid_days = 0
+if hasattr(worked_days, 'UNPAID') and hasattr(worked_days.UNPAID, 'number_of_days'):
+    unpaid_days = worked_days.UNPAID.number_of_days
+
+if unpaid_days > 0 and payslip.standard_days > 0:
+    # Tính lương mất mát = (Lương CB / Công chuẩn) × Số ngày nghỉ
+    daily_wage = contract.wage / payslip.standard_days
+    result = -1 * daily_wage * unpaid_days  # Số âm để trừ
+else:
+    result = 0
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 3. TỔNG THU NHẬP (GROSS)                     -->
+        <!-- ============================================ -->
+
+        <record id="rule_gross_salary" model="hr.salary.rule">
+            <field name="name">Tổng thu nhập (GROSS)</field>
+            <field name="code">GROSS</field>
+            <field name="sequence">90</field>
+            <field name="category_id" ref="category_gross"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Tổng = BASIC + Tất cả ALW + BONUS
+result = categories.BASIC + categories.ALW + categories.BONUS
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 3.1. THU NHẬP CHỊU THUẾ                      -->
+        <!-- ============================================ -->
+        <!-- Một số phụ cấp được miễn thuế theo QĐ 111/2013/TT-BTC:
+             - Phụ cấp ăn trưa (trong giới hạn)
+             - Phụ cấp điện thoại, xăng xe (trong giới hạn)
+             - Phụ cấp đồng phục
+        -->
+
+        <record id="rule_taxable_income" model="hr.salary.rule">
+            <field name="name">Thu nhập chịu thuế</field>
+            <field name="code">TAXABLE</field>
+            <field name="sequence">95</field>
+            <field name="category_id" ref="category_taxable"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Thu nhập chịu thuế = GROSS - các phụ cấp miễn thuế
+# Theo QĐ 111/2013/TT-BTC: Phụ cấp ăn, điện thoại, đồng phục được miễn thuế
+gross = categories.GROSS
+
+# Tính phụ cấp miễn thuế theo ngày công (giống cách tính rules)
+worked_days_work = worked_days.WORK100 if hasattr(worked_days, 'WORK100') else None
+
+# Phụ cấp ăn trưa (theo ngày công)
+if worked_days_work and payslip.standard_days > 0:
+    meal = (contract.meal_allowance / payslip.standard_days) * worked_days_work.number_of_days
+else:
+    meal = contract.meal_allowance
+
+# Phụ cấp điện thoại và đồng phục (cố định)
+phone = contract.phone_allowance
+uniform = contract.uniform_allowance
+
+# Tổng phụ cấp miễn thuế
+tax_exempt_allowances = meal + phone + uniform
+
+result = gross - tax_exempt_allowances
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 4. BẢO HIỂM - NHÂN VIÊN ĐÓNG                 -->
+        <!-- ============================================ -->
+
+        <!-- BHXH nhân viên -->
+        <record id="rule_social_insurance_employee" model="hr.salary.rule">
+            <field name="name">BHXH (8%)</field>
+            <field name="code">SI_EMP</field>
+            <field name="sequence">100</field>
+            <field name="category_id" ref="category_insurance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.insurance_salary > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# BHXH nhân viên = Mức đóng BH * 8%
+result = -(contract.insurance_salary * contract.si_employee_rate / 100.0)
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- BHYT nhân viên -->
+        <record id="rule_health_insurance_employee" model="hr.salary.rule">
+            <field name="name">BHYT (1.5%)</field>
+            <field name="code">HI_EMP</field>
+            <field name="sequence">101</field>
+            <field name="category_id" ref="category_insurance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.insurance_salary > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+result = -(contract.insurance_salary * contract.hi_employee_rate / 100.0)
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- BHTN nhân viên -->
+        <record id="rule_unemployment_insurance_employee" model="hr.salary.rule">
+            <field name="name">BHTN (1%)</field>
+            <field name="code">UI_EMP</field>
+            <field name="sequence">102</field>
+            <field name="category_id" ref="category_insurance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.insurance_salary > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+result = -(contract.insurance_salary * contract.ui_employee_rate / 100.0)
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 5. KHẤU TRỪ KHÁC                             -->
+        <!-- ============================================ -->
+
+        <!-- Tạm ứng lương -->
+        <record id="rule_loan_deduction" model="hr.salary.rule">
+            <field name="name">Trừ tạm ứng</field>
+            <field name="code">ADVANCE</field>
+            <field name="sequence">200</field>
+            <field name="category_id" ref="category_deduction"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = inputs.ADVANCE and inputs.ADVANCE.amount > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Trừ tạm ứng từ input
+advance_amount = 0
+if inputs.ADVANCE:
+    advance_amount = inputs.ADVANCE.amount
+
+result = -advance_amount
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Kỷ luật - Phạt tiền -->
+        <record id="rule_discipline_fine" model="hr.salary.rule">
+            <field name="name">Phạt</field>
+            <field name="code">DEDUCTION</field>
+            <field name="sequence">201</field>
+            <field name="category_id" ref="category_deduction"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = inputs.DEDUCTION and inputs.DEDUCTION.amount > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Trừ phạt từ input
+deduction_amount = 0
+if inputs.DEDUCTION:
+    deduction_amount = inputs.DEDUCTION.amount
+
+result = -deduction_amount
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 6. THUẾ THU NHẬP CÁ NHÂN                     -->
+        <!-- ============================================ -->
+
+        <record id="rule_personal_income_tax" model="hr.salary.rule">
+            <field name="name">Thuế TNCN</field>
+            <field name="code">PIT</field>
+            <field name="sequence">300</field>
+            <field name="category_id" ref="category_tax"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# TÍNH THUẾ TNCN LŨY TIẾN THEO BIỂU THUẾ VIỆT NAM
+
+# 1. Thu nhập chịu thuế = GROSS - phụ cấp miễn thuế
+gross = categories.GROSS
+
+# Tính phụ cấp miễn thuế (ăn trưa, điện thoại, đồng phục)
+worked_days_work = worked_days.WORK100 if hasattr(worked_days, 'WORK100') else None
+if worked_days_work and payslip.standard_days > 0:
+    meal = (contract.meal_allowance / payslip.standard_days) * worked_days_work.number_of_days
+else:
+    meal = contract.meal_allowance
+
+phone = contract.phone_allowance
+uniform = contract.uniform_allowance
+tax_exempt = meal + phone + uniform
+
+taxable_gross = gross - tax_exempt
+
+# 2. Trừ BH nhân viên đóng
+insurance_employee = abs(categories.INSURANCE)  # Số âm → dương
+
+# 3. Giảm trừ gia cảnh
+personal_deduction = employee.personal_deduction if hasattr(employee, 'personal_deduction') else 11000000
+dependent_deduction = (employee.dependent_count if hasattr(employee, 'dependent_count') else 0) * 4400000
+
+total_deduction = personal_deduction + dependent_deduction
+
+# 4. Thu nhập tính thuế
+taxable_income = taxable_gross - insurance_employee - total_deduction
+
+# 5. Tính thuế lũy tiến theo biểu thuế VN
+if taxable_income <= 0:
+    result = 0
+else:
+    tax = 0
+    remaining = taxable_income
+
+    # Biểu thuế lũy tiến
+    brackets = [
+        (5000000, 0.05),      # Đến 5 triệu: 5%
+        (5000000, 0.10),      # 5-10 triệu: 10%
+        (8000000, 0.15),      # 10-18 triệu: 15%
+        (14000000, 0.20),     # 18-32 triệu: 20%
+        (20000000, 0.25),     # 32-52 triệu: 25%
+        (28000000, 0.30),     # 52-80 triệu: 30%
+        (float('inf'), 0.35)  # Trên 80 triệu: 35%
+    ]
+
+    for bracket_amount, rate in brackets:
+        if remaining <= 0:
+            break
+
+        taxable_in_bracket = min(remaining, bracket_amount)
+        tax += taxable_in_bracket * rate
+        remaining -= taxable_in_bracket
+
+    result = -tax  # Số âm vì là khấu trừ
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 7. THƯỞNG                                    -->
+        <!-- ============================================ -->
+
+        <record id="rule_reward_bonus" model="hr.salary.rule">
+            <field name="name">Thưởng</field>
+            <field name="code">BONUS</field>
+            <field name="sequence">50</field>
+            <field name="category_id" ref="category_bonus"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = inputs.BONUS and inputs.BONUS.amount > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Thưởng từ input
+bonus_amount = 0
+if inputs.BONUS:
+    bonus_amount = inputs.BONUS.amount
+
+result = bonus_amount
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 8. LƯƠNG THỰC LĨNH (NET)                     -->
+        <!-- ============================================ -->
+
+        <record id="rule_net_salary" model="hr.salary.rule">
+            <field name="name">THỰC LĨNH</field>
+            <field name="code">NET</field>
+            <field name="sequence">999</field>
+            <field name="category_id" ref="category_net"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# NET = GROSS + DED (DED là số âm) + INSURANCE + TAX
+result = categories.GROSS + categories.INSURANCE + categories.DED + categories.TAX
+]]></field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- GÁN RULES VÀO STRUCTURE                      -->
+        <!-- ============================================ -->
+
+        <!-- Cấu trúc lương nhân viên chính thức -->
+        <record id="payroll_structure_vn_employee" model="hr.payroll.structure">
+            <field name="rule_ids" eval="[(6, 0, [
+                ref('rule_basic_salary'),
+                ref('rule_performance_wage'),
+                ref('rule_meal_allowance'),
+                ref('rule_transport_allowance'),
+                ref('rule_phone_allowance'),
+                ref('rule_housing_allowance'),
+                ref('rule_onsite_allowance'),
+                ref('rule_uniform_allowance'),
+                ref('rule_position_allowance'),
+                ref('rule_responsibility_allowance'),
+                ref('rule_reward_bonus'),
+                ref('rule_gross_salary'),
+                ref('rule_taxable_income'),
+                ref('rule_social_insurance_employee'),
+                ref('rule_health_insurance_employee'),
+                ref('rule_unemployment_insurance_employee'),
+                ref('rule_loan_deduction'),
+                ref('rule_discipline_fine'),
+                ref('rule_personal_income_tax'),
+                ref('rule_net_salary'),
+            ])]"/>
+        </record>
+
+        <!-- Cấu trúc lương nhân viên thử việc -->
+        <record id="payroll_structure_vn_probation" model="hr.payroll.structure">
+            <field name="rule_ids" eval="[(6, 0, [
+                ref('rule_probation_salary'),
+                ref('rule_performance_wage'),
+                ref('rule_meal_allowance'),
+                ref('rule_transport_allowance'),
+                ref('rule_phone_allowance'),
+                ref('rule_housing_allowance'),
+                ref('rule_onsite_allowance'),
+                ref('rule_uniform_allowance'),
+                ref('rule_position_allowance'),
+                ref('rule_responsibility_allowance'),
+                ref('rule_reward_bonus'),
+                ref('rule_gross_salary'),
+                ref('rule_taxable_income'),
+                ref('rule_social_insurance_employee'),
+                ref('rule_health_insurance_employee'),
+                ref('rule_unemployment_insurance_employee'),
+                ref('rule_loan_deduction'),
+                ref('rule_discipline_fine'),
+                ref('rule_personal_income_tax'),
+                ref('rule_net_salary'),
+            ])]"/>
+        </record>
+
+    </data>
+</odoo>

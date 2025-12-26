@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- BIỂU THUẾ LŨY TIẾN 2024 - VIỆT NAM -->
+        
+        <!-- Bậc 1: 0 - 5 triệu = 5% -->
+        <record id="tax_bracket_1" model="hr.tax.bracket">
+            <field name="name">Bậc 1</field>
+            <field name="from_amount">0</field>
+            <field name="to_amount">5000000</field>
+            <field name="tax_rate">5</field>
+            <field name="year">2024</field>
+        </record>
+
+        <!-- Bậc 2: 5tr - 10tr = 10% -->
+        <record id="tax_bracket_2" model="hr.tax.bracket">
+            <field name="name">Bậc 2</field>
+            <field name="from_amount">5000000</field>
+            <field name="to_amount">10000000</field>
+            <field name="tax_rate">10</field>
+            <field name="year">2024</field>
+        </record>
+
+        <!-- Bậc 3: 10tr - 18tr = 15% -->
+        <record id="tax_bracket_3" model="hr.tax.bracket">
+            <field name="name">Bậc 3</field>
+            <field name="from_amount">10000000</field>
+            <field name="to_amount">18000000</field>
+            <field name="tax_rate">15</field>
+            <field name="year">2024</field>
+        </record>
+
+        <!-- Bậc 4: 18tr - 32tr = 20% -->
+        <record id="tax_bracket_4" model="hr.tax.bracket">
+            <field name="name">Bậc 4</field>
+            <field name="from_amount">18000000</field>
+            <field name="to_amount">32000000</field>
+            <field name="tax_rate">20</field>
+            <field name="year">2024</field>
+        </record>
+
+        <!-- Bậc 5: 32tr - 52tr = 25% -->
+        <record id="tax_bracket_5" model="hr.tax.bracket">
+            <field name="name">Bậc 5</field>
+            <field name="from_amount">32000000</field>
+            <field name="to_amount">52000000</field>
+            <field name="tax_rate">25</field>
+            <field name="year">2024</field>
+        </record>
+
+        <!-- Bậc 6: 52tr - 80tr = 30% -->
+        <record id="tax_bracket_6" model="hr.tax.bracket">
+            <field name="name">Bậc 6</field>
+            <field name="from_amount">52000000</field>
+            <field name="to_amount">80000000</field>
+            <field name="tax_rate">30</field>
+            <field name="year">2024</field>
+        </record>
+
+        <!-- Bậc 7: > 80tr = 35% -->
+        <record id="tax_bracket_7" model="hr.tax.bracket">
+            <field name="name">Bậc 7</field>
+            <field name="from_amount">80000000</field>
+            <field name="to_amount" eval="False"/>
+            <field name="tax_rate">35</field>
+            <field name="year">2024</field>
+        </record>
+
+    </data>
+</odoo>

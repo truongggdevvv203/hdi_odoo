@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Cấu trúc lương Nhân viên Việt Nam -->
+        <record id="payroll_structure_vn_employee" model="hr.payroll.structure">
+            <field name="name">Nhân viên Việt Nam</field>
+            <field name="code">VN_EMP</field>
+            <field name="note">Cấu trúc lương chuẩn cho nhân viên Việt Nam</field>
+        </record>
+
+        <!-- Cấu trúc lương Thử việc -->
+        <record id="payroll_structure_vn_probation" model="hr.payroll.structure">
+            <field name="name">Thử việc Việt Nam</field>
+            <field name="code">VN_PROB</field>
+            <field name="note">Cấu trúc lương cho nhân viên thử việc</field>
+        </record>
+
+    </data>
+</odoo>

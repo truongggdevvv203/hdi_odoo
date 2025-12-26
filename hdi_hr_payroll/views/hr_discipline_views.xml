@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- DISCIPLINE - Kỷ luật -->
+    
+    <!-- Tree View -->
+    <record id="view_hr_discipline_tree" model="ir.ui.view">
+        <field name="name">hr.discipline.tree</field>
+        <field name="model">hr.discipline</field>
+        <field name="arch" type="xml">
+            <list string="Kỷ luật">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="discipline_type"/>
+                <field name="date"/>
+                <field name="fine_amount"/>
+                <field name="is_deducted"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_hr_discipline_form" model="ir.ui.view">
+        <field name="name">hr.discipline.form</field>
+        <field name="model">hr.discipline</field>
+        <field name="arch" type="xml">
+            <form string="Quyết định kỷ luật">
+                <header>
+                    <button name="action_approve" string="Duyệt" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Hủy" type="object" invisible="state == 'cancel'"/>
+                    <button name="action_draft" string="Chuyển về nháp" type="object" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="employee_id"/>
+                            <field name="discipline_type"/>
+                            <field name="date"/>
+                            <field name="effective_date"/>
+                        </group>
+                        <group>
+                            <field name="fine_amount" invisible="discipline_type != 'fine'"/>
+                            <field name="deduct_from_payslip" invisible="discipline_type != 'fine'"/>
+                            <field name="payslip_id" invisible="not payslip_id"/>
+                            <field name="is_deducted" invisible="discipline_type != 'fine'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason" placeholder="Lý do kỷ luật..."/>
+                    </group>
+                    <notebook>
+                        <page string="Tài liệu đính kèm">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                        <page string="Ghi chú">
+                            <field name="note" placeholder="Ghi chú..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_hr_discipline" model="ir.actions.act_window">
+        <field name="name">Kỷ luật</field>
+        <field name="res_model">hr.discipline</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- REWARD - Khen thưởng -->
+    
+    <!-- Tree View -->
+    <record id="view_hr_reward_tree" model="ir.ui.view">
+        <field name="name">hr.reward.tree</field>
+        <field name="model">hr.reward</field>
+        <field name="arch" type="xml">
+            <list string="Khen thưởng">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="reward_type"/>
+                <field name="date"/>
+                <field name="amount"/>
+                <field name="is_paid"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_hr_reward_form" model="ir.ui.view">
+        <field name="name">hr.reward.form</field>
+        <field name="model">hr.reward</field>
+        <field name="arch" type="xml">
+            <form string="Quyết định khen thưởng">
+                <header>
+                    <button name="action_approve" string="Duyệt" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Hủy" type="object" invisible="state == 'cancel'"/>
+                    <button name="action_draft" string="Chuyển về nháp" type="object" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,paid"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="employee_id"/>
+                            <field name="reward_type"/>
+                            <field name="date"/>
+                            <field name="effective_date"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="add_to_payslip"/>
+                            <field name="is_taxable"/>
+                            <field name="payslip_id" invisible="not payslip_id"/>
+                            <field name="is_paid"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason" placeholder="Lý do khen thưởng..."/>
+                    </group>
+                    <notebook>
+                        <page string="Tài liệu đính kèm">
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                        <page string="Ghi chú">
+                            <field name="note" placeholder="Ghi chú..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_hr_reward" model="ir.actions.act_window">
+        <field name="name">Khen thưởng</field>
+        <field name="res_model">hr.reward</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

@@ -4,9 +4,6 @@
   'category': 'hdi',
   'description': """
     Human Resources module extensions for HDI
-    - Employee information extensions
-    - Department configurations
-    - HR policies and settings
   """,
   'author': 'HDI',
   'depends': [

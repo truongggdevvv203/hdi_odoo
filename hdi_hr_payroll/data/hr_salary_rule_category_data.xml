@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- NHÓM CƠ BẢN -->
+        <record id="category_basic" model="hr.salary.rule.category">
+            <field name="name">Lương cơ bản</field>
+            <field name="code">BASIC</field>
+            <field name="sequence">1</field>
+        </record>
+
+        <!-- NHÓM PHỤ CẤP -->
+        <record id="category_allowance" model="hr.salary.rule.category">
+            <field name="name">Phụ cấp</field>
+            <field name="code">ALW</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- NHÓM THƯỞNG -->
+        <record id="category_bonus" model="hr.salary.rule.category">
+            <field name="name">Thưởng</field>
+            <field name="code">BONUS</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- TỔNG THU NHẬP (GROSS) -->
+        <record id="category_gross" model="hr.salary.rule.category">
+            <field name="name">Tổng thu nhập (Gross)</field>
+            <field name="code">GROSS</field>
+            <field name="sequence">90</field>
+        </record>
+
+        <!-- THU NHẬP CHỊU THUẾ (loại trừ phụ cấp miễn thuế) -->
+        <record id="category_taxable" model="hr.salary.rule.category">
+            <field name="name">Thu nhập chịu thuế</field>
+            <field name="code">TAXABLE</field>
+            <field name="sequence">95</field>
+        </record>
+
+        <!-- BẢO HIỂM -->
+        <record id="category_insurance" model="hr.salary.rule.category">
+            <field name="name">Bảo hiểm</field>
+            <field name="code">INSURANCE</field>
+            <field name="sequence">100</field>
+        </record>
+
+        <!-- NHÓM KHẤU TRỪ KHÁC -->
+        <record id="category_deduction" model="hr.salary.rule.category">
+            <field name="name">Khấu trừ</field>
+            <field name="code">DED</field>
+            <field name="sequence">200</field>
+        </record>
+
+        <!-- THUẾ -->
+        <record id="category_tax" model="hr.salary.rule.category">
+            <field name="name">Thuế TNCN</field>
+            <field name="code">TAX</field>
+            <field name="sequence">300</field>
+        </record>
+
+        <!-- THỰC LĨNH (NET) -->
+        <record id="category_net" model="hr.salary.rule.category">
+            <field name="name">Thực lĩnh (Net)</field>
+            <field name="code">NET</field>
+            <field name="sequence">999</field>
+        </record>
+
+    </data>
+</odoo>

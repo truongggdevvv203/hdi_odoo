@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================ -->
+    <!-- HR EMPLOYEE - TAB THÔNG TIN THUẾ & GIẢM TRỪ -->
+    <!-- ============================================ -->
+
+    <record id="view_employee_form_payroll" model="ir.ui.view">
+        <field name="name">hr.employee.form.payroll</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Thêm Smart Buttons -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+
+                <!-- Button xem Phiếu lương -->
+                <button name="action_view_payslips"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-money"
+                    groups="hr.group_hr_user">
+                    <field name="payslip_count" widget="statinfo" string="Phiếu lương"/>
+                </button>
+
+                <!-- Button xem Người phụ thuộc -->
+                <button name="action_view_dependents"
+                    type="object"
+                    class="oe_stat_button"
+                    icon="fa-users"
+                    groups="hr.group_hr_user">
+                    <field name="dependent_count" widget="statinfo" string="Người phụ thuộc"/>
+                </button>
+
+            </xpath>
+
+            <!-- Thêm Tab "Thuế & Giảm trừ" -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Thuế &amp; Giảm trừ" name="tax_deduction" groups="hr.group_hr_user">
+                    <group>
+                        <group string="Thông tin thuế">
+                            <field name="tax_id"/>
+                            <field name="tax_registration_date"/>
+                        </group>
+                        <group string="Bảo hiểm">
+                            <field name="social_insurance_number"/>
+                            <field name="social_insurance_date"/>
+                            <field name="health_insurance_number"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Giảm trừ thuế TNCN" name="tax_deduction_group">
+                            <field name="personal_deduction"
+                                widget="monetary"
+                                options="{'currency_field': 'currency_id'}"/>
+                            <field name="dependent_count" readonly="1"/>
+                            <field name="dependent_deduction"
+                                widget="monetary"
+                                options="{'currency_field': 'currency_id'}"/>
+                            <field name="total_deduction"
+                                widget="monetary"
+                                options="{'currency_field': 'currency_id'}"
+                                readonly="1"
+                                class="oe_subtotal_footer_separator"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group></group>
+                    </group>
+
+                    <separator string="Danh sách người phụ thuộc"/>
+                    <field name="dependent_ids" nolabel="1"/>
+
+                    <separator string="Ghi chú" invisible="1"/>
+                    <div class="alert alert-info" role="alert">
+                        <ul>
+                            <li><strong>Giảm trừ bản thân:</strong> 11,000,000 VNĐ/tháng (theo quy định 2024)</li>
+                            <li><strong>Giảm trừ người phụ thuộc:</strong> 4,400,000 VNĐ/tháng/người</li>
+                            <li>Chỉ tính người phụ thuộc đang <strong>active</strong> (trong khoảng thời gian áp dụng)</li>
+                            <li>Tổng giảm trừ = Bản thân + (Số người PT × 4.4tr)</li>
+                        </ul>
+                    </div>
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

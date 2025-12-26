@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ============================================ -->
+        <!-- 1. LƯƠNG CƠ BẢN                              -->
+        <!-- ============================================ -->
+        
+        <record id="rule_basic_salary" model="hr.salary.rule">
+            <field name="name">Lương cơ bản</field>
+            <field name="code">BASIC</field>
+            <field name="sequence">1</field>
+            <field name="category_id" ref="category_basic"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Tính lương theo công thực tế
+# Lấy số ngày công WORK100 (attendance)
+worked_days_work = worked_days.WORK100 if hasattr(worked_days, 'WORK100') else None
+
+if worked_days_work and payslip.standard_days > 0:
+    # Lương = (Lương CB / Công chuẩn) * Công thực tế
+    daily_wage = contract.wage / payslip.standard_days
+    result = daily_wage * worked_days_work.number_of_days
+else:
+    # Không có chấm công => lấy full lương
+    result = contract.wage
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 2. PHỤ CẤP                                   -->
+        <!-- ============================================ -->
+
+        <!-- Phụ cấp ăn trưa -->
+        <record id="rule_meal_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp ăn trưa</field>
+            <field name="code">ALW_MEAL</field>
+            <field name="sequence">10</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.meal_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Phụ cấp ăn theo ngày công
+worked_days_work = worked_days.WORK100 if hasattr(worked_days, 'WORK100') else None
+
+if worked_days_work and payslip.standard_days > 0:
+    daily_allowance = contract.meal_allowance / payslip.standard_days
+    result = daily_allowance * worked_days_work.number_of_days
+else:
+    result = contract.meal_allowance
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp xăng xe -->
+        <record id="rule_transport_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp xăng xe</field>
+            <field name="code">ALW_TRANSPORT</field>
+            <field name="sequence">11</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.transport_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.transport_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp điện thoại -->
+        <record id="rule_phone_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp điện thoại</field>
+            <field name="code">ALW_PHONE</field>
+            <field name="sequence">12</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.phone_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.phone_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp nhà ở -->
+        <record id="rule_housing_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp nhà ở</field>
+            <field name="code">ALW_HOUSING</field>
+            <field name="sequence">13</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.housing_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.housing_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp chức vụ -->
+        <record id="rule_position_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp chức vụ</field>
+            <field name="code">ALW_POSITION</field>
+            <field name="sequence">14</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.position_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.position_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Phụ cấp trách nhiệm -->
+        <record id="rule_responsibility_allowance" model="hr.salary.rule">
+            <field name="name">Phụ cấp trách nhiệm</field>
+            <field name="code">ALW_RESPONSIBILITY</field>
+            <field name="sequence">15</field>
+            <field name="category_id" ref="category_allowance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.responsibility_allowance > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">result = contract.responsibility_allowance</field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 3. TỔNG THU NHẬP (GROSS)                     -->
+        <!-- ============================================ -->
+        
+        <record id="rule_gross_salary" model="hr.salary.rule">
+            <field name="name">Tổng thu nhập (GROSS)</field>
+            <field name="code">GROSS</field>
+            <field name="sequence">90</field>
+            <field name="category_id" ref="category_gross"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Tổng = BASIC + Tất cả ALW + BONUS
+result = categories.BASIC + categories.ALW + categories.BONUS
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 4. BẢO HIỂM - NHÂN VIÊN ĐÓNG                 -->
+        <!-- ============================================ -->
+        
+        <!-- BHXH nhân viên -->
+        <record id="rule_social_insurance_employee" model="hr.salary.rule">
+            <field name="name">BHXH (8%)</field>
+            <field name="code">SI_EMP</field>
+            <field name="sequence">100</field>
+            <field name="category_id" ref="category_insurance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.insurance_salary > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# BHXH nhân viên = Mức đóng BH * 8%
+result = -(contract.insurance_salary * contract.si_employee_rate / 100.0)
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- BHYT nhân viên -->
+        <record id="rule_health_insurance_employee" model="hr.salary.rule">
+            <field name="name">BHYT (1.5%)</field>
+            <field name="code">HI_EMP</field>
+            <field name="sequence">101</field>
+            <field name="category_id" ref="category_insurance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.insurance_salary > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+result = -(contract.insurance_salary * contract.hi_employee_rate / 100.0)
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- BHTN nhân viên -->
+        <record id="rule_unemployment_insurance_employee" model="hr.salary.rule">
+            <field name="name">BHTN (1%)</field>
+            <field name="code">UI_EMP</field>
+            <field name="sequence">102</field>
+            <field name="category_id" ref="category_insurance"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.insurance_salary > 0</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+result = -(contract.insurance_salary * contract.ui_employee_rate / 100.0)
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 5. KHẤU TRỪ KHÁC                             -->
+        <!-- ============================================ -->
+        
+        <!-- Tạm ứng lương -->
+        <record id="rule_loan_deduction" model="hr.salary.rule">
+            <field name="name">Trừ tạm ứng</field>
+            <field name="code">LOAN_DED</field>
+            <field name="sequence">200</field>
+            <field name="category_id" ref="category_deduction"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+# Kiểm tra có khoản vay/tạm ứng cần trả không
+loans = payslip.env['hr.loan'].search([
+    ('employee_id', '=', employee.id),
+    ('state', '=', 'approved'),
+    ('balance', '>', 0),
+    ('installment_method', '=', 'auto')
+])
+result = len(loans) > 0
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Tính tổng số tiền cần trừ trong tháng này
+total_deduction = 0
+loans = payslip.env['hr.loan'].search([
+    ('employee_id', '=', employee.id),
+    ('state', '=', 'approved'),
+    ('balance', '>', 0),
+    ('installment_method', '=', 'auto')
+])
+
+for loan in loans:
+    # Tìm kỳ trả tiếp theo chưa trả
+    unpaid_lines = loan.line_ids.filtered(lambda l: not l.paid).sorted('installment_number')
+    if unpaid_lines:
+        line = unpaid_lines[0]
+        total_deduction += line.amount
+        # Đánh dấu đã trả
+        line.write({
+            'paid': True,
+            'paid_date': payslip.date_to,
+            'payslip_id': payslip.id
+        })
+
+result = -total_deduction
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- Kỷ luật - Phạt tiền -->
+        <record id="rule_discipline_fine" model="hr.salary.rule">
+            <field name="name">Phạt kỷ luật</field>
+            <field name="code">DISCIPLINE_FINE</field>
+            <field name="sequence">201</field>
+            <field name="category_id" ref="category_deduction"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python"><![CDATA[
+# Kiểm tra có quyết định phạt trong tháng không
+disciplines = payslip.env['hr.discipline'].search([
+    ('employee_id', '=', employee.id),
+    ('state', '=', 'approved'),
+    ('effective_date', '>=', payslip.date_from),
+    ('effective_date', '<=', payslip.date_to),
+    ('deduct_from_payslip', '=', True),
+    ('is_deducted', '=', False)
+])
+result = len(disciplines) > 0
+]]></field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute"><![CDATA[
+# Tổng số tiền phạt
+total_fine = 0
+disciplines = payslip.env['hr.discipline'].search([
+    ('employee_id', '=', employee.id),
+    ('state', '=', 'approved'),
+    ('effective_date', '>=', payslip.date_from),
+    ('effective_date', '<=', payslip.date_to),
+    ('deduct_from_payslip', '=', True),
+    ('is_deducted', '=', False)
+])
+]]>
+
+for discipline in disciplines:
+    total_fine += discipline.fine_amount
+    # Đánh dấu đã khấu trừ
+    discipline.write({'payslip_id': payslip.id})
+
+result = -total_fine
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 6. THUẾ THU NHẬP CÁ NHÂN                     -->
+        <!-- ============================================ -->
+        
+        <record id="rule_personal_income_tax" model="hr.salary.rule">
+            <field name="name">Thuế TNCN</field>
+            <field name="code">PIT</field>
+            <field name="sequence">300</field>
+            <field name="category_id" ref="category_tax"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# TÍNH THUẾ TNCN LŨY TIẾN
+# 1. Thu nhập tính thuế = GROSS - BH (vì BH không chịu thuế)
+gross_income = categories.GROSS
+insurance_deduction = abs(categories.INSURANCE)  # Chuyển số âm thành dương
+
+# 2. Giảm trừ gia cảnh
+personal_deduction = employee.personal_deduction  # 11tr/tháng
+dependent_deduction = employee.dependent_count * employee.dependent_deduction  # 4.4tr/người
+
+total_deduction = personal_deduction + dependent_deduction
+
+# 3. Thu nhập tính thuế
+taxable_income = gross_income - insurance_deduction - total_deduction
+
+# 4. Tính thuế lũy tiến
+if taxable_income <= 0:
+    result = 0
+else:
+    # Gọi function tính thuế từ model hr.tax.bracket
+    TaxBracket = payslip.env['hr.tax.bracket']
+    tax_amount = TaxBracket.calculate_tax(taxable_income, year=payslip.date_to.year)
+    result = -tax_amount  # Số âm vì là khấu trừ
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 7. THƯỞNG                                    -->
+        <!-- ============================================ -->
+        
+        <record id="rule_reward_bonus" model="hr.salary.rule">
+            <field name="name">Thưởng</field>
+            <field name="code">REWARD</field>
+            <field name="sequence">50</field>
+            <field name="category_id" ref="category_bonus"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">
+# Kiểm tra có quyết định thưởng trong tháng không
+rewards = payslip.env['hr.reward'].search([
+    ('employee_id', '=', employee.id),
+    ('state', '=', 'approved'),
+    ('effective_date', '>=', payslip.date_from),
+    ('effective_date', '<=', payslip.date_to),
+    ('add_to_payslip', '=', True),
+    ('is_paid', '=', False)
+])
+result = len(rewards) > 0
+            </field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# Tổng số tiền thưởng
+total_reward = 0
+rewards = payslip.env['hr.reward'].search([
+    ('employee_id', '=', employee.id),
+    ('state', '=', 'approved'),
+    ('effective_date', '>=', payslip.date_from),
+    ('effective_date', '<=', payslip.date_to),
+    ('add_to_payslip', '=', True),
+    ('is_paid', '=', False)
+])
+
+for reward in rewards:
+    total_reward += reward.amount
+    # Đánh dấu đã chi trả
+    reward.write({'payslip_id': payslip.id})
+
+result = total_reward
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- 8. LƯƠNG THỰC LĨNH (NET)                     -->
+        <!-- ============================================ -->
+        
+        <record id="rule_net_salary" model="hr.salary.rule">
+            <field name="name">THỰC LĨNH</field>
+            <field name="code">NET</field>
+            <field name="sequence">999</field>
+            <field name="category_id" ref="category_net"/>
+            <field name="condition_select">none</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+# NET = GROSS + DED (DED là số âm) + INSURANCE + TAX
+result = categories.GROSS + categories.INSURANCE + categories.DED + categories.TAX
+            </field>
+            <field name="appears_on_payslip">True</field>
+        </record>
+
+        <!-- ============================================ -->
+        <!-- GÁN RULES VÀO STRUCTURE                      -->
+        <!-- ============================================ -->
+        
+        <record id="payroll_structure_vn_employee" model="hr.payroll.structure">
+            <field name="rule_ids" eval="[(6, 0, [
+                ref('rule_basic_salary'),
+                ref('rule_meal_allowance'),
+                ref('rule_transport_allowance'),
+                ref('rule_phone_allowance'),
+                ref('rule_housing_allowance'),
+                ref('rule_position_allowance'),
+                ref('rule_responsibility_allowance'),
+                ref('rule_reward_bonus'),
+                ref('rule_gross_salary'),
+                ref('rule_social_insurance_employee'),
+                ref('rule_health_insurance_employee'),
+                ref('rule_unemployment_insurance_employee'),
+                ref('rule_loan_deduction'),
+                ref('rule_discipline_fine'),
+                ref('rule_personal_income_tax'),
+                ref('rule_net_salary'),
+            ])]"/>
+        </record>
+
+    </data>
+</odoo>

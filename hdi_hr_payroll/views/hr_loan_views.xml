@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Tree View -->
+    <record id="view_hr_loan_tree" model="ir.ui.view">
+        <field name="name">hr.loan.tree</field>
+        <field name="model">hr.loan</field>
+        <field name="arch" type="xml">
+            <list string="Tạm ứng &amp; Vay">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="loan_type"/>
+                <field name="date"/>
+                <field name="amount"/>
+                <field name="balance"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_hr_loan_form" model="ir.ui.view">
+        <field name="name">hr.loan.form</field>
+        <field name="model">hr.loan</field>
+        <field name="arch" type="xml">
+            <form string="Tạm ứng &amp; Vay">
+                <header>
+                    <button name="action_approve" string="Duyệt" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_cancel" string="Hủy" type="object" invisible="state == 'cancel'"/>
+                    <button name="action_draft" string="Chuyển về nháp" type="object" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,paid"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="employee_id"/>
+                            <field name="loan_type"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="paid_amount"/>
+                            <field name="balance"/>
+                            <field name="installment_method"/>
+                            <field name="installment_count" invisible="installment_method == 'manual'"/>
+                            <field name="installment_amount" invisible="installment_method == 'manual'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Chi tiết trả góp" invisible="installment_method == 'manual'">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="installment_number"/>
+                                    <field name="installment_date"/>
+                                    <field name="amount"/>
+                                    <field name="paid"/>
+                                    <field name="paid_date"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Ghi chú">
+                            <field name="note" placeholder="Ghi chú..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_hr_loan" model="ir.actions.act_window">
+        <field name="name">Tạm ứng &amp; Vay</field>
+        <field name="res_model">hr.loan</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

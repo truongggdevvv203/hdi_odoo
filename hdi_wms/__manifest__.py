@@ -2,7 +2,7 @@
 {
     'name': 'HDI WMS - Warehouse Management System',
     'version': '18.0.1.0.0',
-    'category': 'Inventory/Inventory',
+    'category': 'hdi',
     'summary': 'Advanced WMS with Batch/LPN, Putaway Strategy, and Scanner Support',
     'description': """
 HDI Warehouse Management System
