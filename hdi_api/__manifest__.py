@@ -12,6 +12,7 @@
         'hr_attendance',
         'hr',
         'hdi_hr',
+        'hdi_hr_payroll',
     ],
     'external_dependencies': {
         'python': ['pyjwt', 'werkzeug'],
