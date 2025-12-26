@@ -18,6 +18,10 @@
             'hdi_attendance_kiosk/static/src/js/attendance_kiosk.js',
             'hdi_attendance_kiosk/static/src/css/attendance_kiosk.css',
         ],
+        'web.assets_backend': [
+            'hdi_attendance_kiosk/static/src/js/attendance_kiosk.js',
+            'hdi_attendance_kiosk/static/src/css/attendance_kiosk.css',
+        ],
     },
     'installable': True,
     'auto_install': False,
