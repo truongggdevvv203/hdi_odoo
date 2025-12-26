@@ -60,9 +60,10 @@ class HrPayslip(models.Model):
     # ==================== CÔNG CHUẨN ====================
     standard_days = fields.Float(
         'Công chuẩn trong tháng',
-        default=22.5,
+        compute='_compute_standard_days',
+        store=True,
         readonly=True, states={'draft': [('readonly', False)]},
-        help='Số ngày công chuẩn trong tháng (VD: 22.5, 26...)'
+        help='Tự động tính số ngày công chuẩn'
     )
 
     # ==================== TRẠNG THÁI ====================
@@ -143,9 +144,52 @@ class HrPayslip(models.Model):
             net_line = lines.filtered(lambda l: l.code == 'NET')
             payslip.net_wage = sum(net_line.mapped('total'))
 
+    @api.depends('date_from', 'date_to')
+    def _compute_standard_days(self):
+        """Tính số ngày hành chính (loại bỏ thứ 7, chủ nhật)"""
+        for payslip in self:
+            if not payslip.date_from or not payslip.date_to:
+                payslip.standard_days = 0.0
+                continue
+
+            # Tính số ngày hành chính giữa date_from và date_to
+            standard_days = self._calculate_working_days(payslip.date_from, payslip.date_to)
+            payslip.standard_days = standard_days
+
+    def _calculate_working_days(self, date_from, date_to):
+        """
+        Tính số ngày hành chính (ngày làm việc) từ date_from đến date_to
+        Loại bỏ: thứ 7 (weekday 5), chủ nhật (weekday 6)
+        
+        Args:
+            date_from: ngày bắt đầu
+            date_to: ngày kết thúc
+            
+        Returns:
+            Số ngày hành chính
+        """
+        try:
+            import numpy as np
+            # Sử dụng numpy.busday_count nếu available (nhanh hơn)
+            working_days = np.busday_count(date_from, date_to + relativedelta(days=1))
+            return float(working_days)
+        except (ImportError, TypeError):
+            # Fallback: tính thủ công
+            working_days = 0
+            current_date = date_from
+            
+            while current_date <= date_to:
+                # weekday(): Monday=0, Sunday=6
+                # Chỉ đếm Monday-Friday (0-4)
+                if current_date.weekday() < 5:
+                    working_days += 1
+                current_date += relativedelta(days=1)
+            
+            return float(working_days)
+
     @api.onchange('employee_id', 'date_from', 'date_to')
     def _onchange_employee(self):
-        """Tự động điền contract khi chọn nhân viên"""
+        """Tự động điền contract khi chọn nhân viên và tính ngày chuẩn"""
         if self.employee_id:
             # Tìm contract đang active
             contract = self.env['hr.contract'].search([
@@ -166,6 +210,10 @@ class HrPayslip(models.Model):
             # Tự động tạo tên
             if self.date_from:
                 self.name = f"Lương {self.employee_id.name} - {self.date_from.strftime('%m/%Y')}"
+        
+        # Tính lại standard_days khi date thay đổi (trigger compute)
+        if self.date_from and self.date_to:
+            self._compute_standard_days()
 
     @api.onchange('contract_id')
     def _onchange_contract(self):
