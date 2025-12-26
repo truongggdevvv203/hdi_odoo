@@ -64,17 +64,9 @@ class HRAttendance(models.Model):
         return mode_mapping.get(mode, mode)
 
     def _check_attendance_limit(self, record=None):
-        """
-        Kiểm tra giới hạn tối đa 2 lần chấm công trong một ngày
-        Method này được gọi từ create() trước khi lưu bản ghi
-        """
         check_record = record or self
         
         if not check_record.check_in or not check_record.employee_id:
-            return
-
-        # Loại trừ bản ghi 'technical' - được tạo tự động bởi hệ thống
-        if check_record.in_mode == 'technical':
             return
 
         # Lấy múi giờ của nhân viên
@@ -96,10 +88,8 @@ class HRAttendance(models.Model):
             ('check_in', '>=', day_start_utc),
             ('check_in', '<', day_end_utc),
             ('id', '!=', check_record.id),
-            ('in_mode', '!=', 'technical'),  # Loại trừ bản ghi technical
         ])
 
-        # Kiểm tra: không cho phép tạo bản ghi mới nếu đã có bản ghi hoàn thành
         completed_attendances = attendances_same_day.filtered(
             lambda a: a.check_in and a.check_out
         )
@@ -109,31 +99,16 @@ class HRAttendance(models.Model):
             first_in_mode_display = self._get_mode_display(completed_attendances[0].in_mode)
             
             raise ValidationError(
-                f'❌ LỖI: Chỉ được phép chấm công tối đa 2 lần trong một ngày (1 lần vào + 1 lần ra).\n'
-                f'👤 Nhân viên: {check_record.employee_id.name}\n'
-                f'📍 Lần chấm công đầu tiên ({first_in_mode_display}):\n'
-                f'   • Vào: {completed_attendances[0].check_in.strftime("%H:%M:%S")}\n'
-                f'   • Ra: {completed_attendances[0].check_out.strftime("%H:%M:%S") if completed_attendances[0].check_out else "Chưa ra"}\n'
-                f'🔄 Bạn đang cố gắng chấm công lần thứ 2 ({in_mode_display}).\n'
-                f'📞 Vui lòng liên hệ quản lý nhân sự để xử lý.'
+                f'Chỉ được phép chấm công tối đa 1 lần trong một ngày'
             )
 
     @api.constrains('check_in', 'employee_id', 'in_mode', 'check_out')
     def _check_max_two_attendances_per_day(self):
-        """
-        Kiểm tra giới hạn tối đa 2 lần chấm công trong một ngày
-        (1 lần check in + 1 lần check out)
-        Chỉ kiểm tra các chế độ: 'manual', 'kiosk', 'systray'
-        Loại trừ 'technical' (được tạo tự động hệ thống)
-        """
         for record in self:
             self._check_attendance_limit(record)
 
     @api.model_create_multi
     def create(self, vals_list):
-        """
-        Override create() để kiểm tra giới hạn chấm công trước khi lưu
-        """
         for vals in vals_list:
             # Tạo bản ghi tạm thời để kiểm tra
             temp_record = self.new(vals)
@@ -317,27 +292,20 @@ class HRAttendance(models.Model):
 
     @api.model
     def api_check_in(self, employee_id, in_latitude=None, in_longitude=None):
-        """
-        API method cho check-in
-        Kiểm tra và tạo attendance record
-        Cảnh báo nếu check in lần 2 trong cùng ngày
-        Hỗ trợ các chế độ: 'manual', 'kiosk', 'systray'
-        """
         employee = self.env['hr.employee'].browse(employee_id)
         
         # Kiểm tra xem đã check-in chưa (chưa check-out)
         last_open_attendance = self.search([
             ('employee_id', '=', employee_id),
             ('check_out', '=', False),
-            ('in_mode', '!=', 'technical'),  # Loại trừ technical mode
         ], limit=1)
 
         if last_open_attendance:
             in_mode_display = self._get_mode_display(last_open_attendance.in_mode)
             
             raise UserError(
-                f'⚠️ Bạn đã {in_mode_display} vào lúc {last_open_attendance.check_in.strftime("%H:%M:%S")} rồi.\n'
-                f'❌ Vui lòng chấm công ra trước khi chấm công vào lại.'
+                f'Bạn đã {in_mode_display} vào lúc {last_open_attendance.check_in.strftime("%H:%M:%S")} rồi.\n'
+                f'Vui lòng chấm công ra trước khi chấm công vào lại.'
             )
 
         # Kiểm tra xem đã check in + check out lần đầu trong ngày chưa
@@ -353,14 +321,11 @@ class HRAttendance(models.Model):
         day_start_utc = day_start.astimezone(pytz.UTC).replace(tzinfo=None)
         day_end_utc = day_end.astimezone(pytz.UTC).replace(tzinfo=None)
 
-        # Tìm bản ghi chấm công hoàn thành (có check in + check out) trong ngày
-        # Loại trừ 'technical' mode
         completed_today = self.search([
             ('employee_id', '=', employee_id),
             ('check_in', '>=', day_start_utc),
             ('check_in', '<', day_end_utc),
             ('check_out', '!=', False),
-            ('in_mode', '!=', 'technical'),  # Loại trừ technical mode
         ])
 
         if completed_today:
@@ -368,11 +333,7 @@ class HRAttendance(models.Model):
             first_in_mode_display = self._get_mode_display(completed_today[0].in_mode)
             
             warning_msg = (
-                f'⚠️ CẢNH BÁO: Bạn đã {first_in_mode_display}:\n'
-                f'   • Vào: {completed_today[0].check_in.strftime("%H:%M:%S")}\n'
-                f'   • Ra: {completed_today[0].check_out.strftime("%H:%M:%S")}\n'
-                f'❌ Đây là lần check in thứ 2 trong cùng một ngày.\n'
-                f'📞 Vui lòng liên hệ với quản lý nhân sự nếu có lỗi.'
+                f'Chỉ được phép chấm công tối đa 1 lần trong một ngày'
             )
             raise UserError(warning_msg)
 
@@ -410,12 +371,6 @@ class HRAttendance(models.Model):
 
     @api.model
     def api_check_out(self, employee_id, out_latitude=None, out_longitude=None):
-        """
-        API method cho check-out
-        Kiểm tra và cập nhật attendance record
-        """
-        import logging
-        _logger = logging.getLogger(__name__)
         
         # Tìm bản ghi chấm công chưa check-out
         attendance = self.search([
@@ -444,33 +399,24 @@ class HRAttendance(models.Model):
             'out_mode': 'manual',
         }
 
-        # Thêm GPS coordinates nếu có
-        _logger.info(f"GPS params: out_latitude={out_latitude}, out_longitude={out_longitude}")
         if out_latitude:
             try:
                 update_data['out_latitude'] = float(out_latitude)
-                _logger.info(f"Added out_latitude: {float(out_latitude)}")
             except (ValueError, TypeError) as e:
-                _logger.error(f"Error converting out_latitude: {e}")
                 pass
 
         if out_longitude:
             try:
                 update_data['out_longitude'] = float(out_longitude)
-                _logger.info(f"Added out_longitude: {float(out_longitude)}")
             except (ValueError, TypeError) as e:
-                _logger.error(f"Error converting out_longitude: {e}")
                 pass
 
-        _logger.info(f"Update data before write: {update_data}")
         
         # Cập nhật check-out
         attendance.sudo().write(update_data)
 
         # Re-fetch record để lấy giá trị mới nhất từ database
         attendance = self.browse(attendance.id).sudo()
-        
-        _logger.info(f"After write - out_latitude: {attendance.out_latitude}, out_longitude: {attendance.out_longitude}")
 
         return {
             'id': attendance.id,
