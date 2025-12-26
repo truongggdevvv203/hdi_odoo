@@ -53,16 +53,6 @@ class HRAttendance(models.Model):
         help='Trạng thái chi tiết của bản ghi chấm công'
     )
 
-    def _get_mode_display(self, mode):
-        """Helper method để lấy tên hiển thị của chế độ chấm công"""
-        mode_mapping = {
-            'manual': 'Chấm công thủ công',
-            'kiosk': 'Chấm công kiosk',
-            'systray': 'Chấm công systray',
-            'technical': 'Chấm công tự động',
-        }
-        return mode_mapping.get(mode, mode)
-
     def _check_attendance_limit(self, record=None):
         check_record = record or self
         
@@ -95,8 +85,6 @@ class HRAttendance(models.Model):
         )
         
         if completed_attendances:
-            in_mode_display = self._get_mode_display(check_record.in_mode)
-            first_in_mode_display = self._get_mode_display(completed_attendances[0].in_mode)
             
             raise ValidationError(
                 f'Chỉ được phép chấm công tối đa 1 lần trong một ngày'
@@ -301,11 +289,9 @@ class HRAttendance(models.Model):
         ], limit=1)
 
         if last_open_attendance:
-            in_mode_display = self._get_mode_display(last_open_attendance.in_mode)
             
             raise UserError(
-                f'Bạn đã {in_mode_display} vào lúc {last_open_attendance.check_in.strftime("%H:%M:%S")} rồi.\n'
-                f'Vui lòng chấm công ra trước khi chấm công vào lại.'
+                f'Chỉ được phép chấm công tối đa 1 lần trong một ngày'
             )
 
         # Kiểm tra xem đã check in + check out lần đầu trong ngày chưa
@@ -329,8 +315,6 @@ class HRAttendance(models.Model):
         ])
 
         if completed_today:
-            # Cảnh báo: nhân viên cố gắng check in lần 2
-            first_in_mode_display = self._get_mode_display(completed_today[0].in_mode)
             
             warning_msg = (
                 f'Chỉ được phép chấm công tối đa 1 lần trong một ngày'
