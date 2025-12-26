@@ -1,18 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Action cho Kiosk Chấm Công -->
-    <record id="action_attendance_kiosk" model="ir.actions.act_url">
-        <field name="name">Kiosk Chấm Công</field>
-        <field name="type">ir.actions.act_url</field>
-        <field name="url">/attendance/kiosk</field>
-        <field name="target">new</field>
-    </record>
-
     <!-- Menu item cho Kiosk Chấm Công -->
     <menuitem
         id="menu_attendance_kiosk"
-        name="Kiosk Chấm Công"
+        name="Chấm Công"
         parent="hr_attendance.menu_hr_attendance_root"
-        action="action_attendance_kiosk"
-        sequence="10"/>
+        action="action_attendance_kiosk_form"
+        sequence="5"/>
 </odoo>

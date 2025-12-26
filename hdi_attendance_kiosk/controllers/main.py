@@ -40,6 +40,10 @@ class AttendanceKioskController(Controller):
                 in_longitude=in_longitude
             )
             
+            # Cập nhật mode thành 'systray'
+            attendance = request.env['hr.attendance'].browse(result['id'])
+            attendance.write({'in_mode': 'systray'})
+            
             return {
                 'success': True,
                 'message': 'Check-in thành công',
@@ -76,6 +80,10 @@ class AttendanceKioskController(Controller):
                 out_latitude=out_latitude, 
                 out_longitude=out_longitude
             )
+            
+            # Cập nhật mode thành 'systray'
+            attendance = request.env['hr.attendance'].browse(result['id'])
+            attendance.write({'out_mode': 'systray'})
             
             return {
                 'success': True,

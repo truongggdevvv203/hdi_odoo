@@ -10,6 +10,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/menu.xml',
+        'views/attendance_kiosk_form.xml',
         'views/attendance_kiosk_views.xml',
     ],
     'assets': {
