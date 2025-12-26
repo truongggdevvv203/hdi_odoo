@@ -53,15 +53,19 @@ function updateKioskStatusUI(status) {
     if (workedHoursDetail) workedHoursDetail.style.display = 'none';
 
     if (status.status === 'not_checked_in') {
-        checkInBtn.disabled = false;
-        checkOutBtn.disabled = true;
         checkInBtn.style.opacity = '1';
+        checkInBtn.style.cursor = 'pointer';
+        checkInBtn.style.pointerEvents = 'auto';
         checkOutBtn.style.opacity = '0.5';
+        checkOutBtn.style.cursor = 'not-allowed';
+        checkOutBtn.style.pointerEvents = 'none';
     } else if (status.status === 'checked_in') {
-        checkInBtn.disabled = true;
-        checkOutBtn.disabled = false;
         checkInBtn.style.opacity = '0.5';
+        checkInBtn.style.cursor = 'not-allowed';
+        checkInBtn.style.pointerEvents = 'none';
         checkOutBtn.style.opacity = '1';
+        checkOutBtn.style.cursor = 'pointer';
+        checkOutBtn.style.pointerEvents = 'auto';
 
         if (checkInDetail) {
             checkInDetail.style.display = 'block';
@@ -71,10 +75,12 @@ function updateKioskStatusUI(status) {
             }
         }
     } else if (status.status === 'checked_out') {
-        checkInBtn.disabled = false;
-        checkOutBtn.disabled = true;
         checkInBtn.style.opacity = '1';
+        checkInBtn.style.cursor = 'pointer';
+        checkInBtn.style.pointerEvents = 'auto';
         checkOutBtn.style.opacity = '0.5';
+        checkOutBtn.style.cursor = 'not-allowed';
+        checkOutBtn.style.pointerEvents = 'none';
 
         if (checkInDetail) checkInDetail.style.display = 'block';
         if (checkOutDetail) checkOutDetail.style.display = 'block';
@@ -119,7 +125,9 @@ async function performCheckIn() {
         const btn = document.getElementById('check-in-btn-kiosk');
         if (!btn) return;
         
-        btn.disabled = true;
+        // Disable button
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
 
         const payload = {};
         if (navigator.geolocation) {
@@ -147,12 +155,16 @@ async function performCheckIn() {
         if (data.success) {
             setTimeout(loadKioskStatus, 500);
         } else {
-            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
         }
     } catch (error) {
         showKioskMessage('Lỗi: ' + error.message, false);
         const btn = document.getElementById('check-in-btn-kiosk');
-        if (btn) btn.disabled = false;
+        if (btn) {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        }
     }
 }
 
@@ -161,7 +173,9 @@ async function performCheckOut() {
         const btn = document.getElementById('check-out-btn-kiosk');
         if (!btn) return;
         
-        btn.disabled = true;
+        // Disable button
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
 
         const payload = {};
         if (navigator.geolocation) {
@@ -189,12 +203,16 @@ async function performCheckOut() {
         if (data.success) {
             setTimeout(loadKioskStatus, 500);
         } else {
-            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
         }
     } catch (error) {
         showKioskMessage('Lỗi: ' + error.message, false);
         const btn = document.getElementById('check-out-btn-kiosk');
-        if (btn) btn.disabled = false;
+        if (btn) {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+        }
     }
 }
 
