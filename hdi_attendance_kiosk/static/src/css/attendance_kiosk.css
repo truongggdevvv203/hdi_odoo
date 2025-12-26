@@ -1,0 +1,258 @@
+/* Attendance Kiosk Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.attendance-kiosk-container {
+    width: 100%;
+    max-width: 600px;
+}
+
+.kiosk-content {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 40px 30px;
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header */
+.kiosk-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.kiosk-title {
+    font-size: 32px;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.current-time {
+    font-size: 48px;
+    color: #667eea;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+}
+
+.current-time .time {
+    display: inline-block;
+    min-width: 200px;
+}
+
+/* Status Card */
+.status-card {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.employee-info {
+    margin-bottom: 25px;
+}
+
+.employee-name {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.status-message {
+    font-size: 16px;
+    color: #666;
+    font-weight: 500;
+}
+
+/* Status Details */
+.status-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+}
+
+.detail-value {
+    color: #667eea;
+    font-weight: 700;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+}
+
+.current-hours-item .detail-value {
+    color: #27ae60;
+    font-size: 20px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    padding: 18px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn i {
+    font-size: 24px;
+}
+
+.btn-check-in {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-check-in:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-check-in:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-check-in.active {
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.6);
+}
+
+.btn-check-out {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-check-out:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(245, 87, 108, 0.4);
+}
+
+.btn-check-out:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-check-out.active {
+    box-shadow: 0 5px 20px rgba(245, 87, 108, 0.6);
+}
+
+/* Result Message */
+.result-message {
+    padding: 15px 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 600;
+    animation: slideIn 0.3s ease-out;
+    margin-top: 20px;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result-message.success {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    color: #1e5631;
+    border: 2px solid #52b788;
+}
+
+.result-message.error {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: #d62828;
+    border: 2px solid #f77f00;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .kiosk-content {
+        padding: 25px 15px;
+    }
+
+    .kiosk-title {
+        font-size: 24px;
+    }
+
+    .current-time {
+        font-size: 36px;
+    }
+
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .status-card {
+        padding: 20px 15px;
+    }
+
+    .btn {
+        padding: 15px 15px;
+        font-size: 14px;
+    }
+}
