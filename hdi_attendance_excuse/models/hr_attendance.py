@@ -53,6 +53,71 @@ class HRAttendance(models.Model):
         help='Trạng thái chi tiết của bản ghi chấm công'
     )
 
+    def _get_mode_display(self, mode):
+        """Helper method để lấy tên hiển thị của chế độ chấm công"""
+        mode_mapping = {
+            'manual': 'Chấm công thủ công',
+            'kiosk': 'Chấm công kiosk',
+            'systray': 'Chấm công systray',
+            'technical': 'Chấm công tự động',
+        }
+        return mode_mapping.get(mode, mode)
+
+    def _check_attendance_limit(self, record=None):
+        """
+        Kiểm tra giới hạn tối đa 2 lần chấm công trong một ngày
+        Method này được gọi từ create() trước khi lưu bản ghi
+        """
+        check_record = record or self
+        
+        if not check_record.check_in or not check_record.employee_id:
+            return
+
+        # Loại trừ bản ghi 'technical' - được tạo tự động bởi hệ thống
+        if check_record.in_mode == 'technical':
+            return
+
+        # Lấy múi giờ của nhân viên
+        tz = pytz.timezone(check_record.employee_id._get_tz() or 'UTC')
+        check_in_local = check_record.check_in.astimezone(tz)
+        
+        # Xác định ngày bắt đầu và kết thúc trong múi giờ địa phương
+        day_start = check_in_local.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        
+        # Chuyển đổi về UTC
+        day_start_utc = day_start.astimezone(pytz.UTC).replace(tzinfo=None)
+        day_end_utc = day_end.astimezone(pytz.UTC).replace(tzinfo=None)
+
+        # Tìm tất cả bản ghi chấm công trong cùng ngày của nhân viên
+        # Loại trừ 'technical' mode
+        attendances_same_day = self.search([
+            ('employee_id', '=', check_record.employee_id.id),
+            ('check_in', '>=', day_start_utc),
+            ('check_in', '<', day_end_utc),
+            ('id', '!=', check_record.id),
+            ('in_mode', '!=', 'technical'),  # Loại trừ bản ghi technical
+        ])
+
+        # Kiểm tra: không cho phép tạo bản ghi mới nếu đã có bản ghi hoàn thành
+        completed_attendances = attendances_same_day.filtered(
+            lambda a: a.check_in and a.check_out
+        )
+        
+        if completed_attendances:
+            in_mode_display = self._get_mode_display(check_record.in_mode)
+            first_in_mode_display = self._get_mode_display(completed_attendances[0].in_mode)
+            
+            raise ValidationError(
+                f'❌ LỖI: Chỉ được phép chấm công tối đa 2 lần trong một ngày (1 lần vào + 1 lần ra).\n'
+                f'👤 Nhân viên: {check_record.employee_id.name}\n'
+                f'📍 Lần chấm công đầu tiên ({first_in_mode_display}):\n'
+                f'   • Vào: {completed_attendances[0].check_in.strftime("%H:%M:%S")}\n'
+                f'   • Ra: {completed_attendances[0].check_out.strftime("%H:%M:%S") if completed_attendances[0].check_out else "Chưa ra"}\n'
+                f'🔄 Bạn đang cố gắng chấm công lần thứ 2 ({in_mode_display}).\n'
+                f'📞 Vui lòng liên hệ quản lý nhân sự để xử lý.'
+            )
+
     @api.constrains('check_in', 'employee_id', 'in_mode', 'check_out')
     def _check_max_two_attendances_per_day(self):
         """
@@ -62,62 +127,21 @@ class HRAttendance(models.Model):
         Loại trừ 'technical' (được tạo tự động hệ thống)
         """
         for record in self:
-            if not record.check_in or not record.employee_id:
-                continue
+            self._check_attendance_limit(record)
 
-            # Loại trừ bản ghi 'technical' - được tạo tự động bởi hệ thống
-            if record.in_mode == 'technical':
-                continue
-
-            # Lấy múi giờ của nhân viên
-            tz = pytz.timezone(record.employee_id._get_tz() or 'UTC')
-            check_in_local = record.check_in.astimezone(tz)
-            
-            # Xác định ngày bắt đầu và kết thúc trong múi giờ địa phương
-            day_start = check_in_local.replace(hour=0, minute=0, second=0, microsecond=0)
-            day_end = day_start + timedelta(days=1)
-            
-            # Chuyển đổi về UTC
-            day_start_utc = day_start.astimezone(pytz.UTC).replace(tzinfo=None)
-            day_end_utc = day_end.astimezone(pytz.UTC).replace(tzinfo=None)
-
-            # Tìm tất cả bản ghi chấm công trong cùng ngày của nhân viên
-            # Loại trừ 'technical' mode
-            attendances_same_day = self.search([
-                ('employee_id', '=', record.employee_id.id),
-                ('check_in', '>=', day_start_utc),
-                ('check_in', '<', day_end_utc),
-                ('id', '!=', record.id),
-                ('in_mode', '!=', 'technical'),  # Loại trừ bản ghi technical
-            ])
-
-            # Nếu có > 1 bản ghi check in + check out trong ngày, từ chối
-            completed_attendances = attendances_same_day.filtered(
-                lambda a: a.check_in and a.check_out
-            )
-            
-            if len(completed_attendances) >= 1 and record.check_in and record.check_out:
-                in_mode_display = {
-                    'manual': 'Chấm công thủ công',
-                    'kiosk': 'Chấm công kiosk',
-                    'systray': 'Chấm công systray',
-                }.get(record.in_mode, record.in_mode)
-                
-                first_in_mode_display = {
-                    'manual': 'Chấm công thủ công',
-                    'kiosk': 'Chấm công kiosk',
-                    'systray': 'Chấm công systray',
-                }.get(completed_attendances[0].in_mode, completed_attendances[0].in_mode)
-                
-                raise ValidationError(
-                    f'❌ LỖI: Chỉ được phép chấm công tối đa 2 lần trong một ngày (1 lần vào + 1 lần ra).\n'
-                    f'👤 Nhân viên: {record.employee_id.name}\n'
-                    f'📍 Lần chấm công đầu tiên ({first_in_mode_display}):\n'
-                    f'   • Vào: {completed_attendances[0].check_in.strftime("%H:%M:%S")}\n'
-                    f'   • Ra: {completed_attendances[0].check_out.strftime("%H:%M:%S") if completed_attendances[0].check_out else "Chưa ra"}\n'
-                    f'🔄 Bạn đang cố gắng chấm công lần thứ 2 ({in_mode_display}).\n'
-                    f'📞 Vui lòng liên hệ quản lý nhân sự để xử lý.'
-                )
+    @api.model_create_multi
+    def create(self, vals_list):
+        """
+        Override create() để kiểm tra giới hạn chấm công trước khi lưu
+        """
+        for vals in vals_list:
+            # Tạo bản ghi tạm thời để kiểm tra
+            temp_record = self.new(vals)
+            # Gọi kiểm tra
+            self._check_attendance_limit(temp_record)
+        
+        # Nếu không có lỗi, tiếp tục tạo bình thường
+        return super().create(vals_list)
 
     @api.depends('excuse_ids', 'excuse_ids.state')
     def _compute_is_excused(self):
@@ -309,11 +333,7 @@ class HRAttendance(models.Model):
         ], limit=1)
 
         if last_open_attendance:
-            in_mode_display = {
-                'manual': 'Chấm công thủ công',
-                'kiosk': 'Chấm công kiosk',
-                'systray': 'Chấm công systray',
-            }.get(last_open_attendance.in_mode, last_open_attendance.in_mode)
+            in_mode_display = self._get_mode_display(last_open_attendance.in_mode)
             
             raise UserError(
                 f'⚠️ Bạn đã {in_mode_display} vào lúc {last_open_attendance.check_in.strftime("%H:%M:%S")} rồi.\n'
@@ -345,11 +365,7 @@ class HRAttendance(models.Model):
 
         if completed_today:
             # Cảnh báo: nhân viên cố gắng check in lần 2
-            first_in_mode_display = {
-                'manual': 'Chấm công thủ công',
-                'kiosk': 'Chấm công kiosk',
-                'systray': 'Chấm công systray',
-            }.get(completed_today[0].in_mode, completed_today[0].in_mode)
+            first_in_mode_display = self._get_mode_display(completed_today[0].in_mode)
             
             warning_msg = (
                 f'⚠️ CẢNH BÁO: Bạn đã {first_in_mode_display}:\n'
