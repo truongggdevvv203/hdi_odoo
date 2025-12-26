@@ -53,14 +53,20 @@ class HRAttendance(models.Model):
         help='Trạng thái chi tiết của bản ghi chấm công'
     )
 
-    @api.constrains('check_in', 'employee_id')
+    @api.constrains('check_in', 'employee_id', 'in_mode', 'check_out')
     def _check_max_two_attendances_per_day(self):
         """
         Kiểm tra giới hạn tối đa 2 lần chấm công trong một ngày
         (1 lần check in + 1 lần check out)
+        Chỉ kiểm tra các chế độ: 'manual', 'kiosk', 'systray'
+        Loại trừ 'technical' (được tạo tự động hệ thống)
         """
         for record in self:
             if not record.check_in or not record.employee_id:
+                continue
+
+            # Loại trừ bản ghi 'technical' - được tạo tự động bởi hệ thống
+            if record.in_mode == 'technical':
                 continue
 
             # Lấy múi giờ của nhân viên
@@ -76,11 +82,13 @@ class HRAttendance(models.Model):
             day_end_utc = day_end.astimezone(pytz.UTC).replace(tzinfo=None)
 
             # Tìm tất cả bản ghi chấm công trong cùng ngày của nhân viên
+            # Loại trừ 'technical' mode
             attendances_same_day = self.search([
                 ('employee_id', '=', record.employee_id.id),
                 ('check_in', '>=', day_start_utc),
                 ('check_in', '<', day_end_utc),
                 ('id', '!=', record.id),
+                ('in_mode', '!=', 'technical'),  # Loại trừ bản ghi technical
             ])
 
             # Nếu có > 1 bản ghi check in + check out trong ngày, từ chối
@@ -89,12 +97,26 @@ class HRAttendance(models.Model):
             )
             
             if len(completed_attendances) >= 1 and record.check_in and record.check_out:
+                in_mode_display = {
+                    'manual': 'Chấm công thủ công',
+                    'kiosk': 'Chấm công kiosk',
+                    'systray': 'Chấm công systray',
+                }.get(record.in_mode, record.in_mode)
+                
+                first_in_mode_display = {
+                    'manual': 'Chấm công thủ công',
+                    'kiosk': 'Chấm công kiosk',
+                    'systray': 'Chấm công systray',
+                }.get(completed_attendances[0].in_mode, completed_attendances[0].in_mode)
+                
                 raise ValidationError(
-                    f'Chỉ được phép chấm công tối đa 2 lần trong một ngày (1 lần vào + 1 lần ra). '
-                    f'Nhân viên {record.employee_id.name} đã chấm công lần đầu vào '
-                    f'{completed_attendances[0].check_in.strftime("%H:%M:%S")} và ra '
-                    f'{completed_attendances[0].check_out.strftime("%H:%M:%S") if completed_attendances[0].check_out else "chưa ra"}. '
-                    f'Vui lòng liên hệ quản lý nhân sự để xử lý.'
+                    f'❌ LỖI: Chỉ được phép chấm công tối đa 2 lần trong một ngày (1 lần vào + 1 lần ra).\n'
+                    f'👤 Nhân viên: {record.employee_id.name}\n'
+                    f'📍 Lần chấm công đầu tiên ({first_in_mode_display}):\n'
+                    f'   • Vào: {completed_attendances[0].check_in.strftime("%H:%M:%S")}\n'
+                    f'   • Ra: {completed_attendances[0].check_out.strftime("%H:%M:%S") if completed_attendances[0].check_out else "Chưa ra"}\n'
+                    f'🔄 Bạn đang cố gắng chấm công lần thứ 2 ({in_mode_display}).\n'
+                    f'📞 Vui lòng liên hệ quản lý nhân sự để xử lý.'
                 )
 
     @api.depends('excuse_ids', 'excuse_ids.state')
@@ -275,18 +297,27 @@ class HRAttendance(models.Model):
         API method cho check-in
         Kiểm tra và tạo attendance record
         Cảnh báo nếu check in lần 2 trong cùng ngày
+        Hỗ trợ các chế độ: 'manual', 'kiosk', 'systray'
         """
         employee = self.env['hr.employee'].browse(employee_id)
         
         # Kiểm tra xem đã check-in chưa (chưa check-out)
         last_open_attendance = self.search([
             ('employee_id', '=', employee_id),
-            ('check_out', '=', False)
+            ('check_out', '=', False),
+            ('in_mode', '!=', 'technical'),  # Loại trừ technical mode
         ], limit=1)
 
         if last_open_attendance:
+            in_mode_display = {
+                'manual': 'Chấm công thủ công',
+                'kiosk': 'Chấm công kiosk',
+                'systray': 'Chấm công systray',
+            }.get(last_open_attendance.in_mode, last_open_attendance.in_mode)
+            
             raise UserError(
-                'Bạn đã chấm công vào rồi. Vui lòng chấm công ra trước khi chấm công vào lại.'
+                f'⚠️ Bạn đã {in_mode_display} vào lúc {last_open_attendance.check_in.strftime("%H:%M:%S")} rồi.\n'
+                f'❌ Vui lòng chấm công ra trước khi chấm công vào lại.'
             )
 
         # Kiểm tra xem đã check in + check out lần đầu trong ngày chưa
@@ -303,20 +334,29 @@ class HRAttendance(models.Model):
         day_end_utc = day_end.astimezone(pytz.UTC).replace(tzinfo=None)
 
         # Tìm bản ghi chấm công hoàn thành (có check in + check out) trong ngày
+        # Loại trừ 'technical' mode
         completed_today = self.search([
             ('employee_id', '=', employee_id),
             ('check_in', '>=', day_start_utc),
             ('check_in', '<', day_end_utc),
-            ('check_out', '!=', False)
+            ('check_out', '!=', False),
+            ('in_mode', '!=', 'technical'),  # Loại trừ technical mode
         ])
 
         if completed_today:
             # Cảnh báo: nhân viên cố gắng check in lần 2
+            first_in_mode_display = {
+                'manual': 'Chấm công thủ công',
+                'kiosk': 'Chấm công kiosk',
+                'systray': 'Chấm công systray',
+            }.get(completed_today[0].in_mode, completed_today[0].in_mode)
+            
             warning_msg = (
-                f'⚠️ CẢNH BÁO: Bạn đã chấm công vào {completed_today[0].check_in.strftime("%H:%M:%S")} '
-                f'và ra {completed_today[0].check_out.strftime("%H:%M:%S")} trong hôm nay. '
-                f'Đây là lần check in thứ 2 trong cùng một ngày. '
-                f'Vui lòng liên hệ với quản lý nhân sự nếu có lỗi.'
+                f'⚠️ CẢNH BÁO: Bạn đã {first_in_mode_display}:\n'
+                f'   • Vào: {completed_today[0].check_in.strftime("%H:%M:%S")}\n'
+                f'   • Ra: {completed_today[0].check_out.strftime("%H:%M:%S")}\n'
+                f'❌ Đây là lần check in thứ 2 trong cùng một ngày.\n'
+                f'📞 Vui lòng liên hệ với quản lý nhân sự nếu có lỗi.'
             )
             raise UserError(warning_msg)
 
