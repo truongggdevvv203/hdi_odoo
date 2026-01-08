@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_round
+from datetime import timedelta
 
 
 class HrPayslip(models.Model):
@@ -62,10 +63,33 @@ class HrPayslip(models.Model):
         'Công chuẩn trong tháng',
         compute='_compute_standard_days',
         store=True,
-        readonly=True, states={'draft': [('readonly', False)]},
-        help='Tự động tính số ngày công chuẩn'
+        readonly=True,
+        help='Số ngày công chuẩn trong tháng được tính tự động (Thứ 2 - Thứ 7 sáng)'
     )
 
+    @api.depends('date_from', 'date_to')
+    def _compute_standard_days(self):
+        for record in self:
+            if record.date_from and record.date_to:
+                standard_days = 0
+                current_date = record.date_from
+
+                while current_date <= record.date_to:
+                    weekday = current_date.weekday()
+
+                    # Thứ 2 đến Thứ 6: tính 1 ngày công
+                    if weekday <= 4:  # Monday to Friday
+                        standard_days += 1
+                    # Thứ 7: tính 0.5 ngày công
+                    elif weekday == 5:  # Saturday
+                        standard_days += 0.5
+                    # Chủ nhật: không tính
+
+                    current_date += timedelta(days=1)
+
+                record.standard_days = standard_days
+            else:
+                record.standard_days = 0
     # ==================== TRẠNG THÁI ====================
     state = fields.Selection([
         ('draft', 'Nháp'),
@@ -144,52 +168,9 @@ class HrPayslip(models.Model):
             net_line = lines.filtered(lambda l: l.code == 'NET')
             payslip.net_wage = sum(net_line.mapped('total'))
 
-    @api.depends('date_from', 'date_to')
-    def _compute_standard_days(self):
-        """Tính số ngày hành chính (loại bỏ thứ 7, chủ nhật)"""
-        for payslip in self:
-            if not payslip.date_from or not payslip.date_to:
-                payslip.standard_days = 0.0
-                continue
-
-            # Tính số ngày hành chính giữa date_from và date_to
-            standard_days = self._calculate_working_days(payslip.date_from, payslip.date_to)
-            payslip.standard_days = standard_days
-
-    def _calculate_working_days(self, date_from, date_to):
-        """
-        Tính số ngày hành chính (ngày làm việc) từ date_from đến date_to
-        Logic:
-        - Thứ 2 - Thứ 6: 1 ngày
-        - Thứ 7 (Saturday): 0.5 ngày
-        - Chủ nhật: 0 ngày
-        
-        Args:
-            date_from: ngày bắt đầu
-            date_to: ngày kết thúc
-            
-        Returns:
-            Số ngày hành chính
-        """
-        working_days = 0.0
-        current_date = date_from
-        
-        while current_date <= date_to:
-            weekday = current_date.weekday()
-            # weekday(): Monday=0, Tuesday=1, ..., Saturday=5, Sunday=6
-            if weekday < 5:  # Thứ 2-6 (Monday-Friday)
-                working_days += 1.0
-            elif weekday == 5:  # Thứ 7 (Saturday)
-                working_days += 0.5
-            # Sunday (weekday == 6): không tính
-            
-            current_date += relativedelta(days=1)
-        
-        return working_days
-
     @api.onchange('employee_id', 'date_from', 'date_to')
     def _onchange_employee(self):
-        """Tự động điền contract khi chọn nhân viên và tính ngày chuẩn"""
+        """Tự động điền contract khi chọn nhân viên"""
         if self.employee_id:
             # Tìm contract đang active
             contract = self.env['hr.contract'].search([
@@ -210,10 +191,6 @@ class HrPayslip(models.Model):
             # Tự động tạo tên
             if self.date_from:
                 self.name = f"Lương {self.employee_id.name} - {self.date_from.strftime('%m/%Y')}"
-        
-        # Tính lại standard_days khi date thay đổi (trigger compute)
-        if self.date_from and self.date_to:
-            self._compute_standard_days()
 
     @api.onchange('contract_id')
     def _onchange_contract(self):
@@ -260,10 +237,78 @@ class HrPayslip(models.Model):
 
     def action_payslip_paid(self):
         """Đánh dấu đã thanh toán"""
-        return self.write({
-            'state': 'paid',
-            'paid_date': fields.Date.today()
-        })
+        today = fields.Date.today()
+
+        for payslip in self:
+            # 1) Update payslip state/date
+            payslip.write({
+                'state': 'paid',
+                'paid_date': today
+            })
+
+            # 2) Mark related loan lines as paid (installment lines in the payslip period)
+            loan_line_domain = [
+                ('loan_id.employee_id', '=', payslip.employee_id.id),
+                ('installment_date', '>=', payslip.date_from),
+                ('installment_date', '<=', payslip.date_to),
+                ('paid', '=', False),
+            ]
+            loan_lines = self.env['hr.loan.line'].search(loan_line_domain)
+            if loan_lines:
+                loan_lines.write({
+                    'paid': True,
+                    'paid_date': payslip.date_to or today,
+                    'payslip_id': payslip.id,
+                })
+                # Ensure parent loan states are updated when all lines paid
+                loans = loan_lines.mapped('loan_id')
+                if loans:
+                    try:
+                        loans._compute_balance()
+                    except Exception:
+                        # Fallback: compute and set state explicitly
+                        for loan in loans:
+                            paid_amount = sum(loan.line_ids.filtered('paid').mapped('amount'))
+                            balance = loan.amount - paid_amount
+                            if balance <= 0:
+                                loan.state = 'paid'
+                            elif loan.state == 'paid' and balance > 0:
+                                loan.state = 'approved'
+
+            # 3) Mark rewards as paid and link to payslip
+            reward_domain = [
+                ('employee_id', '=', payslip.employee_id.id),
+                ('state', '=', 'approved'),
+                ('add_to_payslip', '=', True),
+                ('is_paid', '=', False),
+                ('amount', '>', 0),
+                ('date', '>=', payslip.date_from),
+                ('date', '<=', payslip.date_to),
+            ]
+            rewards = self.env['hr.reward'].search(reward_domain)
+            if rewards:
+                # link and mark paid
+                rewards.write({'payslip_id': payslip.id})
+                try:
+                    rewards.action_paid()
+                except Exception:
+                    rewards.write({'state': 'paid'})
+
+            # 4) Link discipline records (khấu trừ) to payslip => is_deducted computed
+            discipline_domain = [
+                ('employee_id', '=', payslip.employee_id.id),
+                ('state', '=', 'approved'),
+                ('deduct_from_payslip', '=', True),
+                ('is_deducted', '=', False),
+                ('fine_amount', '>', 0),
+                ('date', '>=', payslip.date_from),
+                ('date', '<=', payslip.date_to),
+            ]
+            disciplines = self.env['hr.discipline'].search(discipline_domain)
+            if disciplines:
+                disciplines.write({'payslip_id': payslip.id})
+
+        return True
 
     def _validate_payslip(self):
         """Kiểm tra tính hợp lệ trước khi duyệt"""
@@ -365,8 +410,6 @@ class HrPayslip(models.Model):
                     'amount': discipline_total,
                     'sequence': 4,
                 })
-                # Đánh dấu đã trừ vào lương
-                discipline_records.write({'payslip_id': payslip.id})
 
             # 3. Khen thưởng: lấy các quyết định thưởng chưa cộng vào lương
             reward_domain = [

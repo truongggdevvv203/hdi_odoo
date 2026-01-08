@@ -45,7 +45,7 @@
                     <group>
                         <group string="Mức lương đóng bảo hiểm">
                             <field name="insurance_salary"/>
-                            <label for="insurance_salary" string="Công thức: Lương CB + PC ăn" class="text-muted"/>
+                            <label for="insurance_salary" string="Mức đóng = Lương CB" class="text-muted"/>
                         </group>
 
                         <group string="Tổng chi phí">

@@ -48,7 +48,7 @@
                         <group>
                             <field name="date_from" readonly="state != 'draft'"/>
                             <field name="date_to" readonly="state != 'draft'"/>
-                            <field name="standard_days" readonly="state != 'draft'"/>
+                            <field name="standard_days" readonly="1"/>
                         </group>
                     </group>
 
@@ -97,11 +97,49 @@
         </field>
     </record>
 
-    <!-- Action -->
+    <record id="view_hr_payslip_filter" model="ir.ui.view">
+        <field name="name">hr.payslip.search</field>
+        <field name="model">hr.payslip</field>
+        <field name="arch" type="xml">
+            <search string="Tìm kiếm phiếu lương">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+
+                <filter name="draft" string="Nháp" domain="[('state','=','draft')]"/>
+                <filter name="verify" string="Chờ duyệt" domain="[('state','=','verify')]"/>
+                <filter name="done" string="Đã duyệt" domain="[('state','=','done')]"/>
+                <filter name="paid" string="Đã thanh toán" domain="[('state','=','paid')]"/>
+
+                <separator/>
+                <filter name="current_month" string="Tháng này"
+                        domain="[('date_from','&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')),
+                                ('date_to','&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+
+                <group expand="0" string="Nhóm theo">
+                    <filter name="group_by_employee" string="Nhân viên" context="{'group_by':'employee_id'}"/>
+                    <filter name="group_by_state" string="Trạng thái" context="{'group_by':'state'}"/>
+                    <filter name="group_by_month" string="Tháng" context="{'group_by':'date_from'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_hr_payslip" model="ir.actions.act_window">
         <field name="name">Phiếu lương</field>
         <field name="res_model">hr.payslip</field>
         <field name="view_mode">list,form</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+        <field name="search_view_id" ref="view_hr_payslip_filter"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có phiếu lương nào
+            </p>
+            <p>
+                Nhấn nút <b>Mới</b> để tạo phiếu lương mới
+            </p>
+        </field>
     </record>
-
 </odoo>
